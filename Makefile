@@ -2,10 +2,12 @@ NAME := ft_vox
 
 OBJ_DIR := ./obj/
 INCLUDE_DIRS := ./includes/ ./GLFW/include/GLFW/ ./includes/glad/. ./includes/render ./src/ ./glm/glm/ ./glm/glm/gtc/
+CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/
 
 GLFWARCHIVE = GLFW/build/src/libglfw3.a
 
 INCLUDE_DIRS := $(addprefix -I, $(INCLUDE_DIRS))
+CLASSE_HEADERS := $(addprefix -I./src/, $(CLASSE_HEADERS))
 
 MAKE := @make --no-print-directory
 
@@ -17,13 +19,14 @@ OBJECTS = $(SOURCES:.cpp=.o)
 
 CPP_FILES :=	main \
 				glad/glad \
-				Window \
-				Camera \
-				Shader \
-				Texture \
-				Font \
-				Skybox \
-				FrameBuffer
+				Window/Window \
+				Camera/Camera \
+				Shader/Shader \
+				Shader/Font \
+				Texture/Texture \
+				Texture/Skybox \
+				FrameBuffer/FrameBuffer \
+				ChunkMaker/Chunk
 
 CPP_FILES := $(addsuffix .cpp, $(CPP_FILES))
 
@@ -88,7 +91,7 @@ glm:
 	fi
 
 $(OBJECTS): $(OBJ_DIR)%.o : $(SOURCE_DIR)%.cpp
-	@c++ $(CFLAGS) $(INCLUDE_DIRS) -c $< -o $@
+	@c++ $(CFLAGS) $(CLASSE_HEADERS) $(INCLUDE_DIRS) -c $< -o $@
 
 $(OBJ_DIR):
 	@(cd $(SOURCE_DIR) && find . -type d -exec mkdir -p -- $(shell pwd)/$(OBJ_DIR){} \;)

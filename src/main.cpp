@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/10 09:34:48 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/10 11:29:53 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include "Texture.hpp"
 #include "Skybox.hpp"
 #include "FrameBuffer.hpp"
+#include "Chunk.hpp"
 
 #define WORLD_SIZE 32
 
@@ -38,6 +39,7 @@ Window				*WINDOW;
 Camera				*CAMERA;
 Skybox				*SKYBOX;
 
+Chunk				*CHUNK; //!testing
 
 TextureManager		*TEXTURE_MANAGER;
 ShaderManager		*SHADER_MANAGER;
@@ -97,6 +99,7 @@ void	build(ShaderManager *shader)
 	Shader *skyboxShader = shader->load({"skybox", SKYBOX_VERT_SHADER, SKYBOX_FRAG_SHADER});
 	Shader *waterShader = shader->load({"water", "shaders/water.vs", "shaders/water.fs"});
 	Shader *postShader = shader->load({"post", "shaders/post.vs", "shaders/post.fs"});
+	shader->load({"voxel", "shaders/voxel.vs", "shaders/voxel.fs"});
 
 	Texture::use("tex0", 0, 0, textShader);
 
@@ -123,25 +126,29 @@ std::string	getFPSString()
 /*
 	Draws all 2D elements on screen for now just FPS
 */
-void	drawUI()
+void    drawUI()
 {
-	glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
 
-	static int frame = 0;
-	static std::string	fps = "0 fps";
-	std::string			particles_count;
-	std::string			load_particles;
+    static int frame = 0;
+    static std::string    fps = "0 fps";
+    std::string            cameraPos = std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);
 
-	if (frame++ >= currentFPS / 10)
-	{
-		frame = 0;
-		fps = getFPSString();
-	}
-	FONT->putString(fps, *SHADER_MANAGER->get("text"),
-		glm::vec2((SCREEN_WIDTH / 2) - (fps.length() * 15) / 2, 0),
-		glm::vec2(fps.length() * 15, 15));
-	
-	glEnable(GL_DEPTH_TEST);
+    if (frame++ >= currentFPS / 10)
+    {
+        frame = 0;
+        fps = getFPSString();
+    }
+    FONT->putString(fps, *SHADER_MANAGER->get("text"),
+        glm::vec2((SCREEN_WIDTH / 2) - (fps.length() * 15) / 2, 0),
+        glm::vec2(fps.length() * 15, 15));
+
+        FONT->putString(cameraPos, *SHADER_MANAGER->get("text"),
+    glm::vec2((SCREEN_WIDTH / 2) - (cameraPos.length() * 15) / 2, 15),
+    glm::vec2(cameraPos.length() * 15, 15));
+
+        
+    glEnable(GL_DEPTH_TEST);
 }
 
 /*
@@ -249,9 +256,11 @@ struct	Engine
 		build(TEXTURE_MANAGER);
 		MAIN_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEFAULT);
 		SKYBOX = new Skybox({SKYBOX_PATHES});
+		CHUNK = new Chunk(glm::vec3(0, 0, 0));
 	}
 	~Engine()
 	{
+		delete CHUNK;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
 		delete TEXTURE_MANAGER;
@@ -268,6 +277,7 @@ struct	Engine
 void	render()
 {
 	SKYBOX->draw(*CAMERA, *SHADER_MANAGER->get("skybox"));
+	CHUNK->draw(*CAMERA, *SHADER_MANAGER->get("voxel"));
 }
 
 /*
