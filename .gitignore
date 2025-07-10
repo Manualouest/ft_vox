@@ -1,0 +1,16 @@
+# Ignore objects
+obj/
+*.o
+*.d
+
+ft_vox
+
+# Ignore external libraries (They are cloned by the Makefile)
+GLFW/
+src/glad/
+includes/glad/
+glm/
+
+# Ignore useless things
+*.png
+.vscode/
