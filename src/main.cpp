@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/10 11:29:53 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/10 15:41:05 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ Camera				*CAMERA;
 Skybox				*SKYBOX;
 
 Chunk				*CHUNK; //!testing
+Chunk				*CHUNK2; //!testing
 
 TextureManager		*TEXTURE_MANAGER;
 ShaderManager		*SHADER_MANAGER;
@@ -249,6 +250,7 @@ struct	Engine
 	{
 		WINDOW = new Window();
 		CAMERA = new Camera();
+		CAMERA->pos.y += 40;
 		FONT = new Font();
 		SHADER_MANAGER = new ShaderManager();
 		build(SHADER_MANAGER);
@@ -257,10 +259,12 @@ struct	Engine
 		MAIN_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEFAULT);
 		SKYBOX = new Skybox({SKYBOX_PATHES});
 		CHUNK = new Chunk(glm::vec3(0, 0, 0));
+		CHUNK2 = new Chunk(glm::vec3(0, 0, 33));
 	}
 	~Engine()
 	{
 		delete CHUNK;
+		delete CHUNK2;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
 		delete TEXTURE_MANAGER;
@@ -277,7 +281,8 @@ struct	Engine
 void	render()
 {
 	SKYBOX->draw(*CAMERA, *SHADER_MANAGER->get("skybox"));
-	CHUNK->draw(*CAMERA, *SHADER_MANAGER->get("voxel"));
+	CHUNK->draw(*SHADER_MANAGER->get("voxel"));
+	CHUNK2->draw(*SHADER_MANAGER->get("voxel"));
 }
 
 /*

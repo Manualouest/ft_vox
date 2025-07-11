@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/10 10:46:55 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/10 15:48:54 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,14 @@
 
 # include "libs.hpp"
 # include "Shader.hpp"
-#include "Camera.hpp"
+# include "Camera.hpp"
+
+# define LINELEN 6
+# define WATERLINE 21
+# define GROUND 0
+# define WATER 1
+
+extern Camera	*CAMERA;
 
 class Chunk
 {
@@ -23,26 +30,31 @@ class Chunk
 		Chunk(const glm::vec3 &pos);
 		~Chunk();
 
-		void	draw(Camera &camera, Shader &shader);
+		void	draw(Shader &shader);
+		float	getDistance() const;
 
 		glm::vec3							pos;
-		std::unordered_map<int, char32_t>	chunkData;
+		glm::mat4							model;
+		std::unordered_map<int, char32_t>	groundData;
+		std::unordered_map<int, char32_t>	waterData;
 	
 	private:
 		void	gen();
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &height);
 		void	genMesh();
 		void	makeBuffers();
+		bool	isInRange();
 
-		unsigned int		_EBO;
-		unsigned int		_VAO;
-		unsigned int		_VBO;
-		glm::mat4			_model;
-		unsigned int		_minHeight:8;
-		unsigned int		_maxHeight:8;
-		std::vector<float>	_vertices;
-		std::vector<int>	_indices;
-		int					_indicesSize;
+		unsigned int			_EBO;
+		unsigned int			_VAO;
+		unsigned int			_VBO;
+		glm::mat4				_model;
+		uint8_t					_minHeight;
+		uint8_t					_maxHeight;
+		int						_indicesSize;
+		std::vector<int>		_indices;
+		std::vector<float>		_vertices;
+		std::vector<uint8_t>	_chunkTop;
 };
 
 #endif
