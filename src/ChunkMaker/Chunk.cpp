@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 09:24:02 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 12:27:38 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,10 +84,26 @@ float perlin(float x, float y) {
 
 float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
 {
-	float	freq = 1;
-	float	amp = 300;
+	float	freq = 0.1 / 32;
+	float	amp = 4;
 
-	return (std::abs(perlin(pos.x * freq / 256, pos.y * freq / 256) * amp));
+	float	ret = 0;
+
+	if (pos.x < 0 || pos.y < 0)
+		return (256);
+	
+	for (int i = 0; i < 6; i++)
+	{
+		ret += perlin(pos.x * freq, pos.y * freq) * amp;
+
+		freq *= 2;
+		amp /= 2;
+	}
+
+	ret = (ret + 1) / 2;
+	ret = glm::clamp(ret, 0.0f, 1.0f);
+
+	return (ret * 128);
 }
 
 Chunk::Chunk(const glm::vec3 &nPos)
@@ -176,15 +192,17 @@ void	Chunk::makeBuffers()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(6 * sizeof(float)));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
-void	addVertices(float type, std::vector<float> &vertices, std::vector<int> &_indices, const glm::vec3 &TL, const glm::vec3 &TR, const glm::vec3 &BL, const glm::vec3 &BR)
+void	addVertices(float type, std::vector<float> &vertices, std::vector<int> &_indices, const glm::vec3 &TL, const glm::vec3 &TR, const glm::vec3 &BL, const glm::vec3 &BR, const glm::vec3 &Normal)
 {
-	vertices.insert(vertices.end(), {BL.x, BL.y, BL.z, 0, 0, type, TL.x, TL.y, TL.z, 0, 1, type, TR.x, TR.y, TR.z, 1, 1, type, BR.x, BR.y, BR.z, 1, 0, type});
+	vertices.insert(vertices.end(), {BL.x, BL.y, BL.z, 0, 0, type, Normal.x, Normal.y, Normal.z, TL.x, TL.y, TL.z, 0, 1, type, Normal.x, Normal.y, Normal.z, TR.x, TR.y, TR.z, 1, 1, type, Normal.x, Normal.y, Normal.z, BR.x, BR.y, BR.z, 1, 0, type, Normal.x, Normal.y, Normal.z});
 	int vertLen = vertices.size() / LINELEN - 1;
 	_indices.insert(_indices.end(), {vertLen - 3, vertLen - 1, vertLen - 2, vertLen - 3, vertLen - 0, vertLen - 1});
 }
@@ -213,17 +231,17 @@ void	Chunk::genMesh()
 			for (int iii = 0; iii < 32; ++iii)
 			{
 				if ((westFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii});
+					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
 				if ((eastFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii});
+					addVertices(GROUND, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii}, {1, 0, 0});
 				if ((northFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)});
+					addVertices(GROUND, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0, 0, 1});
 				if ((southFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)});
+					addVertices(GROUND, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)}, {0, 0, -1});
 				if ((chunkSlice >> iii) & 1 && 
 					((groundData.find(((i + 1) * 32 + ii)) != groundData.end() && !((groundData.find(((i + 1) * 32 + ii))->second >> iii) & 1))
 						|| groundData.find(((i + 1) * 32 + ii)) == groundData.end()))
-					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii});
+					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii}, {0, 1, 0});
 			}
 		}
 	}
@@ -235,7 +253,7 @@ void	Chunk::genMesh()
 		{
 			std::unordered_map<int, char32_t>::iterator chunkSlice = waterData.find(WATERLINE * 32 + i);
 			if (chunkSlice != waterData.end() && (chunkSlice->second >> ii) & 1)
-				addVertices(WATER, _vertices, _indices, {0 + ii, 1 + WATERLINE, 1 + i}, {1 + ii, 1 + WATERLINE, 1 + i}, {0 + ii, 1 + WATERLINE, 0 + i}, {1 + ii, 1 + WATERLINE, 0 + i});
+				addVertices(WATER, _vertices, _indices, {0 + ii, 1 + WATERLINE, 1 + i}, {1 + ii, 1 + WATERLINE, 1 + i}, {0 + ii, 1 + WATERLINE, 0 + i}, {1 + ii, 1 + WATERLINE, 0 + i}, {0, 1, 0});
 		}
 	}
 }

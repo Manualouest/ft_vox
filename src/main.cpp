@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 09:34:17 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 13:05:12 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,8 @@ TextureManager		*TEXTURE_MANAGER;
 ShaderManager		*SHADER_MANAGER;
 
 FrameBuffer	*MAIN_FRAME_BUFFER;
+FrameBuffer	*DEPTH_FRAME_BUFFER;
+FrameBuffer	*WATER_DEPTH_FRAME_BUFFER;
 
 /*
 	Keyboard input as the char so like typing on a keyboard
@@ -101,6 +103,12 @@ void	build(ShaderManager *shader)
 	Shader *waterShader = shader->load({"water", "shaders/water.vs", "shaders/water.fs"});
 	Shader *postShader = shader->load({"post", "shaders/post.vs", "shaders/post.fs"});
 	shader->load({"voxel", "shaders/voxel.vs", "shaders/voxel.fs"});
+
+	Texture::use("terrainDepthTex", 0, 1, SHADER_MANAGER->get("voxel"));
+	Texture::use("waterDepthTex", 0, 2, SHADER_MANAGER->get("voxel"));
+
+	shader->load({"test", "shaders/test.vs", "shaders/test.fs"});
+	Texture::use("screenTexture", 0, 0, (*shader)["test"]);
 
 	Texture::use("tex0", 0, 0, textShader);
 
@@ -172,6 +180,7 @@ void	update(ShaderManager *shaders)
 	Shader	*textShader = shaders->get("text");
 	Shader	*waterShader = shaders->get("water");
 	Shader	*postShader = shaders->get("post");
+	Shader	*voxelShader = shaders->get("voxel");
 
 	textShader->use();
 	textShader->setFloat("time", glfwGetTime());
@@ -186,6 +195,10 @@ void	update(ShaderManager *shaders)
 
 	postShader->use();
 	postShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
+
+	voxelShader->use();
+	voxelShader->setVec3("viewPos", CAMERA->pos);
+	voxelShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
 }
 
 /*
@@ -257,6 +270,8 @@ struct	Engine
 		TEXTURE_MANAGER = new TextureManager();
 		build(TEXTURE_MANAGER);
 		MAIN_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEFAULT);
+		DEPTH_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEPTH);
+		WATER_DEPTH_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEPTH);
 		SKYBOX = new Skybox({SKYBOX_PATHES});
 		CHUNKS = new RegionManager();
 	}
@@ -265,6 +280,8 @@ struct	Engine
 		delete CHUNKS;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
+		delete DEPTH_FRAME_BUFFER;
+		delete WATER_DEPTH_FRAME_BUFFER;
 		delete TEXTURE_MANAGER;
 		delete SHADER_MANAGER;
 		delete FONT;
@@ -278,7 +295,15 @@ struct	Engine
 */
 void	render()
 {
+	DEPTH_FRAME_BUFFER->clear();
+	WATER_DEPTH_FRAME_BUFFER->clear();
+	MAIN_FRAME_BUFFER->clear();
+	
+	MAIN_FRAME_BUFFER->use();
 	SKYBOX->draw(*CAMERA, *SHADER_MANAGER->get("skybox"));
+	TEXTURE_MANAGER->get("textures/stone.bmp")->use(0);
+	Texture::use("terrainDepthTex", DEPTH_FRAME_BUFFER->getTexture(), 1, SHADER_MANAGER->get("voxel"));
+	Texture::use("waterDepthTex", WATER_DEPTH_FRAME_BUFFER->getTexture(), 2, SHADER_MANAGER->get("voxel"));
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 }
 
@@ -298,6 +323,7 @@ int	main(void)
 		Engine	engine;
 
 		consoleLog("Starting rendering...", NORMAL);
+
 		while (WINDOW->up())
 		{
 			WINDOW->loopStart();
@@ -305,15 +331,12 @@ int	main(void)
 			update(SHADER_MANAGER);
 			update();
 
-			
-			MAIN_FRAME_BUFFER->use();
 			render();
-
 			
 			FrameBuffer::reset();
 
 			updatePostShader(SHADER_MANAGER);
-			FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getTexture());
+			FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getTexture());	
 
 			drawUI();
 

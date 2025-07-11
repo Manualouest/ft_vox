@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   QuadTree.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 09:14:52 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 12:12:06 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ class	Quadtree
 		{
 			if (isLeaf())
 				return (_leaf);
-			
+
 			// if (targetPos.x == _pos.x + _size.x / 2.f || targetPos.y == _pos.y + _size.y / 2.f)
 			// 	std::cout << "danger" << std::endl;
 
@@ -87,7 +87,7 @@ class	Quadtree
 					_branches[QTBranch::TOP_LEFT] = new Quadtree(glm::vec2(_pos.x + _size.x / 2, _pos.y), _size / 2.0f);
 				return (_branches[QTBranch::TOP_LEFT]->growBranch(targetPos));
 			}
-				
+
 			else if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Top right
 			{
 				if (_branches[QTBranch::TOP_RIGHT] == NULL)

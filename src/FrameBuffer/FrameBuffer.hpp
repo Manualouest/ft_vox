@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/05 11:27:41 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/09 17:41:20 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/11 13:05:38 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,8 +109,12 @@ class	FrameBuffer
 			SCREEN_HEIGHT = height;
 			glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBufferID);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
+		}
+		void	clear()
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBufferID);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		}
 		//Resets back to the main frame (The one drawn on screen)
 		static void	reset()

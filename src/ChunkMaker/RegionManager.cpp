@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RegionManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 09:35:05 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 12:04:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,12 +72,30 @@ void	RegionManager::UpdateChunks()
 	}
 }
 
+#include "FrameBuffer.hpp"
+#include "ShaderManager.hpp"
+
+extern FrameBuffer	*MAIN_FRAME_BUFFER;
+extern FrameBuffer	*DEPTH_FRAME_BUFFER;
+extern FrameBuffer	*WATER_DEPTH_FRAME_BUFFER;
+
+extern ShaderManager *SHADER_MANAGER;
+
 void	RegionManager::Render(Shader &shader)
 {
 	UpdateChunks();
 	sortChunks();
 	for (auto chunk : _renderChunks)
 	{
+		shader.use();
+		shader.setBool("getDepth", true);
+		DEPTH_FRAME_BUFFER->use();
+		(*chunk).draw(shader);
+		shader.use();
+		shader.setBool("getDepth", false);
+		WATER_DEPTH_FRAME_BUFFER->use();
+		(*chunk).draw(shader);
+		MAIN_FRAME_BUFFER->use();
 		(*chunk).draw(shader);
 	}
 }
@@ -91,6 +109,3 @@ void	RegionManager::sortChunks()
 		});
 }
 
-	
-		// std::vector<Chunk *>	_Chunks;
-		// std::vector<Chunk *>	_RenderChunks;
