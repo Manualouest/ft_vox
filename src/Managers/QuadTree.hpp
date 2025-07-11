@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 06:45:11 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 09:14:52 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ class	Quadtree
 			this->_size = size;
 
 			if (this->_size == glm::vec2(32))
-				this->_leaf = new Chunk(glm::vec3(_pos.x, _pos.y, 0));
+				this->_leaf = new Chunk(glm::vec3(_pos.x, 0, _pos.y));
 		}
 		~Quadtree()
 		{
@@ -78,6 +78,9 @@ class	Quadtree
 			if (isLeaf())
 				return (_leaf);
 			
+			// if (targetPos.x == _pos.x + _size.x / 2.f || targetPos.y == _pos.y + _size.y / 2.f)
+			// 	std::cout << "danger" << std::endl;
+
 			if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Top left
 			{
 				if (_branches[QTBranch::TOP_LEFT] == NULL)
@@ -109,7 +112,7 @@ class	Quadtree
 			return (NULL);
 		}
 
-		Chunk	*TryGrowBranch(const glm::vec2 &targetPos)
+		Chunk	*getBranch(const glm::vec2 &targetPos)
 		{
 			if (isLeaf())
 				return (_leaf);
@@ -117,25 +120,25 @@ class	Quadtree
 			if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Top left
 			{
 				if (_branches[QTBranch::TOP_LEFT] != NULL)
-					return (_branches[QTBranch::TOP_LEFT]->growBranch(targetPos));
+					return (_branches[QTBranch::TOP_LEFT]->getBranch(targetPos));
 			}
 				
 			else if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Top right
 			{
 				if (_branches[QTBranch::TOP_RIGHT] != NULL)
-					return (_branches[QTBranch::TOP_RIGHT]->growBranch(targetPos));
+					return (_branches[QTBranch::TOP_RIGHT]->getBranch(targetPos));
 			}
 				
 			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Bottom left
 			{
 				if (_branches[QTBranch::BOTTOM_LEFT] != NULL)
-					return (_branches[QTBranch::BOTTOM_LEFT]->growBranch(targetPos));
+					return (_branches[QTBranch::BOTTOM_LEFT]->getBranch(targetPos));
 			}
 
 			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Bottom right
 			{
 				if (_branches[QTBranch::BOTTOM_RIGHT] != NULL)
-					return (_branches[QTBranch::BOTTOM_RIGHT]->growBranch(targetPos));
+					return (_branches[QTBranch::BOTTOM_RIGHT]->getBranch(targetPos));
 			}
 			return (NULL);
 		}

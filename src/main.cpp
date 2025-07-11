@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/10 15:41:05 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 09:34:17 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,14 @@
 #include "Skybox.hpp"
 #include "FrameBuffer.hpp"
 #include "Chunk.hpp"
+#include "RegionManager.hpp"
 
 #define WORLD_SIZE 32
 
 float	FOV = 65;
 float	SCREEN_WIDTH = 860;
 float	SCREEN_HEIGHT = 520;
-float	RENDER_DISTANCE = 448;
+float	RENDER_DISTANCE = 1024;
 
 bool	F3 = false;
 bool	PAUSED = false;
@@ -39,8 +40,7 @@ Window				*WINDOW;
 Camera				*CAMERA;
 Skybox				*SKYBOX;
 
-Chunk				*CHUNK; //!testing
-Chunk				*CHUNK2; //!testing
+RegionManager		*CHUNKS; //!testing
 
 TextureManager		*TEXTURE_MANAGER;
 ShaderManager		*SHADER_MANAGER;
@@ -258,13 +258,11 @@ struct	Engine
 		build(TEXTURE_MANAGER);
 		MAIN_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEFAULT);
 		SKYBOX = new Skybox({SKYBOX_PATHES});
-		CHUNK = new Chunk(glm::vec3(0, 0, 0));
-		CHUNK2 = new Chunk(glm::vec3(0, 0, 33));
+		CHUNKS = new RegionManager();
 	}
 	~Engine()
 	{
-		delete CHUNK;
-		delete CHUNK2;
+		delete CHUNKS;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
 		delete TEXTURE_MANAGER;
@@ -281,8 +279,7 @@ struct	Engine
 void	render()
 {
 	SKYBOX->draw(*CAMERA, *SHADER_MANAGER->get("skybox"));
-	CHUNK->draw(*SHADER_MANAGER->get("voxel"));
-	CHUNK2->draw(*SHADER_MANAGER->get("voxel"));
+	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 }
 
 /*

@@ -26,7 +26,8 @@ CPP_FILES :=	main \
 				Texture/Texture \
 				Texture/Skybox \
 				FrameBuffer/FrameBuffer \
-				ChunkMaker/Chunk
+				ChunkMaker/Chunk \
+				ChunkMaker/RegionManager
 
 CPP_FILES := $(addsuffix .cpp, $(CPP_FILES))
 

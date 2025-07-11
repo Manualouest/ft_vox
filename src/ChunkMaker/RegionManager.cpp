@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/10 16:00:09 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 09:35:05 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,29 +14,77 @@
 
 RegionManager::RegionManager()
 {
-
+	RenderDist = 14;
+	_QT = new Quadtree(glm::vec2(0, 0), glm::vec2(16384.0f, 16384.0f));
 }
 
 RegionManager::~RegionManager()
 {
-
+	delete _QT;
 }
 
 void	RegionManager::UpdateChunks()
 {
-	glm::vec3	center = floor(CAMERA->pos / glm::vec3(32.0f)) * glm::vec3(32.0f) + glm::vec3(16.0f, 0, 16.0f);
+	_renderChunks = {};
+	glm::vec2	dirPos = CAMERA->flatFront;
+	glm::vec2	pos = glm::vec2(CAMERA->pos.x, CAMERA->pos.z) - dirPos * 32.0f;
+	glm::vec2	leftDir = glm::vec2(0);
+	glm::vec2	rightDir = glm::vec2(0);
+	glm::vec2	tmpDirPos = glm::vec2(0);
+	Chunk		*chunk = NULL;
+	int			ChunkAmount = 2;
 
-	
+	for (float i = 1; i <= RenderDist * 2; ++i)
+	{
+		tmpDirPos = dirPos * 16.0f *i;
+		leftDir = glm::normalize(glm::vec2(-tmpDirPos.y, tmpDirPos.x));
+		rightDir = glm::normalize(glm::vec2(tmpDirPos.y, -tmpDirPos.x));
+		for (float ii = i * 1.25; ii > 0; --ii)
+		{
+			chunk = _QT->getBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
+			if (chunk != NULL)
+				_renderChunks.push_back(chunk);
+			else if (--ChunkAmount > 0)
+			{
+				chunk = _QT->growBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
+				_chunks.push_back(chunk);
+				_renderChunks.push_back(chunk);
+			}
+			chunk = _QT->getBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
+			if (chunk != NULL)
+				_renderChunks.push_back(chunk);
+			else if (--ChunkAmount > 0)
+			{
+				chunk = _QT->growBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
+				_chunks.push_back(chunk);
+				_renderChunks.push_back(chunk);
+			}
+		}
+		chunk = _QT->getBranch(pos + tmpDirPos);
+		if (chunk != NULL)
+			_renderChunks.push_back(chunk);
+		else if (--ChunkAmount > 0)
+		{
+			chunk = _QT->growBranch(pos + tmpDirPos);
+			_chunks.push_back(chunk);
+			_renderChunks.push_back(chunk);
+		}
+	}
 }
 
-void	RegionManager::Render(Shader *shader)
+void	RegionManager::Render(Shader &shader)
 {
-
+	UpdateChunks();
+	sortChunks();
+	for (auto chunk : _renderChunks)
+	{
+		(*chunk).draw(shader);
+	}
 }
 
 void	RegionManager::sortChunks()
 {
-	std::sort(_RenderChunks.begin(), _RenderChunks.end(),
+	std::sort(_renderChunks.begin(), _renderChunks.end(),
 		[](const Chunk *cp1, const Chunk *cp2)
 		{
 			return (cp1->getDistance() > cp2->getDistance());
