@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/10 15:48:54 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/12 13:46:21 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include "Shader.hpp"
 # include "Camera.hpp"
 
-# define LINELEN 6
+# define LINELEN 7
 # define WATERLINE 21
 # define GROUND 0
 # define WATER 1
@@ -28,7 +28,11 @@ class Chunk
 {
 	public:
 		Chunk(const glm::vec3 &pos);
+		Chunk(const glm::vec3 &pos, bool nocreate);
 		~Chunk();
+
+		void	generate();
+		void	upload();
 
 		void	draw(Shader &shader);
 		float	getDistance() const;
@@ -37,6 +41,8 @@ class Chunk
 		glm::mat4							model;
 		std::unordered_map<int, char32_t>	groundData;
 		std::unordered_map<int, char32_t>	waterData;
+		std::atomic_bool		generated;
+		std::atomic_bool		uploaded;
 	
 	private:
 		void	gen();

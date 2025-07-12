@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 20:54:38 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 12:31:35 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/11 09:34:47 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ Camera::Camera()
 	this->lastFrame = 0.0f;
 	pos = glm::vec3(0.0f, 0.0f, 0.0f);
 	front = glm::vec3(0.0f, 0.0f, -1.0f);
+	up = glm::vec3(0.0f, 1.0f, 0.0f);
 }
 
 void	Camera::update()
@@ -30,8 +31,6 @@ void	Camera::update()
 	this->direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	front = glm::normalize(direction);
 	flatFront = glm::normalize(glm::vec2(cos(glm::radians(yaw)) * cos(glm::radians(pitch)), sin(glm::radians(yaw)) * cos(glm::radians(pitch))));
-	right = glm::normalize(glm::cross(front, worldUp));
-	up = glm::normalize(glm::cross(right, front));
 }
 
 void	Camera::setViewMatrix(Shader &shader)
@@ -46,5 +45,5 @@ void	Camera::setViewMatrix(Shader &shader)
 
 glm::mat4	Camera::getViewMatrix()
 {
-	return (glm::lookAt(pos, pos + front, worldUp));
+	return (glm::lookAt(pos, pos + front, up));
 }

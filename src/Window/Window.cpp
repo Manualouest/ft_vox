@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:11:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 09:50:51 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/12 15:49:42 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,8 @@ Window::Window() : _lastFrame(0)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
+	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
+
 	this->center();
 	this->setIcon("textures/mbatty.bmp");
 	setDefaultMousePos();
