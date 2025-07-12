@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 10:32:47 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/11 20:46:22 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,11 @@ class Chunk
 {
 	public:
 		Chunk(const glm::vec3 &pos);
+		Chunk(const glm::vec3 &pos, bool nocreate);
 		~Chunk();
+
+		void	generate();
+		void	upload();
 
 		void	draw(Shader &shader);
 		float	getDistance() const;
@@ -37,6 +41,8 @@ class Chunk
 		glm::mat4							model;
 		std::unordered_map<int, char32_t>	groundData;
 		std::unordered_map<int, char32_t>	waterData;
+		std::atomic_bool		generated;
+		std::atomic_bool		uploaded;
 	
 	private:
 		void	gen();

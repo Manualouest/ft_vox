@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 12:12:06 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/11 20:04:13 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,9 @@
 
 #include "libs.hpp"
 #include "Chunk.hpp"
+#include "ChunkGenerator.hpp"
+
+extern ChunkGenerator	*CHUNK_GENERATOR;
 
 /*
 	Quad tree branch enum
@@ -40,7 +43,10 @@ class	Quadtree
 			this->_size = size;
 
 			if (this->_size == glm::vec2(32))
-				this->_leaf = new Chunk(glm::vec3(_pos.x, 0, _pos.y));
+			{
+				this->_leaf = new Chunk(glm::vec3(_pos.x, 0, _pos.y), true);
+				CHUNK_GENERATOR->deposit(this->_leaf);
+			}
 		}
 		~Quadtree()
 		{

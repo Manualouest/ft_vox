@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 13:05:12 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/12 09:09:40 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include "FrameBuffer.hpp"
 #include "Chunk.hpp"
 #include "RegionManager.hpp"
+#include "ChunkGenerator.hpp"
 
 #define WORLD_SIZE 32
 
@@ -48,6 +49,8 @@ ShaderManager		*SHADER_MANAGER;
 FrameBuffer	*MAIN_FRAME_BUFFER;
 FrameBuffer	*DEPTH_FRAME_BUFFER;
 FrameBuffer	*WATER_DEPTH_FRAME_BUFFER;
+
+ChunkGenerator	*CHUNK_GENERATOR;
 
 /*
 	Keyboard input as the char so like typing on a keyboard
@@ -269,14 +272,16 @@ struct	Engine
 		build(SHADER_MANAGER);
 		TEXTURE_MANAGER = new TextureManager();
 		build(TEXTURE_MANAGER);
-		MAIN_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEFAULT);
-		DEPTH_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEPTH);
-		WATER_DEPTH_FRAME_BUFFER = new FrameBuffer(FrameBufferType::DEPTH);
+		CHUNK_GENERATOR = new ChunkGenerator();
+		MAIN_FRAME_BUFFER = new FrameBuffer();
+		DEPTH_FRAME_BUFFER = new FrameBuffer();
+		WATER_DEPTH_FRAME_BUFFER = new FrameBuffer();
 		SKYBOX = new Skybox({SKYBOX_PATHES});
 		CHUNKS = new RegionManager();
 	}
 	~Engine()
 	{
+		delete CHUNK_GENERATOR;
 		delete CHUNKS;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
@@ -286,6 +291,7 @@ struct	Engine
 		delete SHADER_MANAGER;
 		delete FONT;
 		delete CAMERA;
+		consoleLog("Done.", LogSeverity::SUCCESS);
 		delete WINDOW;
 	}
 };
@@ -302,8 +308,8 @@ void	render()
 	MAIN_FRAME_BUFFER->use();
 	SKYBOX->draw(*CAMERA, *SHADER_MANAGER->get("skybox"));
 	TEXTURE_MANAGER->get("textures/stone.bmp")->use(0);
-	Texture::use("terrainDepthTex", DEPTH_FRAME_BUFFER->getTexture(), 1, SHADER_MANAGER->get("voxel"));
-	Texture::use("waterDepthTex", WATER_DEPTH_FRAME_BUFFER->getTexture(), 2, SHADER_MANAGER->get("voxel"));
+	Texture::use("terrainDepthTex", DEPTH_FRAME_BUFFER->getDepthTexture(), 1, SHADER_MANAGER->get("voxel"));
+	Texture::use("waterDepthTex", WATER_DEPTH_FRAME_BUFFER->getDepthTexture(), 2, SHADER_MANAGER->get("voxel"));
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 }
 
@@ -331,12 +337,14 @@ int	main(void)
 			update(SHADER_MANAGER);
 			update();
 
+			CHUNK_GENERATOR->upload();
+
 			render();
 			
 			FrameBuffer::reset();
 
 			updatePostShader(SHADER_MANAGER);
-			FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getTexture());	
+			FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getColorexture());
 
 			drawUI();
 

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 12:04:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/11 20:26:06 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,14 +25,14 @@ RegionManager::~RegionManager()
 
 void	RegionManager::UpdateChunks()
 {
-	_renderChunks = {};
+	_renderChunks.clear();
 	glm::vec2	dirPos = CAMERA->flatFront;
 	glm::vec2	pos = glm::vec2(CAMERA->pos.x, CAMERA->pos.z) - dirPos * 32.0f;
 	glm::vec2	leftDir = glm::vec2(0);
 	glm::vec2	rightDir = glm::vec2(0);
 	glm::vec2	tmpDirPos = glm::vec2(0);
 	Chunk		*chunk = NULL;
-	int			ChunkAmount = 2;
+	int			ChunkAmount = 1;
 
 	for (float i = 1; i <= RenderDist * 2; ++i)
 	{
@@ -44,29 +44,29 @@ void	RegionManager::UpdateChunks()
 			chunk = _QT->getBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
 			if (chunk != NULL)
 				_renderChunks.push_back(chunk);
-			else if (--ChunkAmount > 0)
+			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
-				_chunks.push_back(chunk);
+				// _chunks.push_back(chunk);
 				_renderChunks.push_back(chunk);
 			}
 			chunk = _QT->getBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
 			if (chunk != NULL)
 				_renderChunks.push_back(chunk);
-			else if (--ChunkAmount > 0)
+			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
-				_chunks.push_back(chunk);
+				// _chunks.push_back(chunk);
 				_renderChunks.push_back(chunk);
 			}
 		}
 		chunk = _QT->getBranch(pos + tmpDirPos);
 		if (chunk != NULL)
 			_renderChunks.push_back(chunk);
-		else if (--ChunkAmount > 0)
+		else if (ChunkAmount-- > 0)
 		{
 			chunk = _QT->growBranch(pos + tmpDirPos);
-			_chunks.push_back(chunk);
+			// _chunks.push_back(chunk);
 			_renderChunks.push_back(chunk);
 		}
 	}
@@ -87,14 +87,6 @@ void	RegionManager::Render(Shader &shader)
 	sortChunks();
 	for (auto chunk : _renderChunks)
 	{
-		shader.use();
-		shader.setBool("getDepth", true);
-		DEPTH_FRAME_BUFFER->use();
-		(*chunk).draw(shader);
-		shader.use();
-		shader.setBool("getDepth", false);
-		WATER_DEPTH_FRAME_BUFFER->use();
-		(*chunk).draw(shader);
 		MAIN_FRAME_BUFFER->use();
 		(*chunk).draw(shader);
 	}

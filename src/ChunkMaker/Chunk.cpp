@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 12:27:38 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/11 20:49:12 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,17 +106,48 @@ float	getFakeNoise(glm::vec2 pos) //! //////////////////////////////////////////
 	return (ret * 128);
 }
 
+Chunk::Chunk(const glm::vec3 &nPos, bool)
+{
+	glGenVertexArrays(1, &_VAO);
+    glGenBuffers(1, &_VBO);
+	glGenBuffers(1, &_EBO);
+	generated = false;
+	uploaded = false;
+	_model = glm::mat4(1);
+	_minHeight = 255;
+	_maxHeight = 0;
+	_indicesSize = 0;
+	pos = nPos;
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, pos);
+}
+
+void	Chunk::generate()
+{
+	_chunkTop.reserve(1024);
+	gen();
+	genMesh();
+	_indicesSize = _indices.size();
+	generated = true;
+}
+
+void	Chunk::upload()
+{
+	makeBuffers();
+	uploaded = true;
+}
+
 Chunk::Chunk(const glm::vec3 &nPos)
 {
+	glGenVertexArrays(1, &_VAO);
+    glGenBuffers(1, &_VBO);
+	glGenBuffers(1, &_EBO);
     if (DEBUG)
 	{
 		std::stringstream sPos;
 		sPos << pos.x << ";" << pos.y << ";" << pos.z;
         consoleLog("Creating the Chunk at " + sPos.str(), NORMAL);
 	}
-	_EBO = 0;
-	_VAO = 0;
-	_VBO = 0;
 	_model = glm::mat4(1);
 	_minHeight = 255;
 	_maxHeight = 0;
@@ -129,6 +160,8 @@ Chunk::Chunk(const glm::vec3 &nPos)
 	genMesh();
 	_indicesSize = _indices.size();
 	makeBuffers();
+	generated = true;
+	uploaded = true;
 }
 
 Chunk::~Chunk()
@@ -139,9 +172,12 @@ Chunk::~Chunk()
 		sPos << pos.x << ";" << pos.y << ";" << pos.z;
         consoleLog("Destroying the Chunk at " + sPos.str(), NORMAL);
 	}
-	glDeleteBuffers(1, &_EBO);
-	glDeleteBuffers(1, &_VBO);
-	glDeleteVertexArrays(1, &_VAO);
+	if (_EBO)
+		glDeleteBuffers(1, &_EBO);
+	if (_VBO)
+		glDeleteBuffers(1, &_VBO);
+	if (_VAO)
+		glDeleteVertexArrays(1, &_VAO);
 }
 
 float	Chunk::getDistance() const
@@ -175,13 +211,10 @@ void	Chunk::getRotSlice(std::vector<char32_t> &rotSlice, const int &height)
 
 void	Chunk::makeBuffers()
 {
-    glGenVertexArrays(1, &_VAO);
-    glGenBuffers(1, &_VBO);
     glBindVertexArray(_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(float), _vertices.data(), GL_STATIC_DRAW);
     
-	glGenBuffers(1, &_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(GLuint), (GLuint*)_indices.data(), GL_STATIC_DRAW);
 
@@ -328,6 +361,9 @@ void	Chunk::gen()
 
 void	Chunk::draw(Shader &shader)
 {
+	if (!generated || !uploaded)
+		return ;
+
     glEnable(GL_DEPTH_TEST);
 	shader.use();
 	shader.setMat4("model", model);
