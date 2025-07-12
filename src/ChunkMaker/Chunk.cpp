@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 20:49:12 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/12 18:59:44 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,13 +79,13 @@ float perlin(float x, float y) {
     // Final step: interpolate between the two previously interpolated values, now in y
     float value = interpolate(ix0, ix1, sy);
     
-    return value;
+    return (value);
 }
 
 float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
 {
-	float	freq = 0.1 / 32;
-	float	amp = 4;
+	float	freq = 0.05 / 32;
+	float	amp = 2;
 
 	float	ret = 0;
 
@@ -100,17 +100,14 @@ float	getFakeNoise(glm::vec2 pos) //! //////////////////////////////////////////
 		amp /= 2;
 	}
 
-	ret = (ret + 1) / 2;
+	// ret = (ret + 1) / 2;
 	ret = glm::clamp(ret, 0.0f, 1.0f);
 
-	return (ret * 128);
+	return (ret * 255);
 }
 
 Chunk::Chunk(const glm::vec3 &nPos, bool)
 {
-	glGenVertexArrays(1, &_VAO);
-    glGenBuffers(1, &_VBO);
-	glGenBuffers(1, &_EBO);
 	generated = false;
 	uploaded = false;
 	_model = glm::mat4(1);
@@ -124,6 +121,8 @@ Chunk::Chunk(const glm::vec3 &nPos, bool)
 
 void	Chunk::generate()
 {
+	if (generated)
+		return ;
 	_chunkTop.reserve(1024);
 	gen();
 	genMesh();
@@ -134,33 +133,6 @@ void	Chunk::generate()
 void	Chunk::upload()
 {
 	makeBuffers();
-	uploaded = true;
-}
-
-Chunk::Chunk(const glm::vec3 &nPos)
-{
-	glGenVertexArrays(1, &_VAO);
-    glGenBuffers(1, &_VBO);
-	glGenBuffers(1, &_EBO);
-    if (DEBUG)
-	{
-		std::stringstream sPos;
-		sPos << pos.x << ";" << pos.y << ";" << pos.z;
-        consoleLog("Creating the Chunk at " + sPos.str(), NORMAL);
-	}
-	_model = glm::mat4(1);
-	_minHeight = 255;
-	_maxHeight = 0;
-	_indicesSize = 0;
-	pos = nPos;
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, pos);
-	_chunkTop.reserve(1024);
-	gen();
-	genMesh();
-	_indicesSize = _indices.size();
-	makeBuffers();
-	generated = true;
 	uploaded = true;
 }
 
@@ -209,8 +181,22 @@ void	Chunk::getRotSlice(std::vector<char32_t> &rotSlice, const int &height)
 	}
 }
 
+void	Chunk::clear()
+{
+	if (_EBO)
+		glDeleteBuffers(1, &_EBO);
+	if (_VBO)
+		glDeleteBuffers(1, &_VBO);
+	if (_VAO)
+		glDeleteVertexArrays(1, &_VAO);
+	uploaded = false;
+}
+
 void	Chunk::makeBuffers()
 {
+	glGenVertexArrays(1, &_VAO);
+    glGenBuffers(1, &_VBO);
+	glGenBuffers(1, &_EBO);
     glBindVertexArray(_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(float), _vertices.data(), GL_STATIC_DRAW);
@@ -359,8 +345,13 @@ void	Chunk::gen()
 	}
 }
 
+#include "ChunkGenerator.hpp"
+extern ChunkGeneratorManager	*CHUNK_GENERATOR;
+
 void	Chunk::draw(Shader &shader)
 {
+	if (!uploaded && generated)
+		upload();
 	if (!generated || !uploaded)
 		return ;
 

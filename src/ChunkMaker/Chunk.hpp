@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 20:46:22 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/12 18:29:02 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,12 +27,12 @@ extern Camera	*CAMERA;
 class Chunk
 {
 	public:
-		Chunk(const glm::vec3 &pos);
 		Chunk(const glm::vec3 &pos, bool nocreate);
 		~Chunk();
 
 		void	generate();
 		void	upload();
+		void	clear();
 
 		void	draw(Shader &shader);
 		float	getDistance() const;
@@ -41,9 +41,10 @@ class Chunk
 		glm::mat4							model;
 		std::unordered_map<int, char32_t>	groundData;
 		std::unordered_map<int, char32_t>	waterData;
-		std::atomic_bool		generated;
-		std::atomic_bool		uploaded;
-	
+		std::atomic_bool					generated;
+		std::atomic_bool					uploaded;
+		bool								rendered = false;
+
 	private:
 		void	gen();
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &height);
@@ -51,9 +52,9 @@ class Chunk
 		void	makeBuffers();
 		bool	isInRange();
 
-		unsigned int			_EBO;
-		unsigned int			_VAO;
-		unsigned int			_VBO;
+		unsigned int			_EBO = 0;
+		unsigned int			_VAO = 0;
+		unsigned int			_VBO = 0;
 		glm::mat4				_model;
 		uint8_t					_minHeight;
 		uint8_t					_maxHeight;

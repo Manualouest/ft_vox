@@ -6,11 +6,12 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 20:26:06 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/12 18:28:35 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RegionManager.hpp"
+#include "ChunkGenerator.hpp"
 
 RegionManager::RegionManager()
 {
@@ -25,6 +26,8 @@ RegionManager::~RegionManager()
 
 void	RegionManager::UpdateChunks()
 {
+	for (Chunk *chunk : _renderChunks)
+		chunk->rendered = false;
 	_renderChunks.clear();
 	glm::vec2	dirPos = CAMERA->flatFront;
 	glm::vec2	pos = glm::vec2(CAMERA->pos.x, CAMERA->pos.z) - dirPos * 32.0f;
@@ -32,7 +35,7 @@ void	RegionManager::UpdateChunks()
 	glm::vec2	rightDir = glm::vec2(0);
 	glm::vec2	tmpDirPos = glm::vec2(0);
 	Chunk		*chunk = NULL;
-	int			ChunkAmount = 1;
+	int			ChunkAmount = 10;
 
 	for (float i = 1; i <= RenderDist * 2; ++i)
 	{
@@ -41,32 +44,41 @@ void	RegionManager::UpdateChunks()
 		rightDir = glm::normalize(glm::vec2(tmpDirPos.y, -tmpDirPos.x));
 		for (float ii = i * 1.25; ii > 0; --ii)
 		{
-			chunk = _QT->getBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
+			chunk = _QT->getLeaf(pos + tmpDirPos + (leftDir * 16.0f * ii));
 			if (chunk != NULL)
+			{
+				chunk->rendered = true;
 				_renderChunks.push_back(chunk);
+			}
 			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
-				// _chunks.push_back(chunk);
+				chunk->rendered = true;
 				_renderChunks.push_back(chunk);
 			}
-			chunk = _QT->getBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
+			chunk = _QT->getLeaf(pos + tmpDirPos + (rightDir * 16.0f * ii));
 			if (chunk != NULL)
+			{
+				chunk->rendered = true;
 				_renderChunks.push_back(chunk);
+			}
 			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
-				// _chunks.push_back(chunk);
+				chunk->rendered = true;
 				_renderChunks.push_back(chunk);
 			}
 		}
-		chunk = _QT->getBranch(pos + tmpDirPos);
+		chunk = _QT->getLeaf(pos + tmpDirPos);
 		if (chunk != NULL)
+		{
+			chunk->rendered = true;
 			_renderChunks.push_back(chunk);
+		}
 		else if (ChunkAmount-- > 0)
 		{
 			chunk = _QT->growBranch(pos + tmpDirPos);
-			// _chunks.push_back(chunk);
+			chunk->rendered = true;
 			_renderChunks.push_back(chunk);
 		}
 	}
@@ -85,10 +97,10 @@ void	RegionManager::Render(Shader &shader)
 {
 	UpdateChunks();
 	sortChunks();
-	for (auto chunk : _renderChunks)
+	MAIN_FRAME_BUFFER->use();
+	for (auto *chunk : _renderChunks)
 	{
-		MAIN_FRAME_BUFFER->use();
-		(*chunk).draw(shader);
+		chunk->draw(shader);
 	}
 }
 
@@ -100,4 +112,3 @@ void	RegionManager::sortChunks()
 			return (cp1->getDistance() > cp2->getDistance());
 		});
 }
-

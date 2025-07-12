@@ -19,7 +19,13 @@ out vec4	clipSpace;
 void main()
 {
 	Normal = aNormal;
-	texCoord = aTex;
+
+	if ((Normal.x == 1 || Normal.x == -1) && Normal.y == 0 && Normal.z == 0)
+		texCoord = aPos.zy;
+	else if (Normal.x == 0 && (Normal.y == 1 || Normal.y == -1) && Normal.z == 0)
+		texCoord = aPos.xz;
+	else if (Normal.x == 0 && Normal.y == 0 && (Normal.z == 1 || Normal.z == -1))
+		texCoord = aPos.xy;
 	blockType = aType;
 	FragPos = aPos;
 

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:10 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 19:34:57 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/12 17:08:32 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@
 # include <thread>
 # include <mutex>
 # include <atomic>
+# include <iomanip>
 
 # include "strings.hpp"
 

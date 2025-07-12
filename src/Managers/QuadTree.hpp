@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 20:04:13 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/12 18:30:41 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include "Chunk.hpp"
 #include "ChunkGenerator.hpp"
 
-extern ChunkGenerator	*CHUNK_GENERATOR;
+extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 /*
 	Quad tree branch enum
@@ -60,7 +60,7 @@ class	Quadtree
 			std::cout << "Position " << _pos.x << ", " << _pos.y << " | Size " << _size.x << ", " << _size.y << std::endl;
 			if (isLeaf())
 				return ;
-				
+
 			if (_branches[TOP_LEFT])
 			{
 				_branches[TOP_LEFT]->print();
@@ -83,9 +83,6 @@ class	Quadtree
 		{
 			if (isLeaf())
 				return (_leaf);
-
-			// if (targetPos.x == _pos.x + _size.x / 2.f || targetPos.y == _pos.y + _size.y / 2.f)
-			// 	std::cout << "danger" << std::endl;
 
 			if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Top left
 			{
@@ -118,7 +115,7 @@ class	Quadtree
 			return (NULL);
 		}
 
-		Chunk	*getBranch(const glm::vec2 &targetPos)
+		Chunk	*getLeaf(const glm::vec2 &targetPos)
 		{
 			if (isLeaf())
 				return (_leaf);
@@ -126,28 +123,78 @@ class	Quadtree
 			if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Top left
 			{
 				if (_branches[QTBranch::TOP_LEFT] != NULL)
-					return (_branches[QTBranch::TOP_LEFT]->getBranch(targetPos));
+					return (_branches[QTBranch::TOP_LEFT]->getLeaf(targetPos));
 			}
 				
 			else if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Top right
 			{
 				if (_branches[QTBranch::TOP_RIGHT] != NULL)
-					return (_branches[QTBranch::TOP_RIGHT]->getBranch(targetPos));
+					return (_branches[QTBranch::TOP_RIGHT]->getLeaf(targetPos));
 			}
 				
 			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Bottom left
 			{
 				if (_branches[QTBranch::BOTTOM_LEFT] != NULL)
-					return (_branches[QTBranch::BOTTOM_LEFT]->getBranch(targetPos));
+					return (_branches[QTBranch::BOTTOM_LEFT]->getLeaf(targetPos));
 			}
 
 			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Bottom right
 			{
 				if (_branches[QTBranch::BOTTOM_RIGHT] != NULL)
-					return (_branches[QTBranch::BOTTOM_RIGHT]->getBranch(targetPos));
+					return (_branches[QTBranch::BOTTOM_RIGHT]->getLeaf(targetPos));
 			}
 			return (NULL);
 		}
+		//Gives the branch at given depth (Can be used to check in wich quadrant of the world the player is)
+		Quadtree	*getBranch(const glm::vec2 &targetPos, int depth)
+		{
+			if (depth-- <= 0)
+				return (this);
+			
+			if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Top left
+			{
+				if (_branches[QTBranch::TOP_LEFT] != NULL)
+					return (_branches[QTBranch::TOP_LEFT]->getBranch(targetPos, depth));
+			}
+				
+			else if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Top right
+			{
+				if (_branches[QTBranch::TOP_RIGHT] != NULL)
+					return (_branches[QTBranch::TOP_RIGHT]->getBranch(targetPos, depth));
+			}
+				
+			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Bottom left
+			{
+				if (_branches[QTBranch::BOTTOM_LEFT] != NULL)
+					return (_branches[QTBranch::BOTTOM_LEFT]->getBranch(targetPos, depth));
+			}
+
+			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Bottom right
+			{
+				if (_branches[QTBranch::BOTTOM_RIGHT] != NULL)
+					return (_branches[QTBranch::BOTTOM_RIGHT]->getBranch(targetPos, depth));
+			}
+			return (NULL);
+		}
+		void	pruneDeadLeaves() //shouldBranchDie
+		{
+			if (isLeaf() && !_leaf->rendered && _leaf->uploaded)
+				_leaf->clear();
+
+			if (_branches[QTBranch::TOP_LEFT] != NULL)
+				_branches[QTBranch::TOP_LEFT]->pruneDeadLeaves();
+
+			if (_branches[QTBranch::TOP_RIGHT] != NULL)
+				_branches[QTBranch::TOP_RIGHT]->pruneDeadLeaves();
+
+			if (_branches[QTBranch::BOTTOM_LEFT] != NULL)
+				_branches[QTBranch::BOTTOM_LEFT]->pruneDeadLeaves();
+
+			if (_branches[QTBranch::BOTTOM_RIGHT] != NULL)
+				_branches[QTBranch::BOTTOM_RIGHT]->pruneDeadLeaves();
+		}
+		glm::vec2	getSize() {return (this->_size);}
+		glm::vec2	getPos() {return (this->_pos);}
 	private:
 		glm::vec2				_size;
 		glm::vec2				_pos;

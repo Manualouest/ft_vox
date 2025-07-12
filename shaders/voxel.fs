@@ -32,7 +32,7 @@ const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0);
 void main()
 {
 	float   shininess = 256.0f;
-    float   actualShiness = 1;
+    float   actualShiness = 0;
 	float	alpha = 1.0;
 
 	vec3	color;
