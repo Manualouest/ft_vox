@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/12 09:09:40 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 08:18:13 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,7 @@ void	key_hook(GLFWwindow *window, int key, int, int action, int)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && WINDOW->up())
 	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		consoleLog("Quitting game.", LogSeverity::WARNING);
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -337,7 +338,7 @@ int	main(void)
 			update(SHADER_MANAGER);
 			update();
 
-			CHUNK_GENERATOR->upload();
+			// CHUNK_GENERATOR->upload();
 
 			render();
 			

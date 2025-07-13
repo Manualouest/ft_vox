@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/12 13:57:39 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 08:19:00 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 RegionManager::RegionManager()
 {
-	RenderDist = 14;
+	RenderDist = 5;
 	_QT = new Quadtree(glm::vec2(0, 0), glm::vec2(16384.0f, 16384.0f));
 }
 
@@ -47,7 +47,7 @@ void	RegionManager::UpdateChunks()
 			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
-				// _chunks.push_back(chunk);
+				_chunks.push_back(chunk);
 				_renderChunks.push_back(chunk);
 			}
 			chunk = _QT->getBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
@@ -56,7 +56,7 @@ void	RegionManager::UpdateChunks()
 			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
-				// _chunks.push_back(chunk);
+				_chunks.push_back(chunk);
 				_renderChunks.push_back(chunk);
 			}
 		}
@@ -66,7 +66,7 @@ void	RegionManager::UpdateChunks()
 		else if (ChunkAmount-- > 0)
 		{
 			chunk = _QT->growBranch(pos + tmpDirPos);
-			// _chunks.push_back(chunk);
+			_chunks.push_back(chunk);
 			_renderChunks.push_back(chunk);
 		}
 	}

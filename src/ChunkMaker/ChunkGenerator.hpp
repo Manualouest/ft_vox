@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/11 20:01:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/12 11:30:42 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 08:18:36 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ class	ChunkGenerator
 			for (uint i = 0; i < _chunksToGenerate.size(); i++)
 			{
 				_chunksToGenerate.back()->generate();
-				_generatedChunks.push_back(_chunksToGenerate.back());
+				// _generatedChunks.push_back(_chunksToGenerate.back());
 				_chunksToGenerate.pop_back();
 			}
 

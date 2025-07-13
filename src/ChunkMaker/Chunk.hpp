@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/12 13:46:21 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 08:22:45 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,8 +41,9 @@ class Chunk
 		glm::mat4							model;
 		std::unordered_map<int, char32_t>	groundData;
 		std::unordered_map<int, char32_t>	waterData;
-		std::atomic_bool		generated;
-		std::atomic_bool		uploaded;
+		std::atomic_bool					generated;
+		std::atomic_bool					uploaded;
+		bool								rendered = false;
 	
 	private:
 		void	gen();

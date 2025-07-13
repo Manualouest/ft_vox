@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/12 14:34:21 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 08:22:30 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,6 +126,8 @@ Chunk::Chunk(const glm::vec3 &nPos, bool)
 
 void	Chunk::generate()
 {
+	if (generated)
+		return ;
 	_chunkTop.reserve(1024);
 	gen();
 	genMesh();
@@ -135,8 +137,9 @@ void	Chunk::generate()
 
 void	Chunk::upload()
 {
+	if (!generated)
+		return ;
 	makeBuffers();
-	consoleLog(std::to_string(_vertices.size()) + "; " + std::to_string(_indices.size()), NORMAL);
 	uploaded = true;
 }
 
@@ -210,6 +213,17 @@ void	Chunk::getRotSlice(std::vector<char32_t> &rotSlice, const int &height)
 		for (int ii = 0; ii < 32; ++ii)
 			rotSlice[ii] = rotSlice[ii] << 1 | (((slice >> (31 - ii)) & 1));
 	}
+}
+
+void	Chunk::clear()
+{
+	if (_EBO)
+		glDeleteBuffers(1, &_EBO);
+	if (_VBO)
+		glDeleteBuffers(1, &_VBO);
+	if (_VAO)
+		glDeleteVertexArrays(1, &_VAO);
+	uploaded = false;
 }
 
 void	Chunk::makeBuffers()
@@ -479,8 +493,8 @@ void	Chunk::gen()
 
 void	Chunk::draw(Shader &shader)
 {
-	if (!generated || !uploaded)
-		return ;
+	if (generated && !uploaded)
+		upload() ;
 
     glEnable(GL_DEPTH_TEST);
 	shader.use();
