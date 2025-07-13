@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 14:56:36 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 15:38:13 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,6 +165,15 @@ class	Quadtree
 		glm::vec2	getSize() const {return (this->_size);}
 		glm::vec2	getPos() const {return (this->_pos);}
 		bool	isLeaf() const {return (_leaf != NULL);}
+		bool	isInBounds(const glm::vec2 &point)
+		{
+			bool	inBoundsLeft = point.y >= _pos.y;
+			bool	inBoundsRight = point.y < _pos.y + _size.y;
+			bool	inBoundsTop = point.x < _pos.x + _size.x;
+			bool	inBoundsBottom = point.x >= _pos.x;
+
+			return (inBoundsLeft && inBoundsRight && inBoundsTop && inBoundsBottom);
+		}
 	private:
 		//Returns branch quadrant in wich pos is. (OUT_OF_BOUNDS can be returned but will never happen) @param pos target position of branch
 		QTBranch	_getQuadrant(const glm::vec2 &pos) const
