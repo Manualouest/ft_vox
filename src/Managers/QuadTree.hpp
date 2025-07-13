@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   QuadTree.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/11 20:04:13 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 21:02:48 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,72 @@
 #include "Chunk.hpp"
 #include "ChunkGenerator.hpp"
 
-extern ChunkGenerator	*CHUNK_GENERATOR;
+extern ChunkGeneratorManager	*CHUNK_GENERATOR;
+
+struct Plane
+{
+	glm::vec3	normal = { 0.f, 1.f, 0.f };	// unit vector
+	float		distance = 0.f;        		// Distance with origin
+
+	Plane() = default;
+
+	Plane(const glm::vec3 &p1, const glm::vec3 &norm) : normal(glm::normalize(norm)), distance(glm::dot(normal, p1))
+	{}
+
+	float getSignedDistanceToPlane(const glm::vec3 &point) const
+	{
+		return glm::dot(normal, point) - distance;
+	}
+};
+
+struct Frustum
+{
+	Plane	topFace;
+	Plane	bottomFace;
+
+	Plane	rightFace;
+	Plane	leftFace;
+
+	Plane	farFace;
+	Plane	nearFace;
+};
+
+class VolumeAABB
+{
+	public:
+		glm::vec3	center{ 16.f, 0.f, 16.f };
+		glm::vec3	extents{ 16.f, 256.f, 16.f };
+
+		VolumeAABB(const glm::vec3 &inCenter, const glm::vec3 &inExtents) : center(inCenter), extents(inExtents)
+		{}
+
+		~VolumeAABB()
+		{}
+
+
+		bool isOnOrForwardPlane(const Plane &plane)
+		{
+			// Compute the projection interval radius of b onto L(t) = b.c + t * p.n
+			const float r = extents.x * std::abs(plane.normal.x) + extents.y * std::abs(plane.normal.y) +
+			extents.z * std::abs(plane.normal.z);
+			return -r <= plane.getSignedDistanceToPlane(center);
+		}
+
+		bool isOnFrustum(const Frustum &camFrustum, const glm::vec3 &pos)
+		{
+			//Get global scale thanks to our transform
+			const glm::vec3	globalCenter = pos + center;
+
+			VolumeAABB	globalAABB(globalCenter, extents);
+
+			return (globalAABB.isOnOrForwardPlane(camFrustum.leftFace) &&
+				globalAABB.isOnOrForwardPlane(camFrustum.rightFace) &&
+				globalAABB.isOnOrForwardPlane(camFrustum.topFace) &&
+				globalAABB.isOnOrForwardPlane(camFrustum.bottomFace) &&
+				globalAABB.isOnOrForwardPlane(camFrustum.nearFace) &&
+				globalAABB.isOnOrForwardPlane(camFrustum.farFace));
+		}
+};
 
 /*
 	Quad tree branch enum
@@ -27,26 +92,36 @@ enum QTBranch
 	TOP_LEFT,
 	TOP_RIGHT,
 	BOTTOM_LEFT,
-	BOTTOM_RIGHT
+	BOTTOM_RIGHT,
+	OUT_OF_BOUNDS
 };
-/*
-	Tree to store chunks, each branch has 4 more branches.
 
-	When a branch will try to grow a branch of size 32, it will be a leaf (Chunk)
+/*
+	Quad tree used to store chunks, each branch has 4 branches under it,
+		if a branch reaches a size of 32 it will transform into a Leaf (Chunk).
+	
+	Each time a branch grows under another one, its size will be:
+	- Size of branch above / 2
+
+	Only branches and leaves that are used at some point will be allocated but wont be freed automatically,
+	pleaes call pruneDeadLeaves to free some memory (Please do it)
+
+	Please use powers of 2 when working with this quadtree as its built for it
 */
 class	Quadtree
 {
 	public:
-		Quadtree(const glm::vec2 &pos, const glm::vec2 &size)
+		/*
+			@param pos Bottom left position
+			@param size Size from bottom left position
+		*/
+		Quadtree(const glm::ivec2 &pos, const glm::ivec2 &size)
 		{
 			this->_pos = pos;
 			this->_size = size;
 
-			if (this->_size == glm::vec2(32))
-			{
-				this->_leaf = new Chunk(glm::vec3(_pos.x, 0, _pos.y), true);
-				CHUNK_GENERATOR->deposit(this->_leaf);
-			}
+			if (this->_size == glm::ivec2(32))
+				this->_leaf = new Chunk(glm::ivec3(_pos.x, 0, _pos.y));
 		}
 		~Quadtree()
 		{
@@ -55,102 +130,186 @@ class	Quadtree
 			if (_leaf)
 				delete _leaf;
 		}
-		void	print()
-		{
-			std::cout << "Position " << _pos.x << ", " << _pos.y << " | Size " << _size.x << ", " << _size.y << std::endl;
-			if (isLeaf())
-				return ;
-				
-			if (_branches[TOP_LEFT])
-			{
-				_branches[TOP_LEFT]->print();
-			}
-			if (_branches[TOP_RIGHT])
-			{
-				_branches[TOP_RIGHT]->print();
-			}
-			if (_branches[BOTTOM_LEFT])
-			{
-				_branches[BOTTOM_LEFT]->print();
-			}
-			if (_branches[BOTTOM_RIGHT])
-			{
-				_branches[BOTTOM_RIGHT]->print();
-			}
-		}
-		bool	isLeaf() {return (_leaf != NULL);}
-		Chunk	*growBranch(const glm::vec2 &targetPos)
+		/*
+			Grows branches until it finds a leaf on the given targetPos,
+				if it cant find one a warning will be printed.
+			
+			@param targetPos World position of a block inside the wanted leaf (chunk)
+		*/
+		Chunk	*growBranch(const glm::ivec2 &targetPos)
 		{
 			if (isLeaf())
 				return (_leaf);
 
-			// if (targetPos.x == _pos.x + _size.x / 2.f || targetPos.y == _pos.y + _size.y / 2.f)
-			// 	std::cout << "danger" << std::endl;
+			QTBranch	quadrant = _getQuadrant(targetPos);
 
-			if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Top left
-			{
-				if (_branches[QTBranch::TOP_LEFT] == NULL)
-					_branches[QTBranch::TOP_LEFT] = new Quadtree(glm::vec2(_pos.x + _size.x / 2, _pos.y), _size / 2.0f);
-				return (_branches[QTBranch::TOP_LEFT]->growBranch(targetPos));
-			}
+			glm::ivec2	childPos(_pos);
 
-			else if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Top right
+			bool	isTop = targetPos.x >= _pos.x + _size.x / 2;
+			bool	isRight = !(targetPos.y < _pos.y + _size.y / 2);
+
+			childPos.x += isTop * (_size.x / 2);
+			childPos.y += isRight * (_size.y / 2);
+
+			if (quadrant != QTBranch::OUT_OF_BOUNDS)
 			{
-				if (_branches[QTBranch::TOP_RIGHT] == NULL)
-					_branches[QTBranch::TOP_RIGHT] = new Quadtree(glm::vec2(_pos.x + _size.x / 2, _pos.y + _size.y / 2), _size / 2.0f);
-				return (_branches[QTBranch::TOP_RIGHT]->growBranch(targetPos));
-			}
-				
-			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Bottom left
-			{
-				if (_branches[QTBranch::BOTTOM_LEFT] == NULL)
-					_branches[QTBranch::BOTTOM_LEFT] = new Quadtree(glm::vec2(_pos.x, _pos.y), _size / 2.0f);
-				return (_branches[QTBranch::BOTTOM_LEFT]->growBranch(targetPos));
+				if (_branches[quadrant] == NULL)
+					_branches[quadrant] = new Quadtree(childPos, _size / 2);
+				if (!_branches[quadrant]->isInBounds(targetPos))
+					return (NULL);
+				return (_branches[quadrant]->growBranch(targetPos));
 			}
 
-			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Bottom right
-			{
-				if (_branches[QTBranch::BOTTOM_RIGHT] == NULL)
-					_branches[QTBranch::BOTTOM_RIGHT] = new Quadtree(glm::vec2(_pos.x, _pos.y + _size.y / 2), _size / 2.0f);
-				return (_branches[QTBranch::BOTTOM_RIGHT]->growBranch(targetPos));
-			}
 			consoleLog("WARNING could not find/create a leaf from the given branch", LogSeverity::WARNING);
 			return (NULL);
 		}
-
-		Chunk	*getBranch(const glm::vec2 &targetPos)
+		/*
+			Goes through branches until it can find a leaf on the given position without creating new branches.
+			If it cant find a leaf, NULL will be returned.
+		
+			@param targetPos World position of a block inside the wanted leaf (chunk)
+		*/
+		Chunk	*getLeaf(const glm::ivec2 &targetPos)
 		{
 			if (isLeaf())
 				return (_leaf);
 			
-			if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Top left
+			QTBranch	quadrant = _getQuadrant(targetPos);
+
+			if (quadrant != QTBranch::OUT_OF_BOUNDS && _branches[quadrant] != NULL)
 			{
-				if (_branches[QTBranch::TOP_LEFT] != NULL)
-					return (_branches[QTBranch::TOP_LEFT]->getBranch(targetPos));
-			}
-				
-			else if (targetPos.x >= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Top right
-			{
-				if (_branches[QTBranch::TOP_RIGHT] != NULL)
-					return (_branches[QTBranch::TOP_RIGHT]->getBranch(targetPos));
-			}
-				
-			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y <= _pos.y + _size.y / 2.f) //Bottom left
-			{
-				if (_branches[QTBranch::BOTTOM_LEFT] != NULL)
-					return (_branches[QTBranch::BOTTOM_LEFT]->getBranch(targetPos));
+				if (!_branches[quadrant]->isInBounds(targetPos))
+					return (NULL);
+				return (_branches[quadrant]->getLeaf(targetPos));
 			}
 
-			else if (targetPos.x <= _pos.x + _size.x / 2.f && targetPos.y >= _pos.y + _size.y / 2.f) //Bottom right
-			{
-				if (_branches[QTBranch::BOTTOM_RIGHT] != NULL)
-					return (_branches[QTBranch::BOTTOM_RIGHT]->getBranch(targetPos));
-			}
 			return (NULL);
 		}
+
+		void	getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB)
+		{
+			glm::vec2	npos = {0, 0};
+			AABB.extents = glm::vec3(_size.x / 2, 256, _size.y / 2);
+			AABB.center = glm::vec3(_size.x / 2, 0, _size.y / 2);
+			if (isLeaf())
+			{
+				Chunk *chunk = getLeaf(glm::vec2(_pos.x, _pos.y));
+				chunk->rendered = true;
+				chunks.push_back(chunk);
+			}
+			else
+			{
+				for (int i = QTBranch::TOP_LEFT; i != QTBranch::OUT_OF_BOUNDS; ++i)
+				{
+					AABB.extents = glm::vec3(_size.x / 4, 256, _size.y / 4);
+					AABB.center = glm::vec3(_size.x / 4, 0, _size.y / 4);
+					if (i == QTBranch::TOP_LEFT)
+						npos = {_pos.x + _size.x / 2, _pos.y};
+					else if (i == QTBranch::TOP_RIGHT)
+						npos = {_pos.x + _size.x / 2, _pos.y + _size.y / 2};
+					else if (i == QTBranch::BOTTOM_LEFT)
+						npos = {_pos.x, _pos.y};
+					else if (i == QTBranch::BOTTOM_RIGHT)
+						npos = {_pos.x, _pos.y + _size.y / 2};
+					if (AABB.isOnFrustum(camFrustum, glm::vec3(npos.x, 0, npos.y)))
+					{
+						if (!_branches[i])
+							_branches[i] = new Quadtree(npos, _size / 2);
+						_branches[i]->getVisibleChunks(chunks, camFrustum, AABB);
+					}
+				}
+			}
+		}
+
+		/*
+			Returns the branch that contains targetPos and stops at the given depth.
+			(Can be useful to figure out in wich region the player is)
+
+			@param targetPos World position of a block inside the wanted leaf (chunk)
+			@param depth Depth at wich the search should stop
+		*/
+		Quadtree	*getBranch(const glm::ivec2 &targetPos, int depth)
+		{
+			if (depth-- <= 0)
+				return (this);
+		
+			QTBranch	quadrant = _getQuadrant(targetPos);
+				
+			if (quadrant != QTBranch::OUT_OF_BOUNDS && _branches[quadrant] != NULL)
+			{
+				if (!_branches[quadrant]->isInBounds(targetPos))
+					return (NULL);
+				return (_branches[quadrant]->getBranch(targetPos, depth));
+			}
+
+			return (NULL);
+		}
+		/*
+			Frees memory by pruning branches that contain no used chunks
+		*/
+		void	pruneDeadLeaves(Quadtree *root) //shouldBranchDie
+		{
+			pruneBranch(root, QTBranch::TOP_LEFT);
+			pruneBranch(root, QTBranch::TOP_RIGHT);
+			pruneBranch(root, QTBranch::BOTTOM_LEFT);
+			pruneBranch(root, QTBranch::BOTTOM_RIGHT);
+		}
+		void	pruneBranch(Quadtree *root, QTBranch quadrant)
+		{
+			Quadtree	*branch = _branches[quadrant];
+			if (branch != NULL)
+			{
+				if (branch->isLeaf())
+					if (branch->_leaf->isUploaded() && branch->_leaf->isGenerated()
+						&& !branch->_leaf->isGenerating()
+						&& !branch->_leaf->rendered)
+					{
+						if (branch->_leaf->getDistance() > RENDER_DISTANCE)
+						{
+							delete branch;
+							_branches[quadrant] = NULL;
+						}
+					}
+					else
+						return ;
+				else
+					branch->pruneDeadLeaves(root);
+			}
+		}
+		glm::vec2	getSize() const {return (this->_size);}
+		glm::vec2	getPos() const {return (this->_pos);}
+		bool	isLeaf() const {return (_leaf != NULL);}
+		bool	isInBounds(const glm::ivec2 &point)
+		{
+			bool	inBoundsLeft = point.y >= _pos.y;
+			bool	inBoundsRight = point.y < _pos.y + _size.y;
+			bool	inBoundsTop = point.x < _pos.x + _size.x;
+			bool	inBoundsBottom = point.x >= _pos.x;
+
+			return (inBoundsLeft && inBoundsRight && inBoundsTop && inBoundsBottom);
+		}
 	private:
-		glm::vec2				_size;
-		glm::vec2				_pos;
+		//Returns branch quadrant in wich pos is. (OUT_OF_BOUNDS can be returned but will never happen) @param pos target position of branch
+		QTBranch	_getQuadrant(const glm::ivec2 &pos) const
+		{
+			bool	isLeft = pos.y < _pos.y + _size.y / 2;
+			bool	isTop = pos.x >= _pos.x + _size.x / 2;
+			bool	isRight = !isLeft;
+			bool	isBottom = !isTop;
+
+			if (isLeft && isTop)
+				return (QTBranch::TOP_LEFT);
+			else if (isRight && isTop)
+				return (QTBranch::TOP_RIGHT);
+			else if (isLeft && isBottom)
+				return (QTBranch::BOTTOM_LEFT);
+			else if (isRight && isBottom)
+				return (QTBranch::BOTTOM_RIGHT);
+			else
+				return (QTBranch::OUT_OF_BOUNDS);
+		}
+		glm::ivec2				_size;
+		glm::ivec2				_pos;
 		std::vector<Quadtree*>	_branches = {NULL, NULL, NULL, NULL};
 		Chunk					*_leaf = NULL;
 };

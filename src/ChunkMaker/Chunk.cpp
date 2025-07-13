@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 08:22:30 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 21:07:45 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,15 +79,13 @@ float perlin(float x, float y) {
     // Final step: interpolate between the two previously interpolated values, now in y
     float value = interpolate(ix0, ix1, sy);
     
-    return value;
+    return (value);
 }
 
 float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
 {
-	// return 0;
-
 	float	freq = 0.1 / 32;
-	float	amp = 4;
+	float	amp = 2;
 
 	float	ret = 0;
 
@@ -103,18 +101,13 @@ float	getFakeNoise(glm::vec2 pos) //! //////////////////////////////////////////
 	}
 
 	// ret = (ret + 1) / 2;
-	ret = glm::clamp(ret, -1.0f, 1.0f);
+	ret = glm::clamp(ret, 0.0f, 1.0f);
 
-	return (ret * 127 + 127);
+	return (ret * 255);
 }
 
-Chunk::Chunk(const glm::vec3 &nPos, bool)
+Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _generated(false), _generating(false), _uploaded(false)
 {
-	glGenVertexArrays(1, &_VAO);
-    glGenBuffers(1, &_VBO);
-	glGenBuffers(1, &_EBO);
-	generated = false;
-	uploaded = false;
 	_model = glm::mat4(1);
 	_minHeight = 255;
 	_maxHeight = 0;
@@ -126,48 +119,19 @@ Chunk::Chunk(const glm::vec3 &nPos, bool)
 
 void	Chunk::generate()
 {
-	if (generated)
+	if (_generated)
 		return ;
 	_chunkTop.reserve(1024);
 	gen();
 	genMesh();
 	_indicesSize = _indices.size();
-	generated = true;
+	_generated.store(true);
 }
 
 void	Chunk::upload()
 {
-	if (!generated)
-		return ;
 	makeBuffers();
-	uploaded = true;
-}
-
-Chunk::Chunk(const glm::vec3 &nPos)
-{
-	glGenVertexArrays(1, &_VAO);
-    glGenBuffers(1, &_VBO);
-	glGenBuffers(1, &_EBO);
-    if (DEBUG)
-	{
-		std::stringstream sPos;
-		sPos << pos.x << ";" << pos.y << ";" << pos.z;
-        consoleLog("Creating the Chunk at " + sPos.str(), NORMAL);
-	}
-	_model = glm::mat4(1);
-	_minHeight = 255;
-	_maxHeight = 0;
-	_indicesSize = 0;
-	pos = nPos;
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, pos);
-	_chunkTop.reserve(1024);
-	gen();
-	genMesh();
-	_indicesSize = _indices.size();
-	makeBuffers();
-	generated = true;
-	uploaded = true;
+	_uploaded = true;
 }
 
 Chunk::~Chunk()
@@ -184,11 +148,15 @@ Chunk::~Chunk()
 		glDeleteBuffers(1, &_VBO);
 	if (_VAO)
 		glDeleteVertexArrays(1, &_VAO);
+	groundData.clear();
+	waterData.clear();
+	_vertices.clear();
+	_indices.clear();
 }
 
 float	Chunk::getDistance() const
 {
-	return (glm::length(CAMERA->pos - (pos + glm::vec3(16.f, 0.f, 16.f))));
+	return (glm::length(CAMERA->pos - (pos + glm::vec3(16.f, CAMERA->pos.y, 16.f))));
 }
 
 bool	Chunk::isInRange()
@@ -223,11 +191,14 @@ void	Chunk::clear()
 		glDeleteBuffers(1, &_VBO);
 	if (_VAO)
 		glDeleteVertexArrays(1, &_VAO);
-	uploaded = false;
+	_uploaded = false;
 }
 
 void	Chunk::makeBuffers()
 {
+	glGenVertexArrays(1, &_VAO);
+    glGenBuffers(1, &_VBO);
+	glGenBuffers(1, &_EBO);
     glBindVertexArray(_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(float), _vertices.data(), GL_STATIC_DRAW);
@@ -238,12 +209,12 @@ void	Chunk::makeBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)0);
-	// glEnableVertexAttribArray(1);
-	// glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(4 * sizeof(float)));
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(6 * sizeof(float)));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -252,124 +223,9 @@ void	Chunk::makeBuffers()
 
 void	addVertices(float type, std::vector<float> &vertices, std::vector<int> &_indices, const glm::vec3 &TL, const glm::vec3 &TR, const glm::vec3 &BL, const glm::vec3 &BR, const glm::vec3 &Normal)
 {
-	int	indiceBL = -1;
-	int	indiceTL = -1;
-	int	indiceTR = -1;
-	int	indiceBR = -1;
-
-	int i = 0;
-	for (std::vector<float>::iterator	vertice = vertices.begin(); vertice != vertices.end(); vertice += LINELEN)
-	{
-		if (*(vertice) == BL.x && *(vertice + 1) == BL.y && *(vertice + 2) == BL.z && *(vertice + 3) == type && *(vertice + 4) == Normal.x && *(vertice + 5) == Normal.y && *(vertice + 6) == Normal.z)
-			indiceBL = i / LINELEN;
-
-		if (*(vertice) == TL.x && *(vertice + 1) == TL.y && *(vertice + 2) == TL.z && *(vertice + 3) == type && *(vertice + 4) == Normal.x && *(vertice + 5) == Normal.y && *(vertice + 6) == Normal.z)
-			indiceTL = i / LINELEN;
-
-		if (*(vertice) == TR.x && *(vertice + 1) == TR.y && *(vertice + 2) == TR.z && *(vertice + 3) == type && *(vertice + 4) == Normal.x && *(vertice + 5) == Normal.y && *(vertice + 6) == Normal.z)
-			indiceTR = i / LINELEN;
-
-		if (*(vertice) == BR.x && *(vertice + 1) == BR.y && *(vertice + 2) == BR.z && *(vertice + 3) == type && *(vertice + 4) == Normal.x && *(vertice + 5) == Normal.y && *(vertice + 6) == Normal.z)
-			indiceBR = i / LINELEN;
-
-		if (indiceBL > 0 && indiceTL > 0 && indiceTR > 0 && indiceBR > 0)
-			break;
-		i += LINELEN;
-	}
-
-	if (indiceBL < 0)
-	{
-		vertices.insert(vertices.end(), {BL.x, BL.y, BL.z, type, Normal.x, Normal.y, Normal.z});
-		indiceBL = i / LINELEN;
-		i += LINELEN;
-	}
-	if (indiceTL < 0)
-	{
-		vertices.insert(vertices.end(), {TL.x, TL.y, TL.z, type, Normal.x, Normal.y, Normal.z});
-		indiceTL = i / LINELEN;
-		i += LINELEN;
-	}
-	if (indiceTR < 0)
-	{
-		vertices.insert(vertices.end(), {TR.x, TR.y, TR.z, type, Normal.x, Normal.y, Normal.z});
-		indiceTR = i / LINELEN;
-		i += LINELEN;
-	}
-	if (indiceBR < 0)
-	{
-		vertices.insert(vertices.end(), {BR.x, BR.y, BR.z, type, Normal.x, Normal.y, Normal.z});
-		indiceBR = i / LINELEN;
-		i += LINELEN;
-	}
-
-	_indices.insert(_indices.end(), {indiceBL, indiceTR, indiceTL, indiceBL, indiceBR, indiceTR});
-
-
-
-	// std::vector<float>::iterator	find = std::find(vertices.begin(), vertices.end(), BL.x);
-	// if (find != vertices.end() && *(find + 1) == BL.y && *(find + 2) == BL.z && *(find + 3) == type)
-	// {
-	// 	indiceBL = int(std::distance(vertices.begin(), find) / LINELEN);
-	// 	// _indices.insert(_indices.end(), int(std::distance(vertices.begin(), find) / LINELEN - 1));
-	// }
-	// else
-	// {
-	// 	vertices.insert(vertices.end(), {BL.x, BL.y, BL.z, type, Normal.x, Normal.y, Normal.z});
-	// 	indiceBL = int(vertices.size() / LINELEN - 1);
-	// 	// _indices.insert(_indices.end(), int(vertices.size() / LINELEN - 1));
-	// }
-	
-	// find = std::find(vertices.begin(), vertices.end(), TL.x);
-	// if (find != vertices.end() && *(find + 1) == TL.y && *(find + 2) == TL.z && *(find + 3) == type)
-	// {
-	// 	indiceTL = int(std::distance(vertices.begin(), find) / LINELEN);
-	// 	// _indices.insert(_indices.end(), int(std::distance(vertices.begin(), find) / LINELEN - 1));
-	// }
-	// else
-	// {
-	// 	vertices.insert(vertices.end(), {TL.x, TL.y, TL.z, type, Normal.x, Normal.y, Normal.z});
-	// 	indiceTL = int(vertices.size() / LINELEN - 1);
-	// 	// _indices.insert(_indices.end(), int(vertices.size() / LINELEN - 1));
-	// }
-	
-	// find = std::find(vertices.begin(), vertices.end(), TR.x);
-	// if (find != vertices.end() && *(find + 1) == TR.y && *(find + 2) == TR.z && *(find + 3) == type)
-	// {
-	// 	indiceTR = int(std::distance(vertices.begin(), find) / LINELEN);
-	// 	// _indices.insert(_indices.end(), int(std::distance(vertices.begin(), find) / LINELEN - 1));
-	// }
-	// else
-	// {
-	// 	vertices.insert(vertices.end(), {TR.x, TR.y, TR.z, type, Normal.x, Normal.y, Normal.z});
-	// 	indiceTR = int(vertices.size() / LINELEN - 1);
-	// 	// _indices.insert(_indices.end(), int(vertices.size() / LINELEN - 1));
-	// }
-	
-	// find = std::find(vertices.begin(), vertices.end(), BR.x);
-	// if (find != vertices.end() && *(find + 1) == BR.y && *(find + 2) == BR.z && *(find + 3) == type)
-	// {
-	// 	indiceBR = int(std::distance(vertices.begin(), find) / LINELEN);
-	// 	// _indices.insert(_indices.end(), int(std::distance(vertices.begin(), find) / LINELEN - 1));
-	// }
-	// else
-	// {
-	// 	vertices.insert(vertices.end(), {BR.x, BR.y, BR.z, type, Normal.x, Normal.y, Normal.z});
-	// 	indiceBR = int(vertices.size() / LINELEN - 1);
-	// 	// _indices.insert(_indices.end(), int(vertices.size() / LINELEN - 1));
-	// }
-
-	// _indices.insert(_indices.end(), {indiceBL, indiceTR, indiceTL, indiceBL, indiceBR, indiceTR});
-
-
-
-
-
-	// vertices.insert(vertices.end(), {BL.x, BL.y, BL.z, type, Normal.x, Normal.y, Normal.z,
-	// 								TL.x, TL.y, TL.z, type, Normal.x, Normal.y, Normal.z,
-	// 								TR.x, TR.y, TR.z, type, Normal.x, Normal.y, Normal.z,
-	// 								BR.x, BR.y, BR.z, type, Normal.x, Normal.y, Normal.z});
-	// int vertLen = vertices.size() / LINELEN - 1;
-	// _indices.insert(_indices.end(), {vertLen - 3, vertLen - 1, vertLen - 2, vertLen - 3, vertLen - 0, vertLen - 1});
+	vertices.insert(vertices.end(), {BL.x, BL.y, BL.z, 0, 0, type, Normal.x, Normal.y, Normal.z, TL.x, TL.y, TL.z, 0, 1, type, Normal.x, Normal.y, Normal.z, TR.x, TR.y, TR.z, 1, 1, type, Normal.x, Normal.y, Normal.z, BR.x, BR.y, BR.z, 1, 0, type, Normal.x, Normal.y, Normal.z});
+	int vertLen = vertices.size() / LINELEN - 1;
+	_indices.insert(_indices.end(), {vertLen - 3, vertLen - 1, vertLen - 2, vertLen - 3, vertLen - 0, vertLen - 1});
 }
 
 void	Chunk::genMesh()
@@ -491,10 +347,15 @@ void	Chunk::gen()
 	}
 }
 
+#include "ChunkGenerator.hpp"
+extern ChunkGeneratorManager	*CHUNK_GENERATOR;
+
 void	Chunk::draw(Shader &shader)
 {
-	if (generated && !uploaded)
-		upload() ;
+	if (_generating)
+		return ;
+	if (!_uploaded && _generated)
+		upload();
 
     glEnable(GL_DEPTH_TEST);
 	shader.use();

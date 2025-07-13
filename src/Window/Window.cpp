@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:11:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/12 15:49:42 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 21:26:54 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,13 +39,13 @@ Window::Window() : _lastFrame(0)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	//Creates and opens window
-	// GLFWmonitor	*monitor = glfwGetPrimaryMonitor();
-	// const GLFWvidmode	*monitorInfos = glfwGetVideoMode(monitor);
-	// SCREEN_HEIGHT = monitorInfos->height;
-	// SCREEN_WIDTH = monitorInfos->width;
-	// _windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, monitor, NULL);
-	_windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, NULL, NULL);
+	// Creates and opens window
+	GLFWmonitor	*monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode	*monitorInfos = glfwGetVideoMode(monitor);
+	SCREEN_HEIGHT = monitorInfos->height;
+	SCREEN_WIDTH = monitorInfos->width;
+	_windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, monitor, NULL);
+	// _windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, NULL, NULL);
 	if (!_windowData)
 	{
 		glfwTerminate();
@@ -73,8 +73,6 @@ Window::Window() : _lastFrame(0)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
-	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
-
 	this->center();
 	this->setIcon("textures/mbatty.bmp");
 	setDefaultMousePos();

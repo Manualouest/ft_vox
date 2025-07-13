@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RegionManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:32:56 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/11 09:05:50 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 10:28:41 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,11 @@ class RegionManager
 
 		uint	RenderDist;
 	
+		Quadtree	*getQuadTree() {return (this->_QT);}
 	private:
 		bool	isInRange();
 		void	sortChunks();
 	
-		std::vector<Chunk *>	_chunks;
 		std::vector<Chunk *>	_renderChunks;
 		Quadtree				*_QT;
 };

@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 08:18:13 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 21:40:06 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ FrameBuffer	*MAIN_FRAME_BUFFER;
 FrameBuffer	*DEPTH_FRAME_BUFFER;
 FrameBuffer	*WATER_DEPTH_FRAME_BUFFER;
 
-ChunkGenerator	*CHUNK_GENERATOR;
+ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 /*
 	Keyboard input as the char so like typing on a keyboard
@@ -67,7 +67,6 @@ void	key_hook(GLFWwindow *window, int key, int, int action, int)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && WINDOW->up())
 	{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		consoleLog("Quitting game.", LogSeverity::WARNING);
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -145,7 +144,9 @@ void    drawUI()
 
     static int frame = 0;
     static std::string    fps = "0 fps";
-    std::string            cameraPos = std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);
+    std::string            cameraPos = "xyz " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);
+    std::string            threadUsage = "used threads: " + std::to_string(CHUNK_GENERATOR->availableWorkers());
+    // std::string            waitingChunks = "waiting chunks: " + std::to_string(CHUNK_GENERATOR->getWaitingChunks());
 
     if (frame++ >= currentFPS / 10)
     {
@@ -153,14 +154,21 @@ void    drawUI()
         fps = getFPSString();
     }
     FONT->putString(fps, *SHADER_MANAGER->get("text"),
-        glm::vec2((SCREEN_WIDTH / 2) - (fps.length() * 15) / 2, 0),
+        glm::vec2(0, 0),
         glm::vec2(fps.length() * 15, 15));
 
-        FONT->putString(cameraPos, *SHADER_MANAGER->get("text"),
-    glm::vec2((SCREEN_WIDTH / 2) - (cameraPos.length() * 15) / 2, 15),
+    FONT->putString(cameraPos, *SHADER_MANAGER->get("text"),
+    glm::vec2(0, 15),
     glm::vec2(cameraPos.length() * 15, 15));
 
+	FONT->putString(threadUsage, *SHADER_MANAGER->get("text"),
+    glm::vec2(0, 30),
+    glm::vec2(threadUsage.length() * 15, 15));
         
+	// FONT->putString(waitingChunks, *SHADER_MANAGER->get("text"),
+    // glm::vec2(0, 45),
+    // glm::vec2(waitingChunks.length() * 15, 15));
+
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -210,7 +218,7 @@ void	update(ShaderManager *shaders)
 */
 void	frame_key_hook(Window &window)
 {
-	float cameraSpeed = 15.0f * window.getDeltaTime();
+	float cameraSpeed = 15 * window.getDeltaTime();
 	float	speedBoost = 1.0f;
 
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
@@ -221,14 +229,14 @@ void	frame_key_hook(Window &window)
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_S) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos - CAMERA->front * (cameraSpeed * speedBoost);
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_SPACE) == GLFW_PRESS)
-		CAMERA->pos = CAMERA->pos + CAMERA->up * (cameraSpeed * speedBoost);
+		CAMERA->pos = CAMERA->pos + CAMERA->worldUp * (cameraSpeed * speedBoost);
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-		CAMERA->pos = CAMERA->pos - CAMERA->up * (cameraSpeed * speedBoost);
+		CAMERA->pos = CAMERA->pos - CAMERA->worldUp * (cameraSpeed * speedBoost);
 		
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_A) == GLFW_PRESS)
-		CAMERA->pos = CAMERA->pos - glm::normalize(glm::cross(CAMERA->front, CAMERA->up)) * (cameraSpeed * speedBoost);
+		CAMERA->pos = CAMERA->pos - glm::normalize(glm::cross(CAMERA->front, CAMERA->worldUp)) * (cameraSpeed * speedBoost);
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_D) == GLFW_PRESS)
-		CAMERA->pos = CAMERA->pos + glm::normalize(glm::cross(CAMERA->front, CAMERA->up)) * (cameraSpeed * speedBoost);
+		CAMERA->pos = CAMERA->pos + glm::normalize(glm::cross(CAMERA->front, CAMERA->worldUp)) * (cameraSpeed * speedBoost);
 }
 
 /*
@@ -273,7 +281,7 @@ struct	Engine
 		build(SHADER_MANAGER);
 		TEXTURE_MANAGER = new TextureManager();
 		build(TEXTURE_MANAGER);
-		CHUNK_GENERATOR = new ChunkGenerator();
+		CHUNK_GENERATOR = new ChunkGeneratorManager();
 		MAIN_FRAME_BUFFER = new FrameBuffer();
 		DEPTH_FRAME_BUFFER = new FrameBuffer();
 		WATER_DEPTH_FRAME_BUFFER = new FrameBuffer();
@@ -322,6 +330,14 @@ void	update()
 	
 }
 
+Quadtree	*prevBranch = NULL;
+
+int	getBlock(const glm::vec3 &pos)
+{
+	CHUNKS->getQuadTree()->getLeaf(pos);
+	return (0);
+}
+
 int	main(void)
 {
 	consoleLog("Starting...", NORMAL);
@@ -331,6 +347,10 @@ int	main(void)
 
 		consoleLog("Starting rendering...", NORMAL);
 
+		CAMERA->yaw = 95;
+		CAMERA->pitch = -20;
+		CAMERA->pos = {0, 100, 0};
+
 		while (WINDOW->up())
 		{
 			WINDOW->loopStart();
@@ -338,10 +358,10 @@ int	main(void)
 			update(SHADER_MANAGER);
 			update();
 
-			// CHUNK_GENERATOR->upload();
+			CHUNKS->getQuadTree()->pruneDeadLeaves(CHUNKS->getQuadTree());
 
 			render();
-			
+
 			FrameBuffer::reset();
 
 			updatePostShader(SHADER_MANAGER);

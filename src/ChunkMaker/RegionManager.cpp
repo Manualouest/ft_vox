@@ -6,15 +6,35 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 08:19:00 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 21:40:14 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RegionManager.hpp"
+#include "ChunkGenerator.hpp"
+
+extern	float SPEEDBOOST;
+
+
+Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFar)
+{
+	Frustum			frustum;
+	const float		halfVSide = zFar * tanf(fovY * .5f);
+	const float		halfHSide = halfVSide * aspect;
+	const glm::vec3	frontMultFar = zFar * CAMERA->front;
+
+	frustum.nearFace = { CAMERA->pos + zNear * CAMERA->front, CAMERA->front };
+	frustum.farFace = { CAMERA->pos + frontMultFar, -CAMERA->front };
+	frustum.rightFace = { CAMERA->pos, glm::cross(frontMultFar - CAMERA->right * halfHSide, CAMERA->up) };
+	frustum.leftFace = { CAMERA->pos, glm::cross(CAMERA->up, frontMultFar + CAMERA->right * halfHSide) };
+	frustum.topFace = { CAMERA->pos, glm::cross(CAMERA->right, frontMultFar - CAMERA->up * halfVSide) };
+	frustum.bottomFace = { CAMERA->pos, glm::cross(frontMultFar + CAMERA->up * halfVSide, CAMERA->right) };
+	return frustum;
+}
 
 RegionManager::RegionManager()
 {
-	RenderDist = 5;
+	RenderDist = 16;
 	_QT = new Quadtree(glm::vec2(0, 0), glm::vec2(16384.0f, 16384.0f));
 }
 
@@ -25,51 +45,19 @@ RegionManager::~RegionManager()
 
 void	RegionManager::UpdateChunks()
 {
+	for (Chunk *chunk : _renderChunks)
+		chunk->rendered = false;
 	_renderChunks.clear();
-	glm::vec2	dirPos = CAMERA->flatFront;
-	glm::vec2	pos = glm::vec2(CAMERA->pos.x, CAMERA->pos.z) - dirPos * 32.0f;
-	glm::vec2	leftDir = glm::vec2(0);
-	glm::vec2	rightDir = glm::vec2(0);
-	glm::vec2	tmpDirPos = glm::vec2(0);
-	Chunk		*chunk = NULL;
-	int			ChunkAmount = 1;
 
-	for (float i = 1; i <= RenderDist * 2; ++i)
-	{
-		tmpDirPos = dirPos * 16.0f *i;
-		leftDir = glm::normalize(glm::vec2(-tmpDirPos.y, tmpDirPos.x));
-		rightDir = glm::normalize(glm::vec2(tmpDirPos.y, -tmpDirPos.x));
-		for (float ii = i * 1.25; ii > 0; --ii)
-		{
-			chunk = _QT->getBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
-			if (chunk != NULL)
-				_renderChunks.push_back(chunk);
-			else if (ChunkAmount-- > 0)
-			{
-				chunk = _QT->growBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
-				_chunks.push_back(chunk);
-				_renderChunks.push_back(chunk);
-			}
-			chunk = _QT->getBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
-			if (chunk != NULL)
-				_renderChunks.push_back(chunk);
-			else if (ChunkAmount-- > 0)
-			{
-				chunk = _QT->growBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
-				_chunks.push_back(chunk);
-				_renderChunks.push_back(chunk);
-			}
-		}
-		chunk = _QT->getBranch(pos + tmpDirPos);
-		if (chunk != NULL)
-			_renderChunks.push_back(chunk);
-		else if (ChunkAmount-- > 0)
-		{
-			chunk = _QT->growBranch(pos + tmpDirPos);
-			_chunks.push_back(chunk);
-			_renderChunks.push_back(chunk);
-		}
-	}
+	Frustum	camFrustum = createFrustumFromCamera(SCREEN_WIDTH / SCREEN_HEIGHT, glm::radians(FOV), 0.0001f, RenderDist * 32);
+	VolumeAABB	boundingBox(glm::vec3(16.0f, 0.0f, 16.0f), glm::vec3(16.0f, 256.0f, 16.0f));
+
+
+	_QT->getVisibleChunks(_renderChunks, camFrustum, boundingBox);
+
+
+	sortChunks();
+	CHUNK_GENERATOR->deposit(_renderChunks);
 }
 
 #include "FrameBuffer.hpp"
@@ -86,9 +74,9 @@ void	RegionManager::Render(Shader &shader)
 	UpdateChunks();
 	sortChunks();
 	MAIN_FRAME_BUFFER->use();
-	for (auto chunk : _renderChunks)
+	for (auto *chunk : _renderChunks)
 	{
-		(*chunk).draw(shader);
+		chunk->draw(shader);
 	}
 }
 
@@ -100,4 +88,3 @@ void	RegionManager::sortChunks()
 			return (cp1->getDistance() > cp2->getDistance());
 		});
 }
-

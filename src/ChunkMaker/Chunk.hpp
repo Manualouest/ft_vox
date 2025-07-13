@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 08:22:45 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/13 21:07:26 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include "Shader.hpp"
 # include "Camera.hpp"
 
-# define LINELEN 7
+# define LINELEN 9
 # define WATERLINE 21
 # define GROUND 0
 # define WATER 1
@@ -28,11 +28,11 @@ class Chunk
 {
 	public:
 		Chunk(const glm::vec3 &pos);
-		Chunk(const glm::vec3 &pos, bool nocreate);
 		~Chunk();
 
 		void	generate();
 		void	upload();
+		void	clear();
 
 		void	draw(Shader &shader);
 		float	getDistance() const;
@@ -41,20 +41,30 @@ class Chunk
 		glm::mat4							model;
 		std::unordered_map<int, char32_t>	groundData;
 		std::unordered_map<int, char32_t>	waterData;
-		std::atomic_bool					generated;
-		std::atomic_bool					uploaded;
-		bool								rendered = false;
-	
+		std::atomic_bool					rendered;
+
+		bool	isGenerated() {return (this->_generated);}
+		bool	isGenerating() {return (this->_generating);}
+		bool	isUploaded() {return (this->_uploaded);}
+
+		void	setGenerating(bool state) {this->_generating.store(state);}
+		bool	isInRange();
+
+		std::thread::id	_lastThreadID;
+
 	private:
 		void	gen();
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &height);
 		void	genMesh();
 		void	makeBuffers();
-		bool	isInRange();
 
-		unsigned int			_EBO;
-		unsigned int			_VAO;
-		unsigned int			_VBO;
+		std::atomic_bool		_generated;
+		std::atomic_bool		_generating;
+		std::atomic_bool		_uploaded;
+
+		unsigned int			_EBO = 0;
+		unsigned int			_VAO = 0;
+		unsigned int			_VBO = 0;
 		glm::mat4				_model;
 		uint8_t					_minHeight;
 		uint8_t					_maxHeight;

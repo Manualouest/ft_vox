@@ -9,7 +9,7 @@ uniform sampler2D waterDepthTex;
 
 in vec2 texCoord;
 flat in float blockType;
-flat in vec3	Normal;
+in vec3	Normal;
 in vec3	FragPos;
 in vec4	WorldPos;
 
@@ -31,9 +31,8 @@ const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0);
 
 void main()
 {
-	// vec3 Normal = cross(dFdx(FragPos), dFdy(FragPos));
 	float   shininess = 256.0f;
-    float   actualShiness = 1;
+    float   actualShiness = 0;
 	float	alpha = 1.0;
 
 	vec3	color;
@@ -41,8 +40,7 @@ void main()
 	{
 		shininess = 64;
 		actualShiness = 0.1;
-		color = abs(Normal);
-		// color = texture(uTex, texCoord).rgb;
+		color = texture(uTex, texCoord).rgb;
 	}
 	else
 	{
