@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/11 20:01:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 14:47:47 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 20:51:31 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,197 +17,123 @@
 # include "Chunk.hpp"
 # include "Window.hpp"
 
+#define LOCK const std::lock_guard<std::mutex> lock
+
 class	ChunkGenerator
 {
 	public:
-		ChunkGenerator(): _thread(&ChunkGenerator::_loop, this)
+		ChunkGenerator(): _running(false), _working(false) {}
+		~ChunkGenerator() {stop();}
+		void	stop();
+		void	start();
+		bool	isWorking() {return (this->_working);}
+		bool	deposit(std::vector<Chunk *> chunks)
 		{
-			consoleLog("Starting generation thread", LogSeverity::NORMAL);
-		}
-		~ChunkGenerator()
-		{
-			stop();
-			_thread.join();
-			consoleLog("Successfully joined generation thread", LogSeverity::SUCCESS);
-		}
-		void	stop()
-		{
-			_running.store(false);
-		}
-		void	deposit(Chunk *chunk)
-		{
-			_depositLock.lock();
-			_chunksDeposit.push_back(chunk);
-			_depositLock.unlock();
-		}
-		void	deposit(std::vector<Chunk *> chunks)
-		{
-			_depositLock.lock();
-			for (Chunk* chunk : chunks)
-				_chunksDeposit.push_back(chunk);
-			_depositLock.unlock();
-		}
-		bool	isAvailable()
-		{
-			return (this->_available.load());
+			LOCK(_depositMutex);
+
+			if (_deposit.size() > 0)
+				return (false);
+
+			_deposit.reserve(chunks.size());
+
+			for (Chunk * chunk : chunks)
+				_deposit.push_back(chunk);
+
+			_deposit.shrink_to_fit();
+			return (true);
 		}
 	private:
-		void	_generateChunks()
+		void	_loop()
 		{
-			for (Chunk *chunk : _chunksToGenerate)
+			while (_running)
 			{
-				if (!_running.load())
-					break ;
+				_process();
+				usleep(200);
+				_working = false;
+			}
+		}
+		void	_process()
+		{
+			LOCK(_depositMutex);
+
+			if (_deposit.size() <= 0)
+				return ;
+
+			_working = true;
+
+			for (Chunk * chunk : _deposit)
+			{
 				chunk->generate();
 				chunk->setGenerating(false);
 			}
-
-			_chunksToGenerate.clear();
+			
+			_deposit.clear();
 		}
-		void	_retrieveDeposit()
-		{
-			_depositLock.lock();
-
-			for (Chunk *chunk : _chunksDeposit)
-			{
-				if (!_running.load())
-					break ;
-				_chunksToGenerate.push_back(chunk);
-			}
-			_chunksDeposit.clear();
-
-			_depositLock.unlock();
-		}
-		void	_waitDeposit()
-		{
-			_available.store(true);
-			while (_available.load())
-			{
-				usleep(100);
-				_depositLock.lock();
-				if (_chunksDeposit.size() > 0 || !_running)
-					_available.store(false);
-				_depositLock.unlock();
-			}
-		}
-		void	_loop()
-		{
-			_running.store(true);
-			while (_running.load())
-			{
-				_waitDeposit();
-				_retrieveDeposit();
-				_generateChunks();
-				usleep(100);
-			}
-		}
-		//Main thread will deposit chunks in here
-		std::vector<Chunk *>	_chunksDeposit;
-		std::mutex				_depositLock;
-		
-		//Generator thread will process chunks here
-		std::vector<Chunk *>	_chunksToGenerate;
-
-		//Processed chunks will be deposited here
+		std::vector<Chunk *>	_deposit;
+		std::mutex				_depositMutex;
 		std::atomic_bool		_running;
-		std::atomic_bool		_available;
+		std::atomic_bool		_working;
 		std::thread				_thread;
 };
 
 #define	GENERATION_THREAD_COUNT 16
-#define CHUNKS_PER_THREAD 4
+#define CHUNKS_PER_THREAD 2
 
 class	ChunkGeneratorManager
 {
 	public:
-		ChunkGeneratorManager(): _running(false), _thread(&ChunkGeneratorManager::_loop, this)
+		ChunkGeneratorManager();
+		~ChunkGeneratorManager();
+		void	start();
+		void	stop();
+		void	deposit(std::vector<Chunk *> chunks)
 		{
-			for (int i = 0; i < GENERATION_THREAD_COUNT; i++)
-				_generators.push_back(new ChunkGenerator);
-			_running.store(true);
+			LOCK(_depositMutex);
+
+			_deposit.reserve(chunks.size());
+
+			for (Chunk * chunk : chunks)
+				if (!chunk->isGenerated() && !chunk->isGenerating())
+				{
+					chunk->setGenerating(true);
+					_deposit.push_back(chunk);
+				}
+
+			_deposit.shrink_to_fit();
 		}
-		~ChunkGeneratorManager()
+		uint	availableWorkers()
 		{
-			_running.store(false);
-			_thread.join();
+			uint	res = 0;
 			for (ChunkGenerator *generator : _generators)
-				delete generator;
-		}
-		void	deposit(Chunk *chunk)
-		{
-			if (chunk->isGenerating() || chunk->isGenerated() || chunk->isUploaded())
-				return ;
-
-			_depositLock.lock();
-
-			chunk->setGenerating(true);
-			_chunkDeposit.push_back(chunk);
-
-			_depositLock.unlock();
-		}
-		void	dispatch()
-		{
-			_depositLock.lock();
-
-			int	threads = getAvailableThreads();
-			uint	chunks = _chunkDeposit.size();
-
-			if (threads > 0 && chunks >= CHUNKS_PER_THREAD)
-			{
-				_deposit({_chunkDeposit.begin(), _chunkDeposit.begin() + CHUNKS_PER_THREAD});
-				_chunkDeposit.erase(_chunkDeposit.begin(), _chunkDeposit.begin() + CHUNKS_PER_THREAD);
-			}
-			else if (threads >= GENERATION_THREAD_COUNT && chunks > 0)
-			{
-				_deposit(_chunkDeposit.back());
-				_chunkDeposit.pop_back();
-			}
-
-			_depositLock.unlock();
-		}
-		uint	getWaitingChunks() {return (_chunkDeposit.size());}
-		int	getAvailableThreads()
-		{
-			int	res = 0;
-
-			for (ChunkGenerator *generator : _generators)
-				if (generator->isAvailable())
-					res++;
+				res += generator->isWorking();
 			return (res);
 		}
 	private:
-		void	_loop()
+		void	_send()
 		{
-			while (!_running.load())
-				;
-			while (_running.load())
+			LOCK(_depositMutex);
+			
+			for (ChunkGenerator *generator : _generators)
 			{
-				dispatch();
-				usleep(100);
+				uint	sizeToAdd = std::min(_deposit.size(), (size_t)CHUNKS_PER_THREAD);
+				if (sizeToAdd <= CHUNKS_PER_THREAD && sizeToAdd > 0 && !generator->isWorking())
+				{
+					if (generator->deposit({_deposit.begin(), _deposit.begin() + sizeToAdd}))
+						_deposit.erase(_deposit.begin(), _deposit.begin() + sizeToAdd);
+				}
 			}
 		}
-		//Add a whole vector to the generation queue
-		void	_deposit(std::vector<Chunk *> chunks)
+		void	_loop()
 		{
-			for (ChunkGenerator *generator : _generators)
-				if (generator->isAvailable())
-				{
-					generator->deposit(chunks);
-					return ;
-				}
+			while (_running)
+			{
+				_send();
+				usleep(200);
+			}
 		}
-		void	_deposit(Chunk *chunk)
-		{
-			for (ChunkGenerator *generator : _generators)
-				if (generator->isAvailable())
-				{
-					generator->deposit(chunk);
-					return ;
-				}
-		}
+		std::vector<Chunk *>			_deposit;
+		std::mutex						_depositMutex;
 		std::vector<ChunkGenerator *>	_generators;
-		std::vector<Chunk *>			_chunkDeposit;
-		std::mutex						_depositLock;
 		std::atomic_bool				_running;
 		std::thread						_thread;
 };

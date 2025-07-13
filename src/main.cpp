@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 14:37:24 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 19:49:08 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,8 +145,8 @@ void    drawUI()
     static int frame = 0;
     static std::string    fps = "0 fps";
     std::string            cameraPos = "xyz " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);
-    std::string            threadUsage = "used threads: " + std::to_string(GENERATION_THREAD_COUNT - CHUNK_GENERATOR->getAvailableThreads());
-    std::string            waitingChunks = "waiting chunks: " + std::to_string(CHUNK_GENERATOR->getWaitingChunks());
+    std::string            threadUsage = "used threads: " + std::to_string(CHUNK_GENERATOR->availableWorkers());
+    // std::string            waitingChunks = "waiting chunks: " + std::to_string(CHUNK_GENERATOR->getWaitingChunks());
 
     if (frame++ >= currentFPS / 10)
     {
@@ -165,9 +165,9 @@ void    drawUI()
     glm::vec2(0, 30),
     glm::vec2(threadUsage.length() * 15, 15));
         
-	FONT->putString(waitingChunks, *SHADER_MANAGER->get("text"),
-    glm::vec2(0, 45),
-    glm::vec2(waitingChunks.length() * 15, 15));
+	// FONT->putString(waitingChunks, *SHADER_MANAGER->get("text"),
+    // glm::vec2(0, 45),
+    // glm::vec2(waitingChunks.length() * 15, 15));
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -358,7 +358,7 @@ int	main(void)
 			update(SHADER_MANAGER);
 			update();
 
-			CHUNKS->getQuadTree()->pruneDeadLeaves();
+			CHUNKS->getQuadTree()->pruneDeadLeaves(CHUNKS->getQuadTree());
 
 			render();
 

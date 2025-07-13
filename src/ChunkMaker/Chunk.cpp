@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 14:32:09 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 20:53:08 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,7 +85,7 @@ float perlin(float x, float y) {
 float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
 {
 	float	freq = 0.1 / 32;
-	float	amp = 4;
+	float	amp = 2;
 
 	float	ret = 0;
 
@@ -156,7 +156,7 @@ Chunk::~Chunk()
 
 float	Chunk::getDistance() const
 {
-	return (glm::length(CAMERA->pos - (pos + glm::vec3(16.f, 0.f, 16.f))));
+	return (glm::length(CAMERA->pos - (pos + glm::vec3(16.f, CAMERA->pos.y, 16.f))));
 }
 
 bool	Chunk::isInRange()
@@ -352,12 +352,10 @@ extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 void	Chunk::draw(Shader &shader)
 {
-	if (!_uploaded && !_generated && !_generating)
-		CHUNK_GENERATOR->deposit(this);
-	if (!_uploaded && _generated && !_generating)
-		upload();
-	if (!_generated || !_uploaded || _generating)
+	if (_generating)
 		return ;
+	if (!_uploaded && _generated)
+		upload();
 
     glEnable(GL_DEPTH_TEST);
 	shader.use();

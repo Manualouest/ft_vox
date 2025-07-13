@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 15:38:13 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 16:41:41 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,8 @@ class	Quadtree
 			{
 				if (_branches[quadrant] == NULL)
 					_branches[quadrant] = new Quadtree(childPos, _size / 2);
+				if (!_branches[quadrant]->isInBounds(targetPos))
+					return (NULL);
 				return (_branches[quadrant]->growBranch(targetPos));
 			}
 
@@ -110,7 +112,11 @@ class	Quadtree
 			QTBranch	quadrant = _getQuadrant(targetPos);
 
 			if (quadrant != QTBranch::OUT_OF_BOUNDS && _branches[quadrant] != NULL)
+			{
+				if (!_branches[quadrant]->isInBounds(targetPos))
+					return (NULL);
 				return (_branches[quadrant]->getLeaf(targetPos));
+			}
 
 			return (NULL);
 		}
@@ -129,21 +135,25 @@ class	Quadtree
 			QTBranch	quadrant = _getQuadrant(targetPos);
 				
 			if (quadrant != QTBranch::OUT_OF_BOUNDS && _branches[quadrant] != NULL)
+			{
+				if (!_branches[quadrant]->isInBounds(targetPos))
+					return (NULL);
 				return (_branches[quadrant]->getBranch(targetPos, depth));
+			}
 
 			return (NULL);
 		}
 		/*
 			Frees memory by pruning branches that contain no used chunks
 		*/
-		void	pruneDeadLeaves() //shouldBranchDie
+		void	pruneDeadLeaves(Quadtree *root) //shouldBranchDie
 		{
-			pruneBranch(QTBranch::TOP_LEFT);
-			pruneBranch(QTBranch::TOP_RIGHT);
-			pruneBranch(QTBranch::BOTTOM_LEFT);
-			pruneBranch(QTBranch::BOTTOM_RIGHT);
+			pruneBranch(root, QTBranch::TOP_LEFT);
+			pruneBranch(root, QTBranch::TOP_RIGHT);
+			pruneBranch(root, QTBranch::BOTTOM_LEFT);
+			pruneBranch(root, QTBranch::BOTTOM_RIGHT);
 		}
-		void	pruneBranch(QTBranch quadrant)
+		void	pruneBranch(Quadtree *root, QTBranch quadrant)
 		{
 			Quadtree	*branch = _branches[quadrant];
 			if (branch != NULL)
@@ -153,19 +163,22 @@ class	Quadtree
 						&& !branch->_leaf->isGenerating()
 						&& !branch->_leaf->rendered)
 					{
-						delete branch;
-						_branches[quadrant] = NULL;
+						if (branch->_leaf->getDistance() > RENDER_DISTANCE)
+						{
+							delete branch;
+							_branches[quadrant] = NULL;
+						}
 					}
 					else
 						return ;
 				else
-					branch->pruneDeadLeaves();
+					branch->pruneDeadLeaves(root);
 			}
 		}
 		glm::vec2	getSize() const {return (this->_size);}
 		glm::vec2	getPos() const {return (this->_pos);}
 		bool	isLeaf() const {return (_leaf != NULL);}
-		bool	isInBounds(const glm::vec2 &point)
+		bool	isInBounds(const glm::ivec2 &point)
 		{
 			bool	inBoundsLeft = point.y >= _pos.y;
 			bool	inBoundsRight = point.y < _pos.y + _size.y;
@@ -176,7 +189,7 @@ class	Quadtree
 		}
 	private:
 		//Returns branch quadrant in wich pos is. (OUT_OF_BOUNDS can be returned but will never happen) @param pos target position of branch
-		QTBranch	_getQuadrant(const glm::vec2 &pos) const
+		QTBranch	_getQuadrant(const glm::ivec2 &pos) const
 		{
 			bool	isLeft = pos.y < _pos.y + _size.y / 2;
 			bool	isTop = pos.x >= _pos.x + _size.x / 2;
