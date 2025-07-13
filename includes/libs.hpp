@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:10 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/12 17:08:32 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 10:19:27 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 # define LIBS_HPP
 
 # define DEBUG 0
-# define WIN_NAME "grass"
+# define WIN_NAME "ft_vox"
 
 # include <iostream>
 # include <string>

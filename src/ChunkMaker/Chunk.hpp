@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/12 18:29:02 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 12:03:49 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ extern Camera	*CAMERA;
 class Chunk
 {
 	public:
-		Chunk(const glm::vec3 &pos, bool nocreate);
+		Chunk(const glm::vec3 &pos);
 		~Chunk();
 
 		void	generate();
@@ -41,16 +41,24 @@ class Chunk
 		glm::mat4							model;
 		std::unordered_map<int, char32_t>	groundData;
 		std::unordered_map<int, char32_t>	waterData;
-		std::atomic_bool					generated;
-		std::atomic_bool					uploaded;
 		bool								rendered = false;
+
+		bool	isGenerated() {return (this->_generated);}
+		bool	isGenerating() {return (this->_generating);}
+		bool	isUploaded() {return (this->_uploaded);}
+
+		void	setGenerating(bool state) {this->_generating = state;}
+		bool	isInRange();
 
 	private:
 		void	gen();
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &height);
 		void	genMesh();
 		void	makeBuffers();
-		bool	isInRange();
+
+		std::atomic_bool		_generated;
+		std::atomic_bool		_generating;
+		std::atomic_bool		_uploaded;
 
 		unsigned int			_EBO = 0;
 		unsigned int			_VAO = 0;

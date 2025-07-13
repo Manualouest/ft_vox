@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/12 18:30:41 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 12:07:28 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ enum QTBranch
 	BOTTOM_RIGHT,
 	OUT_OF_BOUNDS
 };
+
 /*
 	Quad tree used to store chunks, each branch has 4 branches under it,
 		if a branch reaches a size of 32 it will transform into a Leaf (Chunk).
@@ -55,10 +56,7 @@ class	Quadtree
 			this->_size = size;
 
 			if (this->_size == glm::ivec2(32))
-			{
-				this->_leaf = new Chunk(glm::ivec3(_pos.x, 0, _pos.y), true);
-				CHUNK_GENERATOR->deposit(this->_leaf);
-			}
+				this->_leaf = new Chunk(glm::ivec3(_pos.x, 0, _pos.y));
 		}
 		~Quadtree()
 		{
@@ -82,8 +80,8 @@ class	Quadtree
 
 			glm::ivec2	childPos(_pos);
 
-			bool	isTop = targetPos.y >= _pos.y + _size.y / 2;
-			bool	isRight = !(targetPos.x < _pos.x + _size.x / 2);
+			bool	isTop = targetPos.x >= _pos.x + _size.x / 2;
+			bool	isRight = !(targetPos.y < _pos.y + _size.y / 2);
 
 			childPos.x += isTop * (_size.x / 2);
 			childPos.y += isRight * (_size.y / 2);
@@ -102,7 +100,7 @@ class	Quadtree
 			Goes through branches until it can find a leaf on the given position without creating new branches.
 			If it cant find a leaf, NULL will be returned.
 		
-			#param targetPos World position of a block inside the wanted leaf (chunk)
+			@param targetPos World position of a block inside the wanted leaf (chunk)
 		*/
 		Chunk	*getLeaf(const glm::ivec2 &targetPos)
 		{
@@ -140,20 +138,29 @@ class	Quadtree
 		*/
 		void	pruneDeadLeaves() //shouldBranchDie
 		{
-			if (isLeaf() && !_leaf->rendered && _leaf->uploaded)
-				_leaf->clear();
-
-			if (_branches[QTBranch::TOP_LEFT] != NULL)
-				_branches[QTBranch::TOP_LEFT]->pruneDeadLeaves();
-
-			if (_branches[QTBranch::TOP_RIGHT] != NULL)
-				_branches[QTBranch::TOP_RIGHT]->pruneDeadLeaves();
-
-			if (_branches[QTBranch::BOTTOM_LEFT] != NULL)
-				_branches[QTBranch::BOTTOM_LEFT]->pruneDeadLeaves();
-
-			if (_branches[QTBranch::BOTTOM_RIGHT] != NULL)
-				_branches[QTBranch::BOTTOM_RIGHT]->pruneDeadLeaves();
+			pruneBranch(QTBranch::TOP_LEFT);
+			pruneBranch(QTBranch::TOP_RIGHT);
+			pruneBranch(QTBranch::BOTTOM_LEFT);
+			pruneBranch(QTBranch::BOTTOM_RIGHT);
+		}
+		void	pruneBranch(QTBranch quadrant)
+		{
+			Quadtree	*branch = _branches[quadrant];
+			if (branch != NULL)
+			{
+				if (branch->isLeaf())
+					if (branch->_leaf->isUploaded() && branch->_leaf->isGenerated()
+						&& !branch->_leaf->isGenerating()
+						&& !branch->_leaf->rendered)
+					{
+						delete branch;
+						_branches[quadrant] = NULL;
+					}
+					else
+						return ;
+				else
+					branch->pruneDeadLeaves();
+			}
 		}
 		glm::vec2	getSize() const {return (this->_size);}
 		glm::vec2	getPos() const {return (this->_pos);}
@@ -162,8 +169,8 @@ class	Quadtree
 		//Returns branch quadrant in wich pos is. (OUT_OF_BOUNDS can be returned but will never happen) @param pos target position of branch
 		QTBranch	_getQuadrant(const glm::vec2 &pos) const
 		{
-			bool	isLeft = pos.x < _pos.x + _size.x / 2;
-			bool	isTop = pos.y >= _pos.y + _size.y / 2;
+			bool	isLeft = pos.y < _pos.y + _size.y / 2;
+			bool	isTop = pos.x >= _pos.x + _size.x / 2;
 			bool	isRight = !isLeft;
 			bool	isBottom = !isTop;
 
@@ -177,7 +184,6 @@ class	Quadtree
 				return (QTBranch::BOTTOM_RIGHT);
 			else
 				return (QTBranch::OUT_OF_BOUNDS);
-
 		}
 		glm::ivec2				_size;
 		glm::ivec2				_pos;

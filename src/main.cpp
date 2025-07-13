@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/12 18:36:18 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 11:56:57 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,6 +146,7 @@ void    drawUI()
     static std::string    fps = "0 fps";
     std::string            cameraPos = "xyz " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);
     std::string            threadUsage = "used threads: " + std::to_string(GENERATION_THREAD_COUNT - CHUNK_GENERATOR->getAvailableThreads());
+    std::string            waitingChunks = "waiting chunks: " + std::to_string(CHUNK_GENERATOR->getWaitingChunks());
 
     if (frame++ >= currentFPS / 10)
     {
@@ -164,6 +165,10 @@ void    drawUI()
     glm::vec2(0, 30),
     glm::vec2(threadUsage.length() * 15, 15));
         
+	FONT->putString(waitingChunks, *SHADER_MANAGER->get("text"),
+    glm::vec2(0, 45),
+    glm::vec2(waitingChunks.length() * 15, 15));
+
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -217,7 +222,7 @@ void	frame_key_hook(Window &window)
 	float	speedBoost = 1.0f;
 
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-		speedBoost = 10.0f;
+		speedBoost = 25.0f;
 	
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_W) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos + CAMERA->front * (cameraSpeed * speedBoost);
@@ -342,6 +347,10 @@ int	main(void)
 
 		consoleLog("Starting rendering...", NORMAL);
 
+		CAMERA->yaw = 95;
+		CAMERA->pitch = -20;
+		CAMERA->pos = {0, 100, 0};
+
 		while (WINDOW->up())
 		{
 			WINDOW->loopStart();
@@ -352,7 +361,7 @@ int	main(void)
 			CHUNKS->getQuadTree()->pruneDeadLeaves();
 
 			render();
-			
+
 			FrameBuffer::reset();
 
 			updatePostShader(SHADER_MANAGER);

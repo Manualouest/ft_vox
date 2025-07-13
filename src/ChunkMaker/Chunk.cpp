@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/12 18:59:44 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 12:12:15 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,7 @@ float perlin(float x, float y) {
 
 float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
 {
-	float	freq = 0.05 / 32;
+	float	freq = 0.005 / 32;
 	float	amp = 2;
 
 	float	ret = 0;
@@ -106,10 +106,8 @@ float	getFakeNoise(glm::vec2 pos) //! //////////////////////////////////////////
 	return (ret * 255);
 }
 
-Chunk::Chunk(const glm::vec3 &nPos, bool)
+Chunk::Chunk(const glm::vec3 &nPos) : _generated(false), _generating(false), _uploaded(false)
 {
-	generated = false;
-	uploaded = false;
 	_model = glm::mat4(1);
 	_minHeight = 255;
 	_maxHeight = 0;
@@ -121,19 +119,19 @@ Chunk::Chunk(const glm::vec3 &nPos, bool)
 
 void	Chunk::generate()
 {
-	if (generated)
+	if (_generated)
 		return ;
 	_chunkTop.reserve(1024);
 	gen();
 	genMesh();
 	_indicesSize = _indices.size();
-	generated = true;
+	_generated = true;
 }
 
 void	Chunk::upload()
 {
 	makeBuffers();
-	uploaded = true;
+	_uploaded = true;
 }
 
 Chunk::~Chunk()
@@ -150,6 +148,10 @@ Chunk::~Chunk()
 		glDeleteBuffers(1, &_VBO);
 	if (_VAO)
 		glDeleteVertexArrays(1, &_VAO);
+	groundData.clear();
+	waterData.clear();
+	_vertices.clear();
+	_indices.clear();
 }
 
 float	Chunk::getDistance() const
@@ -189,7 +191,7 @@ void	Chunk::clear()
 		glDeleteBuffers(1, &_VBO);
 	if (_VAO)
 		glDeleteVertexArrays(1, &_VAO);
-	uploaded = false;
+	_uploaded = false;
 }
 
 void	Chunk::makeBuffers()
@@ -350,9 +352,11 @@ extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 void	Chunk::draw(Shader &shader)
 {
-	if (!uploaded && generated)
+	if (!_uploaded && !_generated && !_generating)
+		CHUNK_GENERATOR->deposit(this);
+	if (!_uploaded && _generated && !_generating)
 		upload();
-	if (!generated || !uploaded)
+	if (!_generated || !_uploaded || _generating)
 		return ;
 
     glEnable(GL_DEPTH_TEST);
