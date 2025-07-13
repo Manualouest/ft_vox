@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 12:12:15 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 14:32:09 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,8 +84,8 @@ float perlin(float x, float y) {
 
 float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
 {
-	float	freq = 0.005 / 32;
-	float	amp = 2;
+	float	freq = 0.1 / 32;
+	float	amp = 4;
 
 	float	ret = 0;
 
@@ -125,7 +125,7 @@ void	Chunk::generate()
 	gen();
 	genMesh();
 	_indicesSize = _indices.size();
-	_generated = true;
+	_generated.store(true);
 }
 
 void	Chunk::upload()

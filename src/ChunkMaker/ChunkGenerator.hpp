@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/11 20:01:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 12:17:59 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 14:47:47 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ class	ChunkGenerator
 		}
 		void	stop()
 		{
-			_running = false;
+			_running.store(false);
 		}
 		void	deposit(Chunk *chunk)
 		{
@@ -49,14 +49,14 @@ class	ChunkGenerator
 		}
 		bool	isAvailable()
 		{
-			return (this->_available);
+			return (this->_available.load());
 		}
 	private:
 		void	_generateChunks()
 		{
 			for (Chunk *chunk : _chunksToGenerate)
 			{
-				if (!_running)
+				if (!_running.load())
 					break ;
 				chunk->generate();
 				chunk->setGenerating(false);
@@ -70,7 +70,7 @@ class	ChunkGenerator
 
 			for (Chunk *chunk : _chunksDeposit)
 			{
-				if (!_running)
+				if (!_running.load())
 					break ;
 				_chunksToGenerate.push_back(chunk);
 			}
@@ -80,20 +80,20 @@ class	ChunkGenerator
 		}
 		void	_waitDeposit()
 		{
-			_available = true;
-			while (_available)
+			_available.store(true);
+			while (_available.load())
 			{
+				usleep(100);
 				_depositLock.lock();
 				if (_chunksDeposit.size() > 0 || !_running)
-					_available = false;
+					_available.store(false);
 				_depositLock.unlock();
-				usleep(100);
 			}
 		}
 		void	_loop()
 		{
-			_running = true;
-			while (_running)
+			_running.store(true);
+			while (_running.load())
 			{
 				_waitDeposit();
 				_retrieveDeposit();
@@ -124,17 +124,20 @@ class	ChunkGeneratorManager
 		{
 			for (int i = 0; i < GENERATION_THREAD_COUNT; i++)
 				_generators.push_back(new ChunkGenerator);
-			_running = true;
+			_running.store(true);
 		}
 		~ChunkGeneratorManager()
 		{
-			_running = false;
+			_running.store(false);
 			_thread.join();
 			for (ChunkGenerator *generator : _generators)
 				delete generator;
 		}
 		void	deposit(Chunk *chunk)
 		{
+			if (chunk->isGenerating() || chunk->isGenerated() || chunk->isUploaded())
+				return ;
+
 			_depositLock.lock();
 
 			chunk->setGenerating(true);
@@ -175,11 +178,12 @@ class	ChunkGeneratorManager
 	private:
 		void	_loop()
 		{
-			while (!_running)
+			while (!_running.load())
 				;
-			while (_running)
+			while (_running.load())
 			{
 				dispatch();
+				usleep(100);
 			}
 		}
 		//Add a whole vector to the generation queue
@@ -192,7 +196,7 @@ class	ChunkGeneratorManager
 					return ;
 				}
 		}
-		void	_deposit(Chunk * chunk)
+		void	_deposit(Chunk *chunk)
 		{
 			for (ChunkGenerator *generator : _generators)
 				if (generator->isAvailable())

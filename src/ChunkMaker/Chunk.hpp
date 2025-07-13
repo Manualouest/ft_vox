@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 12:03:49 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 14:30:42 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,8 +47,10 @@ class Chunk
 		bool	isGenerating() {return (this->_generating);}
 		bool	isUploaded() {return (this->_uploaded);}
 
-		void	setGenerating(bool state) {this->_generating = state;}
+		void	setGenerating(bool state) {this->_generating.store(state);}
 		bool	isInRange();
+
+		std::thread::id	_lastThreadID;
 
 	private:
 		void	gen();

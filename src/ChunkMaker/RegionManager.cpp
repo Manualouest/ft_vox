@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 10:28:54 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/13 14:42:52 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,11 @@ void	RegionManager::UpdateChunks()
 			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (leftDir * 16.0f * ii));
-				chunk->rendered = true;
-				_renderChunks.push_back(chunk);
+				if (chunk)
+				{
+					chunk->rendered = true;
+					_renderChunks.push_back(chunk);
+				}
 			}
 			chunk = _QT->getLeaf(pos + tmpDirPos + (rightDir * 16.0f * ii));
 			if (chunk != NULL)
@@ -65,8 +68,11 @@ void	RegionManager::UpdateChunks()
 			else if (ChunkAmount-- > 0)
 			{
 				chunk = _QT->growBranch(pos + tmpDirPos + (rightDir * 16.0f * ii));
-				chunk->rendered = true;
-				_renderChunks.push_back(chunk);
+				if (chunk)
+				{
+					chunk->rendered = true;
+					_renderChunks.push_back(chunk);
+				}
 			}
 		}
 		chunk = _QT->getLeaf(pos + tmpDirPos);
@@ -78,8 +84,11 @@ void	RegionManager::UpdateChunks()
 		else if (ChunkAmount-- > 0)
 		{
 			chunk = _QT->growBranch(pos + tmpDirPos);
-			chunk->rendered = true;
-			_renderChunks.push_back(chunk);
+			if (chunk)
+			{
+				chunk->rendered = true;
+				_renderChunks.push_back(chunk);
+			}
 		}
 	}
 }
