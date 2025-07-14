@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 21:40:06 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:02:29 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -223,7 +223,7 @@ void	frame_key_hook(Window &window)
 
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 		speedBoost = 20.0f;
-	
+
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_W) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos + CAMERA->front * (cameraSpeed * speedBoost);
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_S) == GLFW_PRESS)
@@ -232,7 +232,6 @@ void	frame_key_hook(Window &window)
 		CAMERA->pos = CAMERA->pos + CAMERA->worldUp * (cameraSpeed * speedBoost);
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos - CAMERA->worldUp * (cameraSpeed * speedBoost);
-		
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_A) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos - glm::normalize(glm::cross(CAMERA->front, CAMERA->worldUp)) * (cameraSpeed * speedBoost);
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_D) == GLFW_PRESS)
@@ -264,6 +263,32 @@ void	move_mouse_hook(GLFWwindow* window, double xpos, double ypos)
 		CAMERA->pitch = 89.0f;
 	if(CAMERA->pitch < -89.0f)
 		CAMERA->pitch = -89.0f;
+}
+
+void	mouseBtnCallback(GLFWwindow* window, int button, int action, int mods)
+{
+	(void)window;
+	(void)mods;
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		std::cout << "" << std::endl;
+		// glm::vec3	rayPos = CAMERA->pos;
+
+		// glm::vec3	dds = glm::abs(CAMERA->front);
+		
+
+
+		// std::cout << "Ray started at: " << rayPos.x << "; " << rayPos.y << "; " << rayPos.z << "; " << std::endl;
+		// int			depth = 5;
+		// while (depth > 0 && rayPos.y > 0 && rayPos.y < 256)
+		// {
+			
+
+		// 	--depth;
+		// 	std::cout << "	Ray passed by: " << rayPos.x << "; " << rayPos.y << "; " << rayPos.z << "; " << std::endl;
+		// }
+		// std::cout << "	Ray endend at: " << rayPos.x << "; " << rayPos.y << "; " << rayPos.z << "; " << std::endl;
+	}
 }
 
 /*

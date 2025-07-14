@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:11:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 21:26:54 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 10:41:51 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ static void resize_hook(GLFWwindow* window, int width, int height)
 void	key_hook(GLFWwindow *window, int key, int scancode, int action, int mods);
 void	keyboard_input(GLFWwindow *window, unsigned int key);
 void	move_mouse_hook(GLFWwindow* window, double xpos, double ypos);
+void	mouseBtnCallback(GLFWwindow* window, int button, int action, int mods);
 
 Window::Window() : _lastFrame(0)
 {
@@ -40,12 +41,12 @@ Window::Window() : _lastFrame(0)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Creates and opens window
-	GLFWmonitor	*monitor = glfwGetPrimaryMonitor();
-	const GLFWvidmode	*monitorInfos = glfwGetVideoMode(monitor);
-	SCREEN_HEIGHT = monitorInfos->height;
-	SCREEN_WIDTH = monitorInfos->width;
-	_windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, monitor, NULL);
-	// _windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, NULL, NULL);
+	// GLFWmonitor	*monitor = glfwGetPrimaryMonitor();
+	// const GLFWvidmode	*monitorInfos = glfwGetVideoMode(monitor);
+	// SCREEN_HEIGHT = monitorInfos->height;
+	// SCREEN_WIDTH = monitorInfos->width;
+	// _windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, monitor, NULL);
+	_windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, NULL, NULL);
 	if (!_windowData)
 	{
 		glfwTerminate();
@@ -64,6 +65,7 @@ Window::Window() : _lastFrame(0)
 	glfwSetKeyCallback(_windowData, key_hook);
 	glfwSetInputMode(this->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(this->getWindowData(), move_mouse_hook);
+	glfwSetMouseButtonCallback(this->getWindowData(), mouseBtnCallback);
 
 	glClearColor(0.6, 0.8, 1.0, 1.0f);
 	glEnable(GL_DEPTH_TEST);

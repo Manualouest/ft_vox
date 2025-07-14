@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 20:54:38 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 21:24:32 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 07:54:41 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ void	Camera::update()
 	this->direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 	this->direction.y = sin(glm::radians(pitch));
 	this->direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	frontFlat = glm::normalize(glm::vec3(cos(glm::radians(yaw)) * cos(glm::radians(pitch)), 0, sin(glm::radians(yaw)) * cos(glm::radians(pitch))));
 	front = glm::normalize(direction);
 	right = glm::normalize(glm::cross(front, worldUp));
 	up = glm::normalize(glm::cross(right, front));

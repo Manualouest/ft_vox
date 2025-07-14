@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 21:07:26 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 08:19:47 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,9 @@ class Chunk
 
 		void	setGenerating(bool state) {this->_generating.store(state);}
 		bool	isInRange();
+
+		bool	isOnBlock(glm::vec3 pos);
+		float	distToBlock(glm::vec3 pos);
 
 		std::thread::id	_lastThreadID;
 

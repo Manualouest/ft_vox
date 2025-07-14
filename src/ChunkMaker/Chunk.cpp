@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 21:07:45 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:02:04 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -251,6 +251,8 @@ void	Chunk::genMesh()
 
 			for (int iii = 0; iii < 32; ++iii)
 			{
+				if (_chunkTop[ii * 32 + iii] == i)
+					std::cout << "hey i'm top: " << iii << "; " <<  i << "; " <<  ii << "; " <<  _chunkTop[ii * 32 + iii] << std::endl;
 				if ((westFaces >> iii) & 1)
 					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
 				if ((eastFaces >> iii) & 1)
@@ -368,4 +370,31 @@ void	Chunk::draw(Shader &shader)
 
 	glBindVertexArray(0);
     glDisable(GL_DEPTH_TEST);
+}
+
+#include <bitset>
+
+bool	Chunk::isOnBlock(glm::vec3 targetPos)
+{
+	if (targetPos.y > 256 || targetPos.y < 0)
+		return (false);
+	std::unordered_map<int, char32_t>::iterator	slice = groundData.find(int(targetPos.y) * 32 + (int(targetPos.z) % 32));
+	if (slice == groundData.end())
+		return (false);
+	return ((slice->second >> (int(targetPos.x) % 32)) & 1);
+}
+
+float	Chunk::distToBlock(glm::vec3 targetPos)
+{
+	if (targetPos.y < 0)
+		return (-1);
+	int	i = 0;
+	int	y = targetPos.y;
+	std::unordered_map<int, char32_t>::iterator	slice = groundData.find(y * 32 + (int(targetPos.z) % 32));
+	while (slice == groundData.end() || !((slice->second >> (int(targetPos.x) % 32)) & 1))
+	{
+		slice = groundData.find(--y * 32 + (int(targetPos.z) % 32));
+		++i;
+	}
+	return (i + (targetPos.y - std::floor(targetPos.y)));
 }
