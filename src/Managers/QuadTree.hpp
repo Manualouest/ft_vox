@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   QuadTree.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 09:23:45 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/14 15:28:27 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -273,7 +273,8 @@ class	Quadtree
 				if (branch->isLeaf())
 					if (branch->_leaf->isUploaded() && branch->_leaf->isGenerated()
 						&& !branch->_leaf->isGenerating()
-						&& !branch->_leaf->rendered)
+						&& !branch->_leaf->rendered
+						&& !branch->_leaf->_edited)
 					{
 						if (branch->_leaf->getDistance() > RENDER_DISTANCE)
 						{

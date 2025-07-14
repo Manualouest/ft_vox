@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 13:09:53 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 18:10:19 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -278,23 +278,49 @@ void	mouseBtnCallback(GLFWwindow* window, int button, int action, int mods)
 	(void)mods;
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		std::cout << "" << std::endl;
-		// glm::vec3	rayPos = CAMERA->pos;
+		glm::vec3	rayDir = CAMERA->front;
+		glm::vec3	rayPos = CAMERA->pos;
+		glm::ivec3	mapPos = CAMERA->pos;
+		glm::vec3	deltaDist = glm::abs(glm::vec3(glm::length(rayDir)) / rayDir);
+		glm::ivec3	rayStep = glm::ivec3(glm::sign(rayDir));
+		glm::vec3	sideDist = (sign(rayDir) * (glm::vec3(mapPos) - rayPos) + (glm::sign(rayDir) * 0.5f) + 0.5f) * deltaDist;
+	
+		std::cout << "ray started at: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
 
-		// glm::vec3	dds = glm::abs(CAMERA->front);
-		
-
-
-		// std::cout << "Ray started at: " << rayPos.x << "; " << rayPos.y << "; " << rayPos.z << "; " << std::endl;
-		// int			depth = 5;
-		// while (depth > 0 && rayPos.y > 0 && rayPos.y < 256)
-		// {
-			
-
-		// 	--depth;
-		// 	std::cout << "	Ray passed by: " << rayPos.x << "; " << rayPos.y << "; " << rayPos.z << "; " << std::endl;
-		// }
-		// std::cout << "	Ray endend at: " << rayPos.x << "; " << rayPos.y << "; " << rayPos.z << "; " << std::endl;
+		int	MAX_RAY_STEPS = 8;
+		for (int i = 0; i < MAX_RAY_STEPS; ++i)
+		{
+			if (sideDist.x < sideDist.y) {
+				if (sideDist.x < sideDist.z)
+				{
+					sideDist.x += deltaDist.x;
+					mapPos.x += rayStep.x;
+				}
+				else
+				{
+					sideDist.z += deltaDist.z;
+					mapPos.z += rayStep.z;
+				}
+			}
+			else
+			{
+				if (sideDist.y < sideDist.z)
+				{
+					sideDist.y += deltaDist.y;
+					mapPos.y += rayStep.y;
+				}
+				else
+				{
+					sideDist.z += deltaDist.z;
+					mapPos.z += rayStep.z;
+				}
+			}
+			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+			if (chunk && chunk->removeBlock(mapPos))
+				break;
+			std::cout << "	ray passed by: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
+		}
+		std::cout << "		ray finished at: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
 	}
 }
 

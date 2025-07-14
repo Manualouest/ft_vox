@@ -6,11 +6,17 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 13:10:29 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 21:02:50 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Chunk.hpp"
+#include "RegionManager.hpp"
+extern RegionManager	*CHUNKS;
+
+
+#include <bitset>
+
 
 glm::vec2 randomGradient(int ix, int iy)
 {
@@ -132,7 +138,7 @@ float getFakeNoise(glm::vec2 pos)
 	return (glm::clamp(res, 0, 255));
 }
 
-Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _generated(false), _generating(false), _uploaded(false)
+Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _edited(false), _generated(false), _generating(false), _uploaded(false)
 {
 	_model = glm::mat4(1);
 	_minHeight = 255;
@@ -200,17 +206,6 @@ char32_t	culling(const char32_t &slice, const bool &dir, const int &edge)
 		return (slice & ~((slice >> 1) | (edge << 31))); // left faces
 }
 
-void	Chunk::getRotSlice(std::vector<char32_t> &rotSlice, const int &height)
-{
-	char32_t slice;
-	for (int i = 0; i < 32; ++i)
-	{
-		slice = groundData.find((height + i))->second;
-		for (int ii = 0; ii < 32; ++ii)
-			rotSlice[ii] = rotSlice[ii] << 1 | (((slice >> (31 - ii)) & 1));
-	}
-}
-
 void	Chunk::clear()
 {
 	if (_EBO)
@@ -256,85 +251,142 @@ void	addVertices(float type, std::vector<float> &vertices, std::vector<int> &_in
 	_indices.insert(_indices.end(), {vertLen - 3, vertLen - 1, vertLen - 2, vertLen - 3, vertLen - 0, vertLen - 1});
 }
 
-struct	Block
+void	Chunk::checkSurround(const glm::ivec3 &chunkPos, const Block &block, const char32_t &slice, const char32_t &rotSlice, const char32_t &up, const char32_t &down)
 {
-	Block(int blockID)
+	Chunk	*chunk;
+
+	if ((slice >> (chunkPos.x)) & 1)
 	{
-		northFace = blockID;
-		southFace = blockID;
-		eastFace = blockID;
-		westFace = blockID;
-		topFace = blockID;
-		bottomFace = blockID;
+		if (chunkPos.x != 31 && !((slice >> (chunkPos.x + 1)) & 1))
+			addVertices(block.eastFace, _vertices, _indices, {1 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {1 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {1, 0, 0});
+		if (chunkPos.x != 0 && !((slice >> (chunkPos.x - 1)) & 1))
+			addVertices(block.westFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {-1, 0, 0});
 	}
-	Block(int northID, int southID, int eastID, int westID, int topID, int bottomID)
+	if (chunkPos.x < 31 && chunkPos.x > 0 && (rotSlice >> (chunkPos.x)) & 1)
 	{
-		northFace = northID;
-		southFace = southID;
-		eastFace = eastID;
-		westFace = westID;
-		topFace = topID;
-		bottomFace = bottomID;
+		if (!((rotSlice >> (chunkPos.x + 1)) & 1))
+			addVertices(block.southFace, _vertices, _indices, {0 + (31 - chunkPos.z), 1 + chunkPos.y, 0 + (31 - chunkPos.x)}, {1 + (31 - chunkPos.z), 1 + chunkPos.y, 0 + (31 - chunkPos.x)}, {0 + (31 - chunkPos.z), 0 + chunkPos.y, 0 + (31 - chunkPos.x)}, {1 + (31 - chunkPos.z), 0 + chunkPos.y, 0 + (31 - chunkPos.x)}, {0, 0, -1});
+		if (!((rotSlice >> (chunkPos.x - 1)) & 1))
+			addVertices(block.northFace, _vertices, _indices, {1 + (31 - chunkPos.z), 1 + chunkPos.y, 1 + (31 - chunkPos.x)}, {0 + (31 - chunkPos.z), 1 + chunkPos.y, 1 + (31 - chunkPos.x)}, {1 + (31 - chunkPos.z), 0 + chunkPos.y, 1 + (31 - chunkPos.x)}, {0 + (31 - chunkPos.z), 0 + chunkPos.y, 1 + (31 - chunkPos.x)}, {0, 0, 1});
 	}
-	int	northFace;
-	int	southFace;
-	int	eastFace;
-	int	westFace;
-	int	topFace;
-	int	bottomFace;
-};
+
+
+	if (chunkPos.x == 0 && ((slice >> (chunkPos.x)) & 1))
+	{
+		chunk = CHUNKS->getQuadTree()->getLeaf({pos.x - 32, pos.z + 1});
+		if (chunk && !chunk->isOnBlock(chunkPos))
+			addVertices(block.westFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {-1, 0, 0});
+		// if (int(getFakeNoise(glm::vec2{pos.x - 1, pos.z + chunkPos.z})) < chunkPos.y)
+		// 	addVertices(block.westFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {-1, 0, 0});
+	}
+
+
+	if ((slice >> (chunkPos.x)) & 1)
+	{
+		if (!((up >> (chunkPos.x)) & 1))
+			addVertices(block.topFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0, 1, 0});
+	}
+	if (chunkPos.y > 0 && (slice >> (chunkPos.x)) & 1)
+	{
+		if (!((down >> (chunkPos.x)) & 1))
+			addVertices(block.topFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0, 1, 0});
+	}
+}
+
+
+void	Chunk::getRotSlice(std::vector<char32_t> &rotSlice, const int &height)
+{
+	char32_t slice;
+	for (int i = 0; i < 32; ++i)
+	{
+		slice = groundData.find((height + i))->second;
+		for (int ii = 0; ii < 32; ++ii)
+			rotSlice[ii] = rotSlice[ii] << 1 | (((slice >> (31 - ii)) & 1));
+	}
+}
 
 void	Chunk::genMesh()
 {
-	char32_t				chunkSlice;
+	char32_t				slice;
+	std::unordered_map<int, char32_t>::iterator chunkSlice;
 	std::vector<char32_t>	rotSlices;
 	rotSlices.reserve(32);
 
+	// if (pos.x != 0 || pos.y != 0)
+	// 	return ;
+
 	// Gen mesh for ground
-	for (int i = 0; i <= _maxHeight; ++i)
+	for (int y = 0; y <= _maxHeight; ++y)
 	{
 		rotSlices.clear();
-		getRotSlice(rotSlices, i * 32);
-		for (int ii = 0; ii < 32; ++ii)
+		getRotSlice(rotSlices, y * 32);
+
+
+		// std::bitset<32>	b(0);
+		// std::cout << "normal:" << std::endl;
+		// for (int i = 0; i < 32; ++i)
+		// {
+		// 	std::unordered_map<int, char32_t>::iterator slice = groundData.find(y * 32 + i);
+		// 	b = 0;
+		// 	if (slice != groundData.end())
+		// 		b = slice->second;
+		// 	std::cout << "	" << b << std::endl;
+		// }
+		// std::cout << "rot:" << std::endl;
+		// for (int i = 0; i < 32; ++i)
+		// {
+		// 	b = rotSlices[i];
+		// 	std::cout << "	" << b << std::endl;
+		// }
+
+
+		for (int z = 0; z < 32; ++z)
 		{
-			chunkSlice = groundData.find((i * 32 + ii))->second;
-			if (!chunkSlice && !rotSlices[ii])
+			Block	block(1);
+			if (1 + y < 86 && 1 + y > 64)
+				block = Block(4, 4, 4, 4, 3, 2);
+			else if (1 + y < 65)
+				block = Block(5);
+			else
+				block = Block(1);
+
+			slice = groundData.find((y * 32 + z))->second;
+			if (!slice && !rotSlices[z])
 				continue;
-			char32_t westFaces = culling(chunkSlice, true, int(getFakeNoise(glm::vec2{pos.x - 1, pos.z + ii})) >= i);
-			char32_t eastFaces = culling(chunkSlice, false, int(getFakeNoise(glm::vec2{pos.x + 32, pos.z + ii})) >= i);
-			char32_t northFaces = culling(rotSlices[ii], true, int(getFakeNoise(glm::vec2{pos.x + (31 - ii), pos.z + 32})) >= i);
-			char32_t southFaces = culling(rotSlices[ii], false, int(getFakeNoise(glm::vec2{pos.x + (31 - ii), pos.z - 1})) >= i);
+			// char32_t westFaces = culling(slice, true, int(getFakeNoise(glm::vec2{pos.x - 1, pos.z + z})) >= y);
+			// char32_t eastFaces = culling(slice, false, int(getFakeNoise(glm::vec2{pos.x + 32, pos.z + z})) >= y);
+			// char32_t northFaces = culling(rotSlices[z], true, int(getFakeNoise(glm::vec2{pos.x + (31 - z), pos.z + 32})) >= y);
+			// char32_t southFaces = culling(rotSlices[z], false, int(getFakeNoise(glm::vec2{pos.x + (31 - z), pos.z - 1})) >= y);
 
-			for (int iii = 0; iii < 32; ++iii)
+			for (int x = 0; x < 32; ++x)
 			{
+				chunkSlice = groundData.find(((y + 1) * 32 + z));
+				char32_t	up = 0;
+				if (chunkSlice != groundData.end())
+					up = chunkSlice->second;
 
+				chunkSlice = groundData.find(((y - 1) * 32 + z));
+				char32_t	down = 0;
+				if (chunkSlice != groundData.end())
+					down = chunkSlice->second;
 				
-				Block	block(1);
-				if (1 + i < 86 && 1 + i > 64)
-					block = Block(4, 4, 4, 4, 3, 2);
-				else if (1 + i < 65)
-					block = Block(5);
-				else
-					block = Block(1);
-				if (_chunkTop[ii * 32 + iii] == i)
-					block = Block(3);
-
-					
-				if ((westFaces >> iii) & 1)
-					addVertices(block.westFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
-				if ((eastFaces >> iii) & 1)
-					addVertices(block.eastFace, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii}, {1, 0, 0});
-				if ((northFaces >> iii) & 1)
-					addVertices(block.northFace, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0, 0, 1});
-				if ((southFaces >> iii) & 1)
-					addVertices(block.southFace, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)}, {0, 0, -1});
-				if ((chunkSlice >> iii) & 1 && 
-					((groundData.find(((i + 1) * 32 + ii)) != groundData.end() && !((groundData.find(((i + 1) * 32 + ii))->second >> iii) & 1))
-						|| groundData.find(((i + 1) * 32 + ii)) == groundData.end()))
-					addVertices(block.topFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii}, {0, 1, 0});
+				checkSurround({x, y, z}, block, slice, rotSlices[z], up, down);
+				// if ((westFaces >> x) & 1)
+				// 	addVertices(block.westFace, _vertices, _indices, {0 + x, 1 + y, 1 + z}, {0 + x, 1 + y, 0 + z}, {0 + x, 0 + y, 1 + z}, {0 + x, 0 + y, 0 + z}, {-1, 0, 0});
+				// if ((eastFaces >> x) & 1)
+				// 	addVertices(block.eastFace, _vertices, _indices, {1 + x, 1 + y, 0 + z}, {1 + x, 1 + y, 1 + z}, {1 + x, 0 + y, 0 + z}, {1 + x, 0 + y, 1 + z}, {1, 0, 0});
+				// if ((northFaces >> x) & 1)
+				// 	addVertices(block.northFace, _vertices, _indices, {1 + (31 - z), 1 + y, 1 + (31 - x)}, {0 + (31 - z), 1 + y, 1 + (31 - x)}, {1 + (31 - z), 0 + y, 1 + (31 - x)}, {0 + (31 - z), 0 + y, 1 + (31 - x)}, {0, 0, 1});
+				// if ((southFaces >> x) & 1)
+				// 	addVertices(block.southFace, _vertices, _indices, {0 + (31 - z), 1 + y, 0 + (31 - x)}, {1 + (31 - z), 1 + y, 0 + (31 - x)}, {0 + (31 - z), 0 + y, 0 + (31 - x)}, {1 + (31 - z), 0 + y, 0 + (31 - x)}, {0, 0, -1});
+				// if ((slice >> x) & 1 && 
+				// 	((groundData.find(((y + 1) * 32 + z)) != groundData.end() && !((groundData.find(((y + 1) * 32 + z))->second >> x) & 1))
+				// 		|| groundData.find(((y + 1) * 32 + z)) == groundData.end()))
+				// 	addVertices(block.topFace, _vertices, _indices, {0 + x, 1 + y, 1 + z}, {1 + x, 1 + y, 1 + z}, {0 + x, 1 + y, 0 + z}, {1 + x, 1 + y, 0 + z}, {0, 1, 0});
 			}
 		}
 	}
+	// exit(1);
 
 	// Gen mesh for water
 	for (int i = 0; i < 32; ++i)
@@ -439,9 +491,8 @@ void	Chunk::draw(Shader &shader)
     glDisable(GL_DEPTH_TEST);
 }
 
-#include <bitset>
 
-bool	Chunk::isOnBlock(glm::vec3 targetPos)
+bool	Chunk::isOnBlock(const glm::vec3 &targetPos)
 {
 	if (targetPos.y > 256 || targetPos.y < 0)
 		return (false);
@@ -451,17 +502,57 @@ bool	Chunk::isOnBlock(glm::vec3 targetPos)
 	return ((slice->second >> (int(targetPos.x) % 32)) & 1);
 }
 
-float	Chunk::distToBlock(glm::vec3 targetPos)
+float	Chunk::distToBlock(const glm::vec3 &targetPos)
 {
 	if (targetPos.y < 0)
 		return (-1);
 	int	i = 0;
 	int	y = targetPos.y;
 	std::unordered_map<int, char32_t>::iterator	slice = groundData.find(y * 32 + (int(targetPos.z) % 32));
-	while (slice == groundData.end() || !((slice->second >> (int(targetPos.x) % 32)) & 1))
+	while (y > 0 && (slice == groundData.end() || !((slice->second >> (int(targetPos.x) % 32)) & 1)))
 	{
 		slice = groundData.find(--y * 32 + (int(targetPos.z) % 32));
 		++i;
 	}
 	return (i + (targetPos.y - std::floor(targetPos.y)));
+}
+
+
+bool	Chunk::removeBlock(const glm::vec3 &targetPos)
+{
+	std::unordered_map<int, char32_t>::iterator	slice = groundData.find(int(targetPos.y) * 32 + (int(targetPos.z) % 32));
+	if (slice == groundData.end() || !((slice->second >> (int(targetPos.x) % 32)) & 1))
+	{
+		slice = waterData.find(int(targetPos.y) * 32 + (int(targetPos.z) % 32));
+		if (slice == waterData.end() || !((slice->second >> (int(targetPos.x) % 32)) & 1))
+			return (false);
+	}
+	std::cout << "whuuut" << std::endl;
+
+	_edited.store(true);
+
+	char32_t rawSlice = slice->second;
+
+	std::bitset<32> y(rawSlice);
+	std::cout << y << " | ";
+	std::bitset<32> x(((rawSlice << int(31 - targetPos.x)) >> int(31 - targetPos.x)) ^ ((rawSlice >> int(targetPos.x)) << int(targetPos.x)));
+	slice->second = ((rawSlice << int(31 - targetPos.x)) >> int(31 - targetPos.x)) ^ ((rawSlice >> int(targetPos.x)) << int(targetPos.x));
+	y = rawSlice;
+	std::cout << y << std::endl << x << std::endl;
+
+	if (_EBO)
+		glDeleteBuffers(1, &_EBO);
+	if (_VBO)
+		glDeleteBuffers(1, &_VBO);
+	if (_VAO)
+		glDeleteVertexArrays(1, &_VAO);
+	_vertices.clear();
+	_vertices.shrink_to_fit();
+	_indices.clear();
+	_indices.shrink_to_fit();
+
+	genMesh();
+	_generated.store(true);
+	_uploaded.store(false);
+	return (true);
 }

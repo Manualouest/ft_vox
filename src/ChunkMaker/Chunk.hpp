@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 13:10:32 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 19:40:03 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,37 @@
 # define WATER 0
 
 extern Camera	*CAMERA;
+
+
+
+struct	Block
+{
+	Block(int blockID)
+	{
+		northFace = blockID;
+		southFace = blockID;
+		eastFace = blockID;
+		westFace = blockID;
+		topFace = blockID;
+		bottomFace = blockID;
+	}
+	Block(int northID, int southID, int eastID, int westID, int topID, int bottomID)
+	{
+		northFace = northID;
+		southFace = southID;
+		eastFace = eastID;
+		westFace = westID;
+		topFace = topID;
+		bottomFace = bottomID;
+	}
+	int	northFace;
+	int	southFace;
+	int	eastFace;
+	int	westFace;
+	int	topFace;
+	int	bottomFace;
+};
+
 
 class Chunk
 {
@@ -42,6 +73,7 @@ class Chunk
 		std::unordered_map<int, char32_t>	groundData;
 		std::unordered_map<int, char32_t>	waterData;
 		std::atomic_bool					rendered;
+		std::atomic_bool					_edited;
 
 		bool	isGenerated() {return (this->_generated);}
 		bool	isGenerating() {return (this->_generating);}
@@ -50,12 +82,14 @@ class Chunk
 		void	setGenerating(bool state) {this->_generating.store(state);}
 		bool	isInRange();
 
-		bool	isOnBlock(glm::vec3 pos);
-		float	distToBlock(glm::vec3 pos);
+		bool	isOnBlock(const glm::vec3 &targetPos);
+		float	distToBlock(const glm::vec3 &targetPos);
+		bool	removeBlock(const glm::vec3 &targetPos);
 
 		std::thread::id	_lastThreadID;
 
 	private:
+		void	checkSurround(const glm::ivec3 &pos, const Block &block, const char32_t &slice, const char32_t &rotSlice, const char32_t &up, const char32_t &down);
 		void	gen();
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &height);
 		void	genMesh();

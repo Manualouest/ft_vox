@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/11 20:01:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 13:10:35 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 19:02:04 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,7 @@ class	ChunkGenerator
 		std::thread				_thread;
 };
 
-#define	GENERATION_THREAD_COUNT 16
+#define	GENERATION_THREAD_COUNT 1
 #define CHUNKS_PER_THREAD 2
 
 class	ChunkGeneratorManager
