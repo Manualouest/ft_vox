@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/11 20:01:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 09:28:00 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:10:35 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 # include "libs.hpp"
 # include "Chunk.hpp"
 # include "Window.hpp"
+
+extern Window	*WINDOW;
 
 #define LOCK const std::lock_guard<std::mutex> lock
 
@@ -69,6 +71,7 @@ class	ChunkGenerator
 			}
 			
 			_deposit.clear();
+			_deposit.shrink_to_fit();
 		}
 		std::vector<Chunk *>	_deposit;
 		std::mutex				_depositMutex;
@@ -123,6 +126,8 @@ class	ChunkGeneratorManager
 						_deposit.erase(_deposit.begin(), _deposit.begin() + sizeToAdd);
 				}
 			}
+			if (_deposit.empty())
+				_deposit.shrink_to_fit();
 		}
 		void	_loop()
 		{

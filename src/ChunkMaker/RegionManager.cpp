@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 09:25:15 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:10:39 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 RegionManager::RegionManager()
 {
 	RenderDist = 16;
-	_QT = new Quadtree(glm::vec2(0, 0), glm::vec2(16384.0f, 16384.0f));
+	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(16384.0f, 16384.0f));
 }
 
 RegionManager::~RegionManager()

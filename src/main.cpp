@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 13:02:29 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:09:53 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,8 @@ void	build(TextureManager *textures)
 	textures->load("textures/mbatty.bmp");
 	textures->load("textures/stone.bmp");
 	textures->load("textures/dirt.bmp");
+	textures->load("textures/grass.bmp");
+	textures->load("textures/grass_side.bmp");
 	consoleLog("Finished loading textures", LogSeverity::SUCCESS);
 }
 
@@ -105,7 +107,7 @@ void	build(ShaderManager *shader)
 	Shader *skyboxShader = shader->load({"skybox", SKYBOX_VERT_SHADER, SKYBOX_FRAG_SHADER});
 	Shader *waterShader = shader->load({"water", "shaders/water.vs", "shaders/water.fs"});
 	Shader *postShader = shader->load({"post", "shaders/post.vs", "shaders/post.fs"});
-	shader->load({"voxel", "shaders/voxel.vs", "shaders/voxel.fs"});
+	Shader *voxelShader = shader->load({"voxel", "shaders/voxel.vs", "shaders/voxel.fs"});
 
 	Texture::use("terrainDepthTex", 0, 1, SHADER_MANAGER->get("voxel"));
 	Texture::use("waterDepthTex", 0, 2, SHADER_MANAGER->get("voxel"));
@@ -122,6 +124,11 @@ void	build(ShaderManager *shader)
 
 	Texture::use("depthTex", 0, 0, waterShader);
 	Texture::use("waterDepthTex", 0, 1, waterShader);
+
+	voxelShader->setInt("stoneTexture", 0);
+	voxelShader->setInt("dirtTexture", 1);
+	voxelShader->setInt("grassTexture", 2);
+	voxelShader->setInt("grassSideTexture", 3);
 
 	consoleLog("Finished building shaders", LogSeverity::SUCCESS);
 }
@@ -341,9 +348,12 @@ void	render()
 	
 	MAIN_FRAME_BUFFER->use();
 	SKYBOX->draw(*CAMERA, *SHADER_MANAGER->get("skybox"));
-	TEXTURE_MANAGER->get("textures/stone.bmp")->use(0);
-	Texture::use("terrainDepthTex", DEPTH_FRAME_BUFFER->getDepthTexture(), 1, SHADER_MANAGER->get("voxel"));
-	Texture::use("waterDepthTex", WATER_DEPTH_FRAME_BUFFER->getDepthTexture(), 2, SHADER_MANAGER->get("voxel"));
+	Shader	*voxelShader = SHADER_MANAGER->get("voxel");
+	Texture::use("stoneTexture", TEXTURE_MANAGER->get("textures/stone.bmp")->getID(), 0, voxelShader);
+	Texture::use("dirtTexture", TEXTURE_MANAGER->get("textures/dirt.bmp")->getID(), 1, voxelShader);
+	Texture::use("grassTexture", TEXTURE_MANAGER->get("textures/grass.bmp")->getID(), 2, voxelShader);
+	Texture::use("grassSideTexture", TEXTURE_MANAGER->get("textures/grass_side.bmp")->getID(), 3, voxelShader);
+	Texture::use("sandTexture", TEXTURE_MANAGER->get("textures/sand.bmp")->getID(), 4, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 }
 

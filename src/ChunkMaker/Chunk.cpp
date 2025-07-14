@@ -6,104 +6,130 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 13:02:04 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:10:29 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Chunk.hpp"
 
-glm::vec2 randomGradient(int ix, int iy) {
-    // No precomputed gradients mean this works for any number of grid coordinates
+glm::vec2 randomGradient(int ix, int iy)
+{
     const unsigned w = 8 * sizeof(unsigned);
     const unsigned s = w / 2; 
     unsigned a = ix, b = iy;
     a *= 3284157443;
- 
-    b ^= a << s | a >> (w - s);
+
+	b ^= a << s | a >> (w - s);
     b *= 1911520717;
- 
-    a ^= b << s | b >> (w - s);
+
+	a ^= b << s | b >> (w - s);
     a *= 2048419325;
     float random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
-    
-    // Create the vector from the angle
-    glm::vec2 v;
+
+	glm::vec2 v;
     v.x = sin(random);
     v.y = cos(random);
- 
-    return v;
+
+	return v;
 }
- 
-// Computes the dot product of the distance and gradient vectors.
-float dotGridGradient(int ix, int iy, float x, float y) {
-    // Get gradient from integer coordinates
+
+float dotGridGradient(int ix, int iy, float x, float y)
+{
     glm::vec2 gradient = randomGradient(ix, iy);
- 
-    // Compute the distance vector
-    float dx = x - (float)ix;
+
+	float dx = x - (float)ix;
     float dy = y - (float)iy;
- 
-    // Compute the dot-product
-    return (dx * gradient.x + dy * gradient.y);
+
+	return (dx * gradient.x + dy * gradient.y);
 }
- 
+
 float interpolate(float a0, float a1, float w)
 {
     return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
- 
- 
-// Sample Perlin noise at coordinates x, y
-float perlin(float x, float y) {
-    
-    // Determine grid cell corner coordinates
+
+float perlin(float x, float y)
+{
     int x0 = (int)x; 
     int y0 = (int)y;
     int x1 = x0 + 1;
     int y1 = y0 + 1;
- 
-    // Compute Interpolation weights
+
     float sx = x - (float)x0;
     float sy = y - (float)y0;
-    
-    // Compute and interpolate top two corners
-    float n0 = dotGridGradient(x0, y0, x, y);
+
+	float n0 = dotGridGradient(x0, y0, x, y);
     float n1 = dotGridGradient(x1, y0, x, y);
     float ix0 = interpolate(n0, n1, sx);
- 
-    // Compute and interpolate bottom two corners
+
     n0 = dotGridGradient(x0, y1, x, y);
     n1 = dotGridGradient(x1, y1, x, y);
     float ix1 = interpolate(n0, n1, sx);
- 
-    // Final step: interpolate between the two previously interpolated values, now in y
+
     float value = interpolate(ix0, ix1, sy);
     
     return (value);
 }
 
-float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
+float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, float heightScale)
 {
-	float	freq = 0.1 / 32;
-	float	amp = 2;
-
-	float	ret = 0;
-
-	if (pos.x < 0 || pos.y < 0)
-		return (256);
-	
-	for (int i = 0; i < 6; i++)
+	float	res = 0;
+	for (int i = 0; i < noisiness; i++)
 	{
-		ret += perlin(pos.x * freq, pos.y * freq) * amp;
-
+		res += perlin(pos.x * freq, pos.y * freq) * amp;
+	
 		freq *= 2;
-		amp /= 2;
+		amp /= 2;	
 	}
 
-	// ret = (ret + 1) / 2;
-	ret = glm::clamp(ret, 0.0f, 1.0f);
+	if (res > 1.0f)
+		res = 1.0f;
+	else if (res < -1.0f)
+		res = -1.0f;
+		
+	res = ((res + 1.0f) * 0.5f) * heightScale;
 
-	return (ret * 255);
+	return (res);
+}
+
+#define MOUNTAINS_FREQ 0.25 / 32
+#define MOUNTAINS_AMP 1.0
+#define MOUNTAINS_NOISE 5
+
+#define PLAINS_FREQ 0.3 / 32
+#define PLAINS_AMP 0.2
+#define PLAINS_NOISE 3
+
+#define OCEAN_FREQ 0.3 / 32
+#define OCEAN_AMP 0.1
+#define OCEAN_NOISE 3
+
+struct	Biome
+{
+	float	frequency;
+	float	amplitude;
+	float	noisiness;
+	float	heightScale;
+	float	bias;
+	float	center;
+	float	range;
+};
+
+float getFakeNoise(glm::vec2 pos)
+{
+	float biomeNoise = calcNoise(pos * 0.001f, 1.0f, 1.0f, 1, 1.0f);
+	float biomeSelector = biomeNoise;
+
+	float plains = calcNoise(pos, PLAINS_FREQ, PLAINS_AMP, PLAINS_NOISE, 90.0f);
+	float hills = calcNoise(pos, MOUNTAINS_FREQ, MOUNTAINS_AMP, MOUNTAINS_NOISE, 240.0f);
+	float ocean = calcNoise(pos, OCEAN_FREQ, OCEAN_AMP, OCEAN_NOISE, 50.0f);
+
+	float plainsWeight = glm::smoothstep(0.3f, 0.5f, biomeSelector);
+	float hillsWeight = glm::smoothstep(0.5f, 0.7f, biomeSelector);
+	float oceanWeight = 1.5 - (plainsWeight + hillsWeight) / 2;
+
+	int res = ocean * oceanWeight + plains * plainsWeight + hills * hillsWeight;
+	return (glm::clamp(res, 0, 255));
 }
 
 Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _generated(false), _generating(false), _uploaded(false)
@@ -151,7 +177,9 @@ Chunk::~Chunk()
 	groundData.clear();
 	waterData.clear();
 	_vertices.clear();
+	_vertices.shrink_to_fit();
 	_indices.clear();
+	_indices.shrink_to_fit();
 }
 
 float	Chunk::getDistance() const
@@ -228,6 +256,34 @@ void	addVertices(float type, std::vector<float> &vertices, std::vector<int> &_in
 	_indices.insert(_indices.end(), {vertLen - 3, vertLen - 1, vertLen - 2, vertLen - 3, vertLen - 0, vertLen - 1});
 }
 
+struct	Block
+{
+	Block(int blockID)
+	{
+		northFace = blockID;
+		southFace = blockID;
+		eastFace = blockID;
+		westFace = blockID;
+		topFace = blockID;
+		bottomFace = blockID;
+	}
+	Block(int northID, int southID, int eastID, int westID, int topID, int bottomID)
+	{
+		northFace = northID;
+		southFace = southID;
+		eastFace = eastID;
+		westFace = westID;
+		topFace = topID;
+		bottomFace = bottomID;
+	}
+	int	northFace;
+	int	southFace;
+	int	eastFace;
+	int	westFace;
+	int	topFace;
+	int	bottomFace;
+};
+
 void	Chunk::genMesh()
 {
 	char32_t				chunkSlice;
@@ -251,20 +307,31 @@ void	Chunk::genMesh()
 
 			for (int iii = 0; iii < 32; ++iii)
 			{
+
+				
+				Block	block(1);
+				if (1 + i < 86 && 1 + i > 64)
+					block = Block(4, 4, 4, 4, 3, 2);
+				else if (1 + i < 65)
+					block = Block(5);
+				else
+					block = Block(1);
 				if (_chunkTop[ii * 32 + iii] == i)
-					std::cout << "hey i'm top: " << iii << "; " <<  i << "; " <<  ii << "; " <<  _chunkTop[ii * 32 + iii] << std::endl;
+					block = Block(3);
+
+					
 				if ((westFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
+					addVertices(block.westFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
 				if ((eastFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii}, {1, 0, 0});
+					addVertices(block.eastFace, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii}, {1, 0, 0});
 				if ((northFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0, 0, 1});
+					addVertices(block.northFace, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0, 0, 1});
 				if ((southFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)}, {0, 0, -1});
+					addVertices(block.southFace, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)}, {0, 0, -1});
 				if ((chunkSlice >> iii) & 1 && 
 					((groundData.find(((i + 1) * 32 + ii)) != groundData.end() && !((groundData.find(((i + 1) * 32 + ii))->second >> iii) & 1))
 						|| groundData.find(((i + 1) * 32 + ii)) == groundData.end()))
-					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii}, {0, 1, 0});
+					addVertices(block.topFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii}, {0, 1, 0});
 			}
 		}
 	}

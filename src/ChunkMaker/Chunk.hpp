@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 08:19:47 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:10:32 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,9 @@
 # include "Camera.hpp"
 
 # define LINELEN 9
-# define WATERLINE 21
-# define GROUND 0
-# define WATER 1
+# define WATERLINE 63
+# define GROUND 1
+# define WATER 0
 
 extern Camera	*CAMERA;
 
