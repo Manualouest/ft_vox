@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   QuadTree.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 21:02:48 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 09:23:45 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,10 +115,11 @@ class	Quadtree
 			@param pos Bottom left position
 			@param size Size from bottom left position
 		*/
-		Quadtree(const glm::ivec2 &pos, const glm::ivec2 &size)
+		Quadtree(const glm::ivec2 &pos, QTBranch quadrant, const glm::ivec2 &size)
 		{
 			this->_pos = pos;
 			this->_size = size;
+			this->_quadrantInRoot = quadrant;
 
 			if (this->_size == glm::ivec2(32))
 				this->_leaf = new Chunk(glm::ivec3(_pos.x, 0, _pos.y));
@@ -126,7 +127,8 @@ class	Quadtree
 		~Quadtree()
 		{
 			for (auto *branch : _branches)
-				delete branch;
+				if (branch)
+					delete branch;
 			if (_leaf)
 				delete _leaf;
 		}
@@ -154,7 +156,7 @@ class	Quadtree
 			if (quadrant != QTBranch::OUT_OF_BOUNDS)
 			{
 				if (_branches[quadrant] == NULL)
-					_branches[quadrant] = new Quadtree(childPos, _size / 2);
+					_branches[quadrant] = new Quadtree(childPos, quadrant, _size / 2);
 				if (!_branches[quadrant]->isInBounds(targetPos))
 					return (NULL);
 				return (_branches[quadrant]->growBranch(targetPos));
@@ -214,7 +216,7 @@ class	Quadtree
 					if (AABB.isOnFrustum(camFrustum, glm::vec3(npos.x, 0, npos.y)))
 					{
 						if (!_branches[i])
-							_branches[i] = new Quadtree(npos, _size / 2);
+							_branches[i] = new Quadtree(npos, (QTBranch)i, _size / 2);
 						_branches[i]->getVisibleChunks(chunks, camFrustum, AABB);
 					}
 				}
@@ -245,7 +247,7 @@ class	Quadtree
 			return (NULL);
 		}
 		/*
-			Frees memory by pruning branches that contain no used chunks
+			Frees memory by pruning branches and leaves that contain no used chunks
 		*/
 		void	pruneDeadLeaves(Quadtree *root) //shouldBranchDie
 		{
@@ -253,9 +255,18 @@ class	Quadtree
 			pruneBranch(root, QTBranch::TOP_RIGHT);
 			pruneBranch(root, QTBranch::BOTTOM_LEFT);
 			pruneBranch(root, QTBranch::BOTTOM_RIGHT);
+
+			if (!_branches[QTBranch::TOP_LEFT] && !_branches[QTBranch::TOP_RIGHT] && !_branches[QTBranch::BOTTOM_LEFT] && !_branches[QTBranch::BOTTOM_RIGHT])
+			{
+				if (this == root)
+					return ;
+				root->_branches[this->_quadrantInRoot] = NULL;
+				delete this;
+			}
 		}
 		void	pruneBranch(Quadtree *root, QTBranch quadrant)
 		{
+			(void)root;
 			Quadtree	*branch = _branches[quadrant];
 			if (branch != NULL)
 			{
@@ -273,7 +284,7 @@ class	Quadtree
 					else
 						return ;
 				else
-					branch->pruneDeadLeaves(root);
+					branch->pruneDeadLeaves(this);
 			}
 		}
 		glm::vec2	getSize() const {return (this->_size);}
@@ -312,6 +323,8 @@ class	Quadtree
 		glm::ivec2				_pos;
 		std::vector<Quadtree*>	_branches = {NULL, NULL, NULL, NULL};
 		Chunk					*_leaf = NULL;
+		//Current branch's position in its parent's branches
+		QTBranch				_quadrantInRoot;
 };
 
 #endif

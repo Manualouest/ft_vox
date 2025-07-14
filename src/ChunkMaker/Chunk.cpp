@@ -3,107 +3,137 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 21:07:45 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 11:43:11 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Chunk.hpp"
 
-glm::vec2 randomGradient(int ix, int iy) {
-    // No precomputed gradients mean this works for any number of grid coordinates
+glm::vec2 randomGradient(int ix, int iy)
+{
     const unsigned w = 8 * sizeof(unsigned);
     const unsigned s = w / 2; 
     unsigned a = ix, b = iy;
     a *= 3284157443;
- 
-    b ^= a << s | a >> (w - s);
+
+	b ^= a << s | a >> (w - s);
     b *= 1911520717;
- 
-    a ^= b << s | b >> (w - s);
+
+	a ^= b << s | b >> (w - s);
     a *= 2048419325;
     float random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
-    
-    // Create the vector from the angle
-    glm::vec2 v;
+
+	glm::vec2 v;
     v.x = sin(random);
     v.y = cos(random);
- 
-    return v;
+
+	return v;
 }
- 
-// Computes the dot product of the distance and gradient vectors.
-float dotGridGradient(int ix, int iy, float x, float y) {
-    // Get gradient from integer coordinates
+
+float dotGridGradient(int ix, int iy, float x, float y)
+{
     glm::vec2 gradient = randomGradient(ix, iy);
- 
-    // Compute the distance vector
-    float dx = x - (float)ix;
+
+	float dx = x - (float)ix;
     float dy = y - (float)iy;
- 
-    // Compute the dot-product
-    return (dx * gradient.x + dy * gradient.y);
+
+	return (dx * gradient.x + dy * gradient.y);
 }
- 
+
 float interpolate(float a0, float a1, float w)
 {
     return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
- 
- 
-// Sample Perlin noise at coordinates x, y
-float perlin(float x, float y) {
-    
-    // Determine grid cell corner coordinates
+
+float perlin(float x, float y)
+{
     int x0 = (int)x; 
     int y0 = (int)y;
     int x1 = x0 + 1;
     int y1 = y0 + 1;
- 
-    // Compute Interpolation weights
+
     float sx = x - (float)x0;
     float sy = y - (float)y0;
-    
-    // Compute and interpolate top two corners
-    float n0 = dotGridGradient(x0, y0, x, y);
+
+	float n0 = dotGridGradient(x0, y0, x, y);
     float n1 = dotGridGradient(x1, y0, x, y);
     float ix0 = interpolate(n0, n1, sx);
- 
-    // Compute and interpolate bottom two corners
+
     n0 = dotGridGradient(x0, y1, x, y);
     n1 = dotGridGradient(x1, y1, x, y);
     float ix1 = interpolate(n0, n1, sx);
- 
-    // Final step: interpolate between the two previously interpolated values, now in y
+
     float value = interpolate(ix0, ix1, sy);
     
     return (value);
 }
 
-float	getFakeNoise(glm::vec2 pos) //! ////////////////////////////////////////////////////////////////////////// because no noise
+float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, float heightScale)
 {
-	float	freq = 0.1 / 32;
-	float	amp = 2;
-
-	float	ret = 0;
-
-	if (pos.x < 0 || pos.y < 0)
-		return (256);
-	
-	for (int i = 0; i < 6; i++)
+	float	res = 0;
+	for (int i = 0; i < noisiness; i++)
 	{
-		ret += perlin(pos.x * freq, pos.y * freq) * amp;
-
+		res += perlin(pos.x * freq, pos.y * freq) * amp;
+	
 		freq *= 2;
-		amp /= 2;
+		amp /= 2;	
 	}
 
-	// ret = (ret + 1) / 2;
-	ret = glm::clamp(ret, 0.0f, 1.0f);
+	if (res > 1.0f)
+		res = 1.0f;
+	else if (res < -1.0f)
+		res = -1.0f;
+		
+	res = ((res + 1.0f) * 0.5f) * heightScale;
 
-	return (ret * 255);
+	return (res);
+}
+
+#define MOUNTAINS_FREQ 0.25 / 32
+#define MOUNTAINS_AMP 1.0
+#define MOUNTAINS_NOISE 5
+
+#define PLAINS_FREQ 0.3 / 32
+#define PLAINS_AMP 0.2
+#define PLAINS_NOISE 3
+
+#define OCEAN_FREQ 0.3 / 32
+#define OCEAN_AMP 0.1
+#define OCEAN_NOISE 3
+
+struct	Biome
+{
+	float	frequency;
+	float	amplitude;
+	float	noisiness;
+	float	heightScale;
+	float	bias;
+	float	center;
+	float	range;
+};
+
+float getFakeNoise(glm::vec2 pos)
+{
+	float biomeNoise = calcNoise(pos * 0.001f, 1.0f, 1.0f, 1, 1.0f);
+	float biomeSelector = biomeNoise;
+
+	float plains = calcNoise(pos, PLAINS_FREQ, PLAINS_AMP, PLAINS_NOISE, 90.0f);
+	float hills = calcNoise(pos, MOUNTAINS_FREQ, MOUNTAINS_AMP, MOUNTAINS_NOISE, 255.0f);
+	float ocean = calcNoise(pos, OCEAN_FREQ, OCEAN_AMP, OCEAN_NOISE, 50.0f);
+
+	float plainsWeight = glm::smoothstep(0.3f, 0.5f, biomeSelector);
+	float hillsWeight = glm::smoothstep(0.5f, 0.7f, biomeSelector);
+	float oceanWeight = 1.5 - (plainsWeight + hillsWeight) / 2;
+
+	plains += 20.0f;
+	hills += 30.0f;
+	ocean += 0.0f;
+
+	int res = ocean * oceanWeight + plains * plainsWeight + hills * hillsWeight;
+	return (glm::clamp(res, 0, 255));
 }
 
 Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _generated(false), _generating(false), _uploaded(false)
@@ -151,7 +181,9 @@ Chunk::~Chunk()
 	groundData.clear();
 	waterData.clear();
 	_vertices.clear();
+	_vertices.shrink_to_fit();
 	_indices.clear();
+	_indices.shrink_to_fit();
 }
 
 float	Chunk::getDistance() const
