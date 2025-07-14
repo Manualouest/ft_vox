@@ -2,7 +2,11 @@
 
 out vec4 FragColor;
 
-uniform sampler2D uTex;
+uniform sampler2D stoneTexture;
+uniform sampler2D dirtTexture;
+uniform sampler2D grassTexture;
+uniform sampler2D sandTexture;
+uniform sampler2D grassSideTexture;
 
 uniform sampler2D terrainDepthTex;
 uniform sampler2D waterDepthTex;
@@ -14,6 +18,7 @@ in vec3	FragPos;
 in vec4	WorldPos;
 
 uniform float RENDER_DISTANCE;
+float FOG_DISTANCE = RENDER_DISTANCE - (RENDER_DISTANCE / 2);
 
 uniform vec3 viewPos;
 in vec4	clipSpace;
@@ -28,21 +33,36 @@ uniform bool getDepth;
 
 const vec3  SHORE_COLOR = vec3(0.3, 0.8, 0.87);
 const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0); 
+const vec3  FOG_COLOR = vec3(0.6, 0.8, 1.0);
+
+vec3	getBlockTexture(int ID)
+{
+	if (ID == 1)
+		return (texture(stoneTexture, texCoord).rgb);
+	if (ID == 2)
+		return (texture(dirtTexture, texCoord).rgb);
+	if (ID == 3)
+		return (texture(grassTexture, texCoord).rgb);
+	if (ID == 4)
+		return (texture(grassSideTexture, texCoord).rgb);
+	if (ID == 5)
+		return (texture(sandTexture, texCoord).rgb);
+	return (texture(grassTexture, texCoord).rgb);
+}
 
 void main()
 {
-	float   shininess = 256.0f;
-    float   actualShiness = 0;
+	float   shininess = 64.0f;
+    float   actualShiness = 0.1;
 	float	alpha = 1.0;
 
 	vec3	color;
-	if (blockType == 0.0f)
-	{
-		shininess = 64;
-		actualShiness = 0.1;
-		color = texture(uTex, texCoord).rgb;
-	}
-	else
+	float	dist = length(WorldPos.xyz - viewPos) / FOG_DISTANCE;
+	dist = clamp(pow(dist, 1.5), 0.0, 1.0);
+
+	color = getBlockTexture(int(blockType));
+
+	if (int(blockType) == 0) //WATER
 	{
 		if (getDepth)
 			discard ;
@@ -87,6 +107,8 @@ void main()
         
     vec3 result = ambient + diffuse + specular;
     //DIRECTIONAL LIGHT
+
+	result = mix(result, FOG_COLOR, dist);
 
 	FragColor = vec4(result, alpha + (specular.r / 2));
 }

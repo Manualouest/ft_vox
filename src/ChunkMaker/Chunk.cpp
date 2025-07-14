@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 11:43:11 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/14 13:07:18 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,16 +121,12 @@ float getFakeNoise(glm::vec2 pos)
 	float biomeSelector = biomeNoise;
 
 	float plains = calcNoise(pos, PLAINS_FREQ, PLAINS_AMP, PLAINS_NOISE, 90.0f);
-	float hills = calcNoise(pos, MOUNTAINS_FREQ, MOUNTAINS_AMP, MOUNTAINS_NOISE, 255.0f);
+	float hills = calcNoise(pos, MOUNTAINS_FREQ, MOUNTAINS_AMP, MOUNTAINS_NOISE, 240.0f);
 	float ocean = calcNoise(pos, OCEAN_FREQ, OCEAN_AMP, OCEAN_NOISE, 50.0f);
 
 	float plainsWeight = glm::smoothstep(0.3f, 0.5f, biomeSelector);
 	float hillsWeight = glm::smoothstep(0.5f, 0.7f, biomeSelector);
 	float oceanWeight = 1.5 - (plainsWeight + hillsWeight) / 2;
-
-	plains += 20.0f;
-	hills += 30.0f;
-	ocean += 0.0f;
 
 	int res = ocean * oceanWeight + plains * plainsWeight + hills * hillsWeight;
 	return (glm::clamp(res, 0, 255));
@@ -260,6 +256,34 @@ void	addVertices(float type, std::vector<float> &vertices, std::vector<int> &_in
 	_indices.insert(_indices.end(), {vertLen - 3, vertLen - 1, vertLen - 2, vertLen - 3, vertLen - 0, vertLen - 1});
 }
 
+struct	Block
+{
+	Block(int blockID)
+	{
+		northFace = blockID;
+		southFace = blockID;
+		eastFace = blockID;
+		westFace = blockID;
+		topFace = blockID;
+		bottomFace = blockID;
+	}
+	Block(int northID, int southID, int eastID, int westID, int topID, int bottomID)
+	{
+		northFace = northID;
+		southFace = southID;
+		eastFace = eastID;
+		westFace = westID;
+		topFace = topID;
+		bottomFace = bottomID;
+	}
+	int	northFace;
+	int	southFace;
+	int	eastFace;
+	int	westFace;
+	int	topFace;
+	int	bottomFace;
+};
+
 void	Chunk::genMesh()
 {
 	char32_t				chunkSlice;
@@ -283,18 +307,31 @@ void	Chunk::genMesh()
 
 			for (int iii = 0; iii < 32; ++iii)
 			{
+
+				
+				Block	block(1);
+				if (1 + i < 86 && 1 + i > 64)
+					block = Block(4, 4, 4, 4, 3, 2);
+				else if (1 + i < 65)
+					block = Block(5);
+				else
+					block = Block(1);
+				if (_chunkTop[ii * 32 + iii] == i)
+					block = Block(3);
+
+					
 				if ((westFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
+					addVertices(block.westFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
 				if ((eastFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii}, {1, 0, 0});
+					addVertices(block.eastFace, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii}, {1, 0, 0});
 				if ((northFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0, 0, 1});
+					addVertices(block.northFace, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0, 0, 1});
 				if ((southFaces >> iii) & 1)
-					addVertices(GROUND, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)}, {0, 0, -1});
+					addVertices(block.southFace, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)}, {0, 0, -1});
 				if ((chunkSlice >> iii) & 1 && 
 					((groundData.find(((i + 1) * 32 + ii)) != groundData.end() && !((groundData.find(((i + 1) * 32 + ii))->second >> iii) & 1))
 						|| groundData.find(((i + 1) * 32 + ii)) == groundData.end()))
-					addVertices(GROUND, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii}, {0, 1, 0});
+					addVertices(block.topFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii}, {0, 1, 0});
 			}
 		}
 	}

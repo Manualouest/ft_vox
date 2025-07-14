@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 10:49:19 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/14 12:24:34 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,8 @@
 
 # define LINELEN 9
 # define WATERLINE 63
-# define GROUND 0
-# define WATER 1
+# define GROUND 1
+# define WATER 0
 
 extern Camera	*CAMERA;
 
