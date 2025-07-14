@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RegionManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/13 21:40:14 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 11:50:17 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 RegionManager::RegionManager()
 {
 	RenderDist = 16;
-	_QT = new Quadtree(glm::vec2(0, 0), glm::vec2(16384.0f, 16384.0f));
+	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(16384.0f, 16384.0f));
 }
 
 RegionManager::~RegionManager()
