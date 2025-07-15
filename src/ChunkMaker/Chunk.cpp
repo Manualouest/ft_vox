@@ -6,14 +6,15 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 21:02:50 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/15 12:09:45 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Chunk.hpp"
 #include "RegionManager.hpp"
+#include "ChunkGenerator.hpp"
 extern RegionManager	*CHUNKS;
-
+extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 #include <bitset>
 
@@ -138,7 +139,7 @@ float getFakeNoise(glm::vec2 pos)
 	return (glm::clamp(res, 0, 255));
 }
 
-Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _edited(false), _generated(false), _generating(false), _uploaded(false)
+Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _edited(false), _generated(false), _needGen(true), _generating(false), _uploaded(false)
 {
 	_model = glm::mat4(1);
 	_minHeight = 255;
@@ -153,11 +154,15 @@ void	Chunk::generate()
 {
 	if (_generated)
 		return ;
-	_chunkTop.reserve(1024);
-	gen();
+	if (_needGen)
+	{
+		_chunkTop.reserve(1024);
+		gen();
+	}
 	genMesh();
 	_indicesSize = _indices.size();
 	_generated.store(true);
+	_needGen.store(false);
 }
 
 void	Chunk::upload()
@@ -206,6 +211,22 @@ char32_t	culling(const char32_t &slice, const bool &dir, const int &edge)
 		return (slice & ~((slice >> 1) | (edge << 31))); // left faces
 }
 
+void	Chunk::reset()
+{
+	if (_EBO)
+		glDeleteBuffers(1, &_EBO);
+	if (_VBO)
+		glDeleteBuffers(1, &_VBO);
+	if (_VAO)
+		glDeleteVertexArrays(1, &_VAO);
+	_uploaded.store(false);
+	_vertices.clear();
+	_vertices.shrink_to_fit();
+	_indices.clear();
+	_indices.shrink_to_fit();
+	_generated.store(false);
+}
+
 void	Chunk::clear()
 {
 	if (_EBO)
@@ -214,7 +235,7 @@ void	Chunk::clear()
 		glDeleteBuffers(1, &_VBO);
 	if (_VAO)
 		glDeleteVertexArrays(1, &_VAO);
-	_uploaded = false;
+	_uploaded.store(false);
 }
 
 void	Chunk::makeBuffers()
@@ -262,24 +283,40 @@ void	Chunk::checkSurround(const glm::ivec3 &chunkPos, const Block &block, const 
 		if (chunkPos.x != 0 && !((slice >> (chunkPos.x - 1)) & 1))
 			addVertices(block.westFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {-1, 0, 0});
 	}
-	if (chunkPos.x < 31 && chunkPos.x > 0 && (rotSlice >> (chunkPos.x)) & 1)
+
+	if (chunkPos.x == 31 && ((slice >> (chunkPos.x)) & 1))
 	{
-		if (!((rotSlice >> (chunkPos.x + 1)) & 1))
-			addVertices(block.southFace, _vertices, _indices, {0 + (31 - chunkPos.z), 1 + chunkPos.y, 0 + (31 - chunkPos.x)}, {1 + (31 - chunkPos.z), 1 + chunkPos.y, 0 + (31 - chunkPos.x)}, {0 + (31 - chunkPos.z), 0 + chunkPos.y, 0 + (31 - chunkPos.x)}, {1 + (31 - chunkPos.z), 0 + chunkPos.y, 0 + (31 - chunkPos.x)}, {0, 0, -1});
-		if (!((rotSlice >> (chunkPos.x - 1)) & 1))
-			addVertices(block.northFace, _vertices, _indices, {1 + (31 - chunkPos.z), 1 + chunkPos.y, 1 + (31 - chunkPos.x)}, {0 + (31 - chunkPos.z), 1 + chunkPos.y, 1 + (31 - chunkPos.x)}, {1 + (31 - chunkPos.z), 0 + chunkPos.y, 1 + (31 - chunkPos.x)}, {0 + (31 - chunkPos.z), 0 + chunkPos.y, 1 + (31 - chunkPos.x)}, {0, 0, 1});
+		chunk = CHUNKS->getQuadTree()->getLeaf({pos.x + 32, pos.z});
+		if (chunk && chunk->_generated && !chunk->isOnBlock(chunkPos - glm::ivec3(31, 0, 0)))
+			addVertices(block.eastFace, _vertices, _indices, {1 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {1 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {1, 0, 0});
+		else if (int(getFakeNoise(glm::vec2{pos.x + 32, pos.z + chunkPos.z})) < chunkPos.y)
+			addVertices(block.eastFace, _vertices, _indices, {1 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {1 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {1, 0, 0});
 	}
-
-
 	if (chunkPos.x == 0 && ((slice >> (chunkPos.x)) & 1))
 	{
-		chunk = CHUNKS->getQuadTree()->getLeaf({pos.x - 32, pos.z + 1});
-		if (chunk && !chunk->isOnBlock(chunkPos))
+		chunk = CHUNKS->getQuadTree()->getLeaf({pos.x - 32, pos.z});
+		if (chunk && chunk->_generated && !chunk->isOnBlock(chunkPos + glm::ivec3(31, 0, 0)))
 			addVertices(block.westFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {-1, 0, 0});
-		// if (int(getFakeNoise(glm::vec2{pos.x - 1, pos.z + chunkPos.z})) < chunkPos.y)
-		// 	addVertices(block.westFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {-1, 0, 0});
+		else if (int(getFakeNoise(glm::vec2{pos.x - 1, pos.z + chunkPos.z})) < chunkPos.y)
+			addVertices(block.westFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 0 + chunkPos.y, 0 + chunkPos.z}, {-1, 0, 0});
 	}
 
+
+	if ((rotSlice >> 1) & 1)
+	{
+		if (chunkPos.x != 0 && !((rotSlice >> 2) & 1))
+			addVertices(block.southFace, _vertices, _indices, {0 + (chunkPos.x), 1 + chunkPos.y, 0 + (chunkPos.z)}, {1 + (chunkPos.x), 1 + chunkPos.y, 0 + (chunkPos.z)}, {0 + (chunkPos.x), 0 + chunkPos.y, 0 + (chunkPos.z)}, {1 + (chunkPos.x), 0 + chunkPos.y, 0 + (chunkPos.z)}, {0, 0, -1});
+		if (chunkPos.x != 31 && !((rotSlice) & 1))
+			addVertices(block.northFace, _vertices, _indices, {1 + (chunkPos.x), 1 + chunkPos.y, 1 + (chunkPos.z)}, {0 + (chunkPos.x), 1 + chunkPos.y, 1 + (chunkPos.z)}, {1 + (chunkPos.x), 0 + chunkPos.y, 1 + (chunkPos.z)}, {0 + (chunkPos.x), 0 + chunkPos.y, 1 + (chunkPos.z)}, {0, 0, 1});
+	}
+	if (chunkPos.x == 31 && ((rotSlice >> 1) & 1))//
+	{
+		chunk = CHUNKS->getQuadTree()->getLeaf({pos.x, pos.z + 32});
+		if (chunk&& chunk->_generated  && !chunk->isOnBlock(glm::ivec3(chunkPos.x, chunkPos.y, chunkPos.z) - glm::ivec3(0, 0, 31))) //&& chunk->_generated
+			addVertices(block.northFace, _vertices, _indices, {1 + (chunkPos.x), 1 + chunkPos.y, 1 + (chunkPos.z)}, {0 + (chunkPos.x), 1 + chunkPos.y, 1 + (chunkPos.z)}, {1 + (chunkPos.x), 0 + chunkPos.y, 1 + (chunkPos.z)}, {0 + (chunkPos.x), 0 + chunkPos.y, 1 + (chunkPos.z)}, {0, 0, 1});
+		if (int(getFakeNoise(glm::vec2{pos.x + (chunkPos.z), pos.z + 32})) < chunkPos.y)
+			addVertices(block.northFace, _vertices, _indices, {1 + (chunkPos.x), 1 + chunkPos.y, 1 + (chunkPos.z)}, {0 + (chunkPos.x), 1 + chunkPos.y, 1 + (chunkPos.z)}, {1 + (chunkPos.x), 0 + chunkPos.y, 1 + (chunkPos.z)}, {0 + (chunkPos.x), 0 + chunkPos.y, 1 + (chunkPos.z)}, {0, 0, 1});
+	}
 
 	if ((slice >> (chunkPos.x)) & 1)
 	{
@@ -289,7 +326,10 @@ void	Chunk::checkSurround(const glm::ivec3 &chunkPos, const Block &block, const 
 	if (chunkPos.y > 0 && (slice >> (chunkPos.x)) & 1)
 	{
 		if (!((down >> (chunkPos.x)) & 1))
-			addVertices(block.topFace, _vertices, _indices, {0 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, 1 + chunkPos.y, 0 + chunkPos.z}, {0, 1, 0});
+		{
+			std::cout << "oi" << std::endl; //																						3, 2, 1, 3, 4, 2
+			addVertices(block.bottomFace, _vertices, _indices, {0 + chunkPos.x, chunkPos.y, 1 + chunkPos.z}, {0 + chunkPos.x, chunkPos.y, 0 + chunkPos.z}, {1 + chunkPos.x, chunkPos.y, 1 + chunkPos.z}, {1 + chunkPos.x, chunkPos.y, 0 + chunkPos.z}, {0, 1, 0});
+		}
 	}
 }
 
@@ -370,7 +410,8 @@ void	Chunk::genMesh()
 				if (chunkSlice != groundData.end())
 					down = chunkSlice->second;
 				
-				checkSurround({x, y, z}, block, slice, rotSlices[z], up, down);
+				char32_t	rotSlice = (groundData.find((y * 32 + z - 1)) != groundData.end() ? (groundData.find((y * 32 + z - 1))->second >> x & 1) : 0) << 2 | (slice >> x & 1) << 1 | (groundData.find((y * 32 + z + 1)) != groundData.end() ? (groundData.find((y * 32 + z + 1))->second >> x & 1) >> x & 1 : 0);
+				checkSurround({x, y, z}, block, slice, rotSlice, up, down);
 				// if ((westFaces >> x) & 1)
 				// 	addVertices(block.westFace, _vertices, _indices, {0 + x, 1 + y, 1 + z}, {0 + x, 1 + y, 0 + z}, {0 + x, 0 + y, 1 + z}, {0 + x, 0 + y, 0 + z}, {-1, 0, 0});
 				// if ((eastFaces >> x) & 1)
@@ -496,9 +537,18 @@ bool	Chunk::isOnBlock(const glm::vec3 &targetPos)
 {
 	if (targetPos.y > 256 || targetPos.y < 0)
 		return (false);
+	if (pos.z != 32 || pos.x != 0 || targetPos.y < 50)
+		return true;
+	std::bitset<32>y(0);
 	std::unordered_map<int, char32_t>::iterator	slice = groundData.find(int(targetPos.y) * 32 + (int(targetPos.z) % 32));
 	if (slice == groundData.end())
+	{
+		std::cout << "no slice data" << std::endl;
 		return (false);
+	}
+	std::cout << "pos: " << pos.x << "; " << pos.y << "; " << pos.z << " | " << targetPos.x << "; " << targetPos.y << "; " << targetPos.z << " : ";
+	y = (slice->second);
+	std::cout << y << std::endl;
 	return ((slice->second >> (int(targetPos.x) % 32)) & 1);
 }
 
@@ -527,32 +577,34 @@ bool	Chunk::removeBlock(const glm::vec3 &targetPos)
 		if (slice == waterData.end() || !((slice->second >> (int(targetPos.x) % 32)) & 1))
 			return (false);
 	}
-	std::cout << "whuuut" << std::endl;
 
 	_edited.store(true);
 
 	char32_t rawSlice = slice->second;
-
-	std::bitset<32> y(rawSlice);
-	std::cout << y << " | ";
-	std::bitset<32> x(((rawSlice << int(31 - targetPos.x)) >> int(31 - targetPos.x)) ^ ((rawSlice >> int(targetPos.x)) << int(targetPos.x)));
 	slice->second = ((rawSlice << int(31 - targetPos.x)) >> int(31 - targetPos.x)) ^ ((rawSlice >> int(targetPos.x)) << int(targetPos.x));
-	y = rawSlice;
-	std::cout << y << std::endl << x << std::endl;
 
-	if (_EBO)
-		glDeleteBuffers(1, &_EBO);
-	if (_VBO)
-		glDeleteBuffers(1, &_VBO);
-	if (_VAO)
-		glDeleteVertexArrays(1, &_VAO);
-	_vertices.clear();
-	_vertices.shrink_to_fit();
-	_indices.clear();
-	_indices.shrink_to_fit();
+	reset();
+	generate();
 
-	genMesh();
-	_generated.store(true);
-	_uploaded.store(false);
+	glm::vec2	sideReload = {targetPos.x, targetPos.z};
+	if (int(targetPos.x) % 32 == 31)
+		sideReload.x += 32;
+	if (int(targetPos.x) % 32 == 0)
+		sideReload.x -= 32;
+	if (int(targetPos.z) % 32 == 31)
+		sideReload.y += 32;
+	if (int(targetPos.z) % 32 == 0)
+		sideReload.y -= 32;
+
+	if (sideReload == glm::vec2(targetPos.x, targetPos.z))
+		return (true);
+
+	Chunk *chunk = CHUNKS->getQuadTree()->getLeaf(sideReload);
+	if (chunk && chunk->_generated)
+	{
+		// std::cout << "poses:" << chunk->pos.x << "; " << chunk->pos.y << "; " << chunk->pos.z << " | " << targetPos.x << "; " << targetPos.y << "; " << targetPos.z << std::endl;
+		chunk->reset();
+		chunk->generate();
+	}
 	return (true);
 }

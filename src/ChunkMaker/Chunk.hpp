@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 19:40:03 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/15 07:04:59 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,8 +94,10 @@ class Chunk
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &height);
 		void	genMesh();
 		void	makeBuffers();
+		void	reset();
 
 		std::atomic_bool		_generated;
+		std::atomic_bool		_needGen;
 		std::atomic_bool		_generating;
 		std::atomic_bool		_uploaded;
 
