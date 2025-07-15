@@ -2,7 +2,7 @@ NAME := ft_vox
 
 OBJ_DIR := ./obj/
 INCLUDE_DIRS := ./includes/ ./GLFW/include/GLFW/ ./includes/glad/. ./includes/render ./src/ ./glm/glm/ ./glm/glm/gtc/
-CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/
+CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/ UI/ UI/Elements UI/Interfaces Terminal/
 
 GLFWARCHIVE = GLFW/build/src/libglfw3.a
 
@@ -28,7 +28,9 @@ CPP_FILES :=	main \
 				FrameBuffer/FrameBuffer \
 				ChunkMaker/Chunk \
 				ChunkMaker/RegionManager \
-				ChunkMaker/ChunkGenerator
+				ChunkMaker/ChunkGenerator \
+				UI/UIElement \
+				Terminal/Commands
 
 
 CPP_FILES := $(addsuffix .cpp, $(CPP_FILES))
@@ -45,10 +47,10 @@ GLAD_PATH = libs/glad
 all: glfw glad glm $(NAME)
 
 run: all
-	@./$(NAME) 1000000
+	@./$(NAME) 42
 
 vrun: all
-	@valgrind ./$(NAME)
+	@valgrind ./$(NAME) 42
 
 glfw:
 	@if ls | grep -q "GLFW"; then \

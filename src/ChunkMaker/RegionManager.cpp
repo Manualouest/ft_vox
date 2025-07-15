@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 11:50:17 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/15 16:22:38 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 RegionManager::RegionManager()
 {
 	RenderDist = 16;
-	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(16384.0f, 16384.0f));
+	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(WORLD_SIZE, WORLD_SIZE));
 }
 
 RegionManager::~RegionManager()
@@ -48,6 +48,7 @@ void	RegionManager::UpdateChunks()
 	for (Chunk *chunk : _renderChunks)
 		chunk->rendered = false;
 	_renderChunks.clear();
+	_renderChunks.shrink_to_fit();
 
 	Frustum	camFrustum = createFrustumFromCamera(SCREEN_WIDTH / SCREEN_HEIGHT, glm::radians(FOV), 0.0001f, RenderDist * 32);
 	VolumeAABB	boundingBox(glm::vec3(16.0f, 0.0f, 16.0f), glm::vec3(16.0f, 256.0f, 16.0f));
@@ -73,7 +74,6 @@ void	RegionManager::Render(Shader &shader)
 {
 	UpdateChunks();
 	sortChunks();
-	MAIN_FRAME_BUFFER->use();
 	for (auto *chunk : _renderChunks)
 	{
 		chunk->draw(shader);

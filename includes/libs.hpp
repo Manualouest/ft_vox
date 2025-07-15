@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   libs.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/07/13 08:32:12 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/14 14:37:02 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,9 @@
 # define LIBS_HPP
 
 # define DEBUG 0
-# define WIN_NAME "grass"
+# define WIN_NAME "ft_vox"
+
+# define FULL_SCREEN 0
 
 # include <iostream>
 # include <string>

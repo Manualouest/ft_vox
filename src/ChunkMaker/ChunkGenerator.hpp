@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/11 20:01:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 11:46:14 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/14 14:44:53 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,9 @@ class	ChunkGeneratorManager
 		void	stop();
 		void	deposit(std::vector<Chunk *> chunks)
 		{
-			LOCK(_depositMutex);
+			if (!_depositMutex.try_lock())
+				return ;
+			// LOCK(_depositMutex);
 
 			_deposit.reserve(chunks.size());
 
@@ -104,8 +106,10 @@ class	ChunkGeneratorManager
 				}
 
 			_deposit.shrink_to_fit();
+
+			_depositMutex.unlock();
 		}
-		uint	availableWorkers()
+		uint	workingThreads()
 		{
 			uint	res = 0;
 			for (ChunkGenerator *generator : _generators)
@@ -115,8 +119,11 @@ class	ChunkGeneratorManager
 	private:
 		void	_send()
 		{
+			if (workingThreads() >= GENERATION_THREAD_COUNT)
+				return ;
+				
 			LOCK(_depositMutex);
-			
+
 			for (ChunkGenerator *generator : _generators)
 			{
 				uint	sizeToAdd = std::min(_deposit.size(), (size_t)CHUNKS_PER_THREAD);

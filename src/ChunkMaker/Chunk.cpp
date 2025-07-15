@@ -6,18 +6,20 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 13:07:18 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/15 16:24:27 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Chunk.hpp"
+
+extern uint	seed;
 
 glm::vec2 randomGradient(int ix, int iy)
 {
     const unsigned w = 8 * sizeof(unsigned);
     const unsigned s = w / 2; 
     unsigned a = ix, b = iy;
-    a *= 3284157443;
+    a *= 3284157443 + (seed + 1);
 
 	b ^= a << s | a >> (w - s);
     b *= 1911520717;
@@ -104,18 +106,7 @@ float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, floa
 #define OCEAN_AMP 0.1
 #define OCEAN_NOISE 3
 
-struct	Biome
-{
-	float	frequency;
-	float	amplitude;
-	float	noisiness;
-	float	heightScale;
-	float	bias;
-	float	center;
-	float	range;
-};
-
-float getFakeNoise(glm::vec2 pos)
+GenInfo getGeneration(glm::vec2 pos)
 {
 	float biomeNoise = calcNoise(pos * 0.001f, 1.0f, 1.0f, 1, 1.0f);
 	float biomeSelector = biomeNoise;
@@ -129,7 +120,7 @@ float getFakeNoise(glm::vec2 pos)
 	float oceanWeight = 1.5 - (plainsWeight + hillsWeight) / 2;
 
 	int res = ocean * oceanWeight + plains * plainsWeight + hills * hillsWeight;
-	return (glm::clamp(res, 0, 255));
+	return (GenInfo(glm::clamp(res, 0, 255), Biome::PLAINS));
 }
 
 Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _generated(false), _generating(false), _uploaded(false)
@@ -166,7 +157,7 @@ Chunk::~Chunk()
 	{
 		std::stringstream sPos;
 		sPos << pos.x << ";" << pos.y << ";" << pos.z;
-        consoleLog("Destroying the Chunk at " + sPos.str(), NORMAL);
+        consoleLog("Destroying the Chunk at " + sPos.str(), LogSeverity::NORMAL);
 	}
 	if (_EBO)
 		glDeleteBuffers(1, &_EBO);
@@ -284,6 +275,22 @@ struct	Block
 	int	bottomFace;
 };
 
+#define GRASS_BLOCK Block(4, 4, 4, 4, 3, 2)
+#define SAND_BLOCK Block(5)
+#define STONE_BLOCK Block(1)
+
+Block	getBlock(int y)
+{
+	Block	block(42);
+	if (y < 86 && y >= 64)
+		block = GRASS_BLOCK;
+	else if (y < 64)
+		block = SAND_BLOCK;
+	else if (y >= 86)
+		block = STONE_BLOCK;
+	return (block);
+}
+
 void	Chunk::genMesh()
 {
 	char32_t				chunkSlice;
@@ -291,59 +298,49 @@ void	Chunk::genMesh()
 	rotSlices.reserve(32);
 
 	// Gen mesh for ground
-	for (int i = 0; i <= _maxHeight; ++i)
+	for (int y = 0; y <= _maxHeight; ++y)
 	{
 		rotSlices.clear();
-		getRotSlice(rotSlices, i * 32);
-		for (int ii = 0; ii < 32; ++ii)
+		getRotSlice(rotSlices, y * 32);
+		for (int z = 0; z < 32; ++z)
 		{
-			chunkSlice = groundData.find((i * 32 + ii))->second;
-			if (!chunkSlice && !rotSlices[ii])
+			chunkSlice = groundData.find((y * 32 + z))->second;
+			if (!chunkSlice && !rotSlices[z])
 				continue;
-			char32_t westFaces = culling(chunkSlice, true, int(getFakeNoise(glm::vec2{pos.x - 1, pos.z + ii})) >= i);
-			char32_t eastFaces = culling(chunkSlice, false, int(getFakeNoise(glm::vec2{pos.x + 32, pos.z + ii})) >= i);
-			char32_t northFaces = culling(rotSlices[ii], true, int(getFakeNoise(glm::vec2{pos.x + (31 - ii), pos.z + 32})) >= i);
-			char32_t southFaces = culling(rotSlices[ii], false, int(getFakeNoise(glm::vec2{pos.x + (31 - ii), pos.z - 1})) >= i);
+			char32_t westFaces = culling(chunkSlice, true, int(getGeneration(glm::vec2{pos.x - 1, pos.z + z}).height) >= y);
+			char32_t eastFaces = culling(chunkSlice, false, int(getGeneration(glm::vec2{pos.x + 32, pos.z + z}).height) >= y);
+			char32_t northFaces = culling(rotSlices[z], true, int(getGeneration(glm::vec2{pos.x + (31 - z), pos.z + 32}).height) >= y);
+			char32_t southFaces = culling(rotSlices[z], false, int(getGeneration(glm::vec2{pos.x + (31 - z), pos.z - 1}).height) >= y);
 
-			for (int iii = 0; iii < 32; ++iii)
+			for (int x = 0; x < 32; ++x)
 			{
+				Block	block(42);
+				block = getBlock(y);
 
-				
-				Block	block(1);
-				if (1 + i < 86 && 1 + i > 64)
-					block = Block(4, 4, 4, 4, 3, 2);
-				else if (1 + i < 65)
-					block = Block(5);
-				else
-					block = Block(1);
-				if (_chunkTop[ii * 32 + iii] == i)
-					block = Block(3);
-
-					
-				if ((westFaces >> iii) & 1)
-					addVertices(block.westFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {0 + iii, 0 + i, 1 + ii}, {0 + iii, 0 + i, 0 + ii}, {-1, 0, 0});
-				if ((eastFaces >> iii) & 1)
-					addVertices(block.eastFace, _vertices, _indices, {1 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 1 + ii}, {1 + iii, 0 + i, 0 + ii}, {1 + iii, 0 + i, 1 + ii}, {1, 0, 0});
-				if ((northFaces >> iii) & 1)
-					addVertices(block.northFace, _vertices, _indices, {1 + (31 - ii), 1 + i, 1 + (31 - iii)}, {0 + (31 - ii), 1 + i, 1 + (31 - iii)}, {1 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0 + (31 - ii), 0 + i, 1 + (31 - iii)}, {0, 0, 1});
-				if ((southFaces >> iii) & 1)
-					addVertices(block.southFace, _vertices, _indices, {0 + (31 - ii), 1 + i, 0 + (31 - iii)}, {1 + (31 - ii), 1 + i, 0 + (31 - iii)}, {0 + (31 - ii), 0 + i, 0 + (31 - iii)}, {1 + (31 - ii), 0 + i, 0 + (31 - iii)}, {0, 0, -1});
-				if ((chunkSlice >> iii) & 1 && 
-					((groundData.find(((i + 1) * 32 + ii)) != groundData.end() && !((groundData.find(((i + 1) * 32 + ii))->second >> iii) & 1))
-						|| groundData.find(((i + 1) * 32 + ii)) == groundData.end()))
-					addVertices(block.topFace, _vertices, _indices, {0 + iii, 1 + i, 1 + ii}, {1 + iii, 1 + i, 1 + ii}, {0 + iii, 1 + i, 0 + ii}, {1 + iii, 1 + i, 0 + ii}, {0, 1, 0});
+				if ((westFaces >> x) & 1)
+					addVertices(block.westFace, _vertices, _indices, {0 + x, 1 + y, 1 + z}, {0 + x, 1 + y, 0 + z}, {0 + x, 0 + y, 1 + z}, {0 + x, 0 + y, 0 + z}, {-1, 0, 0});
+				if ((eastFaces >> x) & 1)
+					addVertices(block.eastFace, _vertices, _indices, {1 + x, 1 + y, 0 + z}, {1 + x, 1 + y, 1 + z}, {1 + x, 0 + y, 0 + z}, {1 + x, 0 + y, 1 + z}, {1, 0, 0});
+				if ((northFaces >> x) & 1)
+					addVertices(block.northFace, _vertices, _indices, {1 + (31 - z), 1 + y, 1 + (31 - x)}, {0 + (31 - z), 1 + y, 1 + (31 - x)}, {1 + (31 - z), 0 + y, 1 + (31 - x)}, {0 + (31 - z), 0 + y, 1 + (31 - x)}, {0, 0, 1});
+				if ((southFaces >> x) & 1)
+					addVertices(block.southFace, _vertices, _indices, {0 + (31 - z), 1 + y, 0 + (31 - x)}, {1 + (31 - z), 1 + y, 0 + (31 - x)}, {0 + (31 - z), 0 + y, 0 + (31 - x)}, {1 + (31 - z), 0 + y, 0 + (31 - x)}, {0, 0, -1});
+				if ((chunkSlice >> x) & 1 && 
+					((groundData.find(((y + 1) * 32 + z)) != groundData.end() && !((groundData.find(((y + 1) * 32 + z))->second >> x) & 1))
+						|| groundData.find(((y + 1) * 32 + z)) == groundData.end()))
+					addVertices(block.topFace, _vertices, _indices, {0 + x, 1 + y, 1 + z}, {1 + x, 1 + y, 1 + z}, {0 + x, 1 + y, 0 + z}, {1 + x, 1 + y, 0 + z}, {0, 1, 0});
 			}
 		}
 	}
 
 	// Gen mesh for water
-	for (int i = 0; i < 32; ++i)
+	for (int z = 0; z < 32; ++z)
 	{
 		for (int ii = 0; ii < 32; ++ii)
 		{
-			std::unordered_map<int, char32_t>::iterator chunkSlice = waterData.find(WATERLINE * 32 + i);
+			std::unordered_map<int, char32_t>::iterator chunkSlice = waterData.find(WATERLINE * 32 + z);
 			if (chunkSlice != waterData.end() && (chunkSlice->second >> ii) & 1)
-				addVertices(WATER, _vertices, _indices, {0 + ii, 1 + WATERLINE, 1 + i}, {1 + ii, 1 + WATERLINE, 1 + i}, {0 + ii, 1 + WATERLINE, 0 + i}, {1 + ii, 1 + WATERLINE, 0 + i}, {0, 1, 0});
+				addVertices(WATER, _vertices, _indices, {0 + ii, 1 + WATERLINE, 1 + z}, {1 + ii, 1 + WATERLINE, 1 + z}, {0 + ii, 1 + WATERLINE, 0 + z}, {1 + ii, 1 + WATERLINE, 0 + z}, {0, 1, 0});
 		}
 	}
 }
@@ -357,7 +354,8 @@ void	Chunk::gen()
 	{
 		for (int ii = 0; ii < 32; ++ii)
 		{
-			height = getFakeNoise(glm::vec2{pos.x + (31 - ii), pos.z + i}); // since no gen yet;
+			GenInfo infos = getGeneration(glm::vec2{pos.x + (31 - ii), pos.z + i});
+			height = infos.height;
 			std::unordered_map<int, char32_t>::iterator chunkSlice = groundData.find(height * 32 + i);
 
 			if (chunkSlice != groundData.end())
@@ -379,7 +377,7 @@ void	Chunk::gen()
 		for (int ii = 0; ii < 32; ++ii)
 		{
 			std::unordered_map<int, char32_t>::iterator chunkSlice = groundData.find((i * 32 + ii));
-
+			
 			if (chunkSlice != groundData.end())
 			{
 				std::unordered_map<int, char32_t>::iterator underSlice = groundData.find(((i - 1) * 32 + ii));

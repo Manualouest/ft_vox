@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 12:24:34 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/14 18:13:32 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,24 @@
 # define WATER 0
 
 extern Camera	*CAMERA;
+
+enum Biome
+{
+	PLAINS,
+	MESA,
+	SNOWY
+};
+
+struct GenInfo
+{
+	GenInfo(float h, Biome b)
+	{
+		this->height = h;
+		this->biome = b;
+	}
+	float	height;
+	Biome	biome;
+};
 
 class Chunk
 {

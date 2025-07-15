@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:48:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/09 15:05:05 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/15 11:37:44 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,10 +30,11 @@ Font::~Font()
 
 Font::Font()
 {
+    this->_shader = SHADER_MANAGER->get("text");
 	std::ifstream	tmpFile;
-	for (unsigned char c = 33; c < 128; ++c)
+	for (unsigned char c = 32; c < 128; ++c)
 	{
-		std::string path = "src/assets/textures/font/" + std::string(1, c) + ".bmp";
+		std::string path = "src/assets/textures/font/" + std::to_string((int)c) + ".bmp";
 		tmpFile.open(path);
 		if (tmpFile.is_open())
 		{
@@ -42,7 +43,7 @@ Font::Font()
 		}
 		tmpFile.close();
 	}
-	Texture	tmp("src/assets/textures/font/?.bmp");
+	Texture	tmp("src/assets/textures/font/63.bmp");
 	font[127].cut(tmp);
 }
 
@@ -60,34 +61,33 @@ Texture	&Font::getChar(char c)
 	return (font[c]);
 }
 
-void    Font::putChar(char c, Shader &shader, glm::vec2 pos, glm::vec2 size)
+void    Font::putChar(char c, glm::vec2 pos, glm::vec2 size)
 {
-    if (c == ' ')
-        return ;
     initFontModel();
-    shader.use();
+    _shader->use();
     getChar(c).use(0);
     
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f));
     model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
     glm::mat4 projection = glm::ortho(0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f);
     
-    shader.setMat4("projection", projection);
-    shader.setMat4("model", model);
+    _shader->setMat4("projection", projection);
+    _shader->setMat4("model", model);
 
     glBindVertexArray(fontVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
 
-void	Font::putString(std::string str, Shader &shader, glm::vec2 pos, glm::vec2 size)
+void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 size)
 {
 	float	offset = size.x / str.size();
-	float	charPos = pos.x;
+	float	charPosX = pos.x;
+	float	charPosY = pos.y;
 	for (std::string::iterator it = str.begin(); it != str.end(); it++)
 	{
-		putChar(*it, shader, glm::vec2(charPos, pos.y), glm::vec2(offset, size.y));
-		charPos += offset;
+		putChar(*it, glm::vec2(charPosX, charPosY), glm::vec2(offset, size.y));
+		charPosX += offset;
 	}
 }
 

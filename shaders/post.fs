@@ -16,6 +16,11 @@ float VignetteIntensity = 0.25;
 float VignetteRadius = 0.75;
 uniform float	RENDER_DISTANCE;
 
+uniform	float SCREEN_WIDTH;
+uniform	float SCREEN_HEIGHT;
+
+uniform	bool	blur;
+
 float LinearizeDepth(float depth, float near, float far)
 {
     float z = depth * 2.0 - 1.0; // Back to NDC
@@ -24,14 +29,35 @@ float LinearizeDepth(float depth, float near, float far)
 
 void main()
 {
-	vec2	uv = TexCoords;
+	vec2 uv = TexCoords;
 
-	vec3 color = texture(screenTexture, uv).rgb;
+	float pixelX = 1.0 / SCREEN_WIDTH;
+	float pixelY = 1.0 / SCREEN_HEIGHT;
 
-    vec2 centeredUV = uv - vec2(0.5);
+	vec3 color = vec3(0.0);
 
-    float dist = length(centeredUV);
+	if (blur)
+	{
+		int kernelSize = 16;
+		int halfKernel = kernelSize / 2;
 
+		for (int x = -halfKernel; x < halfKernel; x++)
+		{
+			for (int y = -halfKernel; y < halfKernel; y++)
+			{
+				vec2 offset = vec2(float(x) * pixelX, float(y) * pixelY);
+				color += texture(screenTexture, uv + offset).rgb;
+			}
+		}
+
+		color /= float(kernelSize * kernelSize);
+	}
+	else
+		color = texture(screenTexture, uv).rgb;
+
+
+	vec2 centeredUV = uv - vec2(0.5);
+	float dist = length(centeredUV);
 	float vignette = smoothstep(VignetteRadius, VignetteRadius - 0.3, dist);
 	vignette = mix(1.0, vignette, VignetteIntensity);
 

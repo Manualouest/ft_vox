@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 12:56:22 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/15 16:26:10 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,29 +22,34 @@
 #include "Chunk.hpp"
 #include "RegionManager.hpp"
 #include "ChunkGenerator.hpp"
+#include "InterfaceManager.hpp"
+#include "UIElement.hpp"
+#include "Terminal.hpp"
 
-#define WORLD_SIZE 32
-
-float	FOV = 65;
+float	FOV = 80;
 float	SCREEN_WIDTH = 860;
 float	SCREEN_HEIGHT = 520;
 float	RENDER_DISTANCE = 1024;
 
-bool	F3 = false;
-bool	PAUSED = false;
-bool	SKYBOX_ACTIVE = false;
+bool		F3 = false;
+bool		PAUSED = false;
+bool		SKYBOX_ACTIVE = false;
 
 int		currentFPS = 60;
+
+uint	seed = 0;
 
 Font				*FONT;
 Window				*WINDOW;
 Camera				*CAMERA;
 Skybox				*SKYBOX;
+Terminal			*TERMINAL;
 
 RegionManager		*CHUNKS; //!testing
 
 TextureManager		*TEXTURE_MANAGER;
 ShaderManager		*SHADER_MANAGER;
+InterfaceManager	*INTERFACE_MANAGER;
 
 FrameBuffer	*MAIN_FRAME_BUFFER;
 FrameBuffer	*DEPTH_FRAME_BUFFER;
@@ -55,9 +60,31 @@ ChunkGeneratorManager	*CHUNK_GENERATOR;
 /*
 	Keyboard input as the char so like typing on a keyboard
 */
-void	keyboard_input(GLFWwindow *window, unsigned int key)
+void	keyboard_input(GLFWwindow *, unsigned int key)
 {
-	(void)window;(void)key;
+	TERMINAL->input(key);
+}
+
+void	pauseGame(void*)
+{
+	PAUSED = true;
+	INTERFACE_MANAGER->use("pause");
+	glfwSetInputMode(WINDOW->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
+void	resumeGame(void*)
+{
+	PAUSED = false;
+	INTERFACE_MANAGER->reset();
+	WINDOW->setDefaultMousePos();
+}
+
+void	closeWindow(void*)
+{
+	if (!WINDOW->up())
+		return ;
+	glfwSetWindowShouldClose(WINDOW->getWindowData(), true);
+	consoleLog("Quitting game.", LogSeverity::WARNING);
 }
 
 /*
@@ -65,10 +92,19 @@ void	keyboard_input(GLFWwindow *window, unsigned int key)
 */
 void	key_hook(GLFWwindow *window, int key, int, int action, int)
 {
+	if (TERMINAL->specialInput(key, action))
+		return ;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && WINDOW->up())
 	{
-		consoleLog("Quitting game.", LogSeverity::WARNING);
-		glfwSetWindowShouldClose(window, true);
+		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+		{
+			glfwSetWindowShouldClose(window, true);
+			consoleLog("Quitting game.", LogSeverity::WARNING);
+		}
+		if (!TERMINAL->isActive() && PAUSED)
+			resumeGame(NULL);
+		else if (!TERMINAL->isActive())
+			pauseGame(NULL);
 	}
 	if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
 	{
@@ -79,6 +115,26 @@ void	key_hook(GLFWwindow *window, int key, int, int action, int)
 		{
 			consoleLog("WARNING: Debug mode is ON, more resources will be used.", LogSeverity::WARNING);
 			glfwSwapInterval(0);
+		}
+	}
+	if (TERMINAL->isActive())
+		return ;
+	if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
+	{
+		uint	current = CHUNKS->getRenderDist();
+		if (current + 1 < 32)
+		{
+			RENDER_DISTANCE = ((current + 1) * 32) * 2;
+			CHUNKS->setRenderDist(current + 1);
+		}
+	}
+	if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
+	{
+		int	current = CHUNKS->getRenderDist();
+		if (current - 1 > 0)
+		{
+			RENDER_DISTANCE = ((current - 1) * 32) * 2;
+			CHUNKS->setRenderDist(current - 1);
 		}
 	}
 }
@@ -94,7 +150,14 @@ void	build(TextureManager *textures)
 	textures->load("textures/dirt.bmp");
 	textures->load("textures/grass.bmp");
 	textures->load("textures/grass_side.bmp");
+	textures->load("textures/cobblestone.bmp");
 	consoleLog("Finished loading textures", LogSeverity::SUCCESS);
+}
+
+void	openOptions(void*)
+{
+	pauseGame(NULL);
+	INTERFACE_MANAGER->use("options");
 }
 
 /*
@@ -105,9 +168,11 @@ void	build(ShaderManager *shader)
 	consoleLog("Building shaders...", LogSeverity::NORMAL);
 	Shader *textShader = shader->load({"text", TEXT_VERT_SHADER, TEXT_FRAG_SHADER});
 	Shader *skyboxShader = shader->load({"skybox", SKYBOX_VERT_SHADER, SKYBOX_FRAG_SHADER});
-	Shader *waterShader = shader->load({"water", "shaders/water.vs", "shaders/water.fs"});
 	Shader *postShader = shader->load({"post", "shaders/post.vs", "shaders/post.fs"});
-	Shader *voxelShader = shader->load({"voxel", "shaders/voxel.vs", "shaders/voxel.fs"});
+	shader->load({"voxel", "shaders/voxel.vs", "shaders/voxel.fs"});
+	Shader *guiShader = shader->load({"gui", "shaders/gui_shader.vs", "shaders/gui_shader.fs"});
+
+	guiShader->setInt("tex0", 0);
 
 	Texture::use("terrainDepthTex", 0, 1, SHADER_MANAGER->get("voxel"));
 	Texture::use("waterDepthTex", 0, 2, SHADER_MANAGER->get("voxel"));
@@ -122,14 +187,6 @@ void	build(ShaderManager *shader)
 	Texture::use("screenTexture", 0, 0, postShader);
 	Texture::use("depthTex", 0, 1, postShader);
 
-	Texture::use("depthTex", 0, 0, waterShader);
-	Texture::use("waterDepthTex", 0, 1, waterShader);
-
-	voxelShader->setInt("stoneTexture", 0);
-	voxelShader->setInt("dirtTexture", 1);
-	voxelShader->setInt("grassTexture", 2);
-	voxelShader->setInt("grassSideTexture", 3);
-
 	consoleLog("Finished building shaders", LogSeverity::SUCCESS);
 }
 
@@ -138,8 +195,68 @@ void	build(ShaderManager *shader)
 */
 std::string	getFPSString()
 {
-	currentFPS = (int)(1.0f / WINDOW->getDeltaTime());
-	return (std::to_string(currentFPS) + " fps");
+	static int			frame = 0;
+	static std::string	fpsString = "0 fps";
+	if (frame++ >= currentFPS / 10)
+	{
+		currentFPS = (int)(1.0f / WINDOW->getDeltaTime());
+		fpsString = std::to_string(currentFPS) + " fps";
+		frame = 0;
+	}
+	return (fpsString);
+}
+
+void	build(InterfaceManager *interfaces)
+{
+	consoleLog("Loading interfaces...", LogSeverity::NORMAL);
+
+	Interface	*debug = interfaces->load("debug");
+	debug->elements.push_back(new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
+		[](std::string &label){label = getFPSString();}, true));
+
+	debug->elements.push_back(new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 15),
+		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);}, true));
+
+	debug->elements.push_back(new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 30),
+		[](std::string &label){label = "chunk xz: " + std::to_string((int)CAMERA->pos.x / 32) + "," + std::to_string((int)CAMERA->pos.z / 32);}, true));
+
+	debug->elements.push_back(new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
+		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
+			
+	debug->elements.push_back(new Text(UIAnchor::UI_TOP_RIGHT, "used threads", glm::vec2(0, 15),
+		[](std::string &label){label = "used threads: " + std::to_string(CHUNK_GENERATOR->workingThreads()) + "/" + std::to_string(GENERATION_THREAD_COUNT);}, true));
+
+	debug->elements.push_back(new Text(UIAnchor::UI_TOP_RIGHT, "rendered chunks", glm::vec2(0, 30),
+		[](std::string &label){label = "rendered chunks: " + std::to_string(CHUNKS->renderCount());}, true));
+
+	Interface	*pause = interfaces->load("pause");
+
+	pause->elements.push_back(new Button(UIAnchor::UI_CENTER, "resume", glm::vec2(0, -90), glm::vec2(300, 80), resumeGame, NULL));
+	pause->elements.push_back(new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), openOptions, NULL));
+	pause->elements.push_back(new Button(UIAnchor::UI_CENTER, "quit game", glm::vec2(0, 90), glm::vec2(300, 80), closeWindow, NULL));
+
+	Interface	*options = interfaces->load("options");
+
+	options->elements.push_back(new Button(UIAnchor::UI_CENTER, "leave", glm::vec2(0, 90), glm::vec2(300, 80), [](void*)
+		{
+			INTERFACE_MANAGER->use("pause");
+		}, NULL));
+
+	options->elements.push_back(new Slider(UIAnchor::UI_CENTER, "render distance", glm::vec2(0, 0), glm::vec2(300, 80),
+		[](float val)
+		{
+			int	newRenderDistance = glm::clamp((int)(val * 32.f), 1, 32);
+			RENDER_DISTANCE = newRenderDistance * 32 * 2;
+			CHUNKS->setRenderDist(newRenderDistance);
+		}, [](Slider *slider) {slider->setLabel("render distance " + std::to_string(CHUNKS->getRenderDist()));}, 0.55));
+
+	options->elements.push_back(new Slider(UIAnchor::UI_CENTER, "fov", glm::vec2(0, -90), glm::vec2(300, 80),
+		[](float val)
+		{
+			FOV = glm::clamp((int)(val * 100), 1, 100);
+		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 0.80));
+
+	consoleLog("Finished loading interfaces", LogSeverity::SUCCESS);
 }
 
 /*
@@ -149,32 +266,13 @@ void    drawUI()
 {
     glDisable(GL_DEPTH_TEST);
 
-    static int frame = 0;
-    static std::string    fps = "0 fps";
-    std::string            cameraPos = "xyz " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);
-    std::string            threadUsage = "used threads: " + std::to_string(CHUNK_GENERATOR->availableWorkers());
-    // std::string            waitingChunks = "waiting chunks: " + std::to_string(CHUNK_GENERATOR->getWaitingChunks());
+	Interface	*debug = INTERFACE_MANAGER->get("debug");
 
-    if (frame++ >= currentFPS / 10)
-    {
-        frame = 0;
-        fps = getFPSString();
-    }
-    FONT->putString(fps, *SHADER_MANAGER->get("text"),
-        glm::vec2(0, 0),
-        glm::vec2(fps.length() * 15, 15));
+	debug->update();
+	debug->draw();
 
-    FONT->putString(cameraPos, *SHADER_MANAGER->get("text"),
-    glm::vec2(0, 15),
-    glm::vec2(cameraPos.length() * 15, 15));
-
-	FONT->putString(threadUsage, *SHADER_MANAGER->get("text"),
-    glm::vec2(0, 30),
-    glm::vec2(threadUsage.length() * 15, 15));
-        
-	// FONT->putString(waitingChunks, *SHADER_MANAGER->get("text"),
-    // glm::vec2(0, 45),
-    // glm::vec2(waitingChunks.length() * 15, 15));
+	INTERFACE_MANAGER->draw();
+	TERMINAL->draw();
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -197,7 +295,6 @@ void	updatePostShader(ShaderManager *shaders)
 void	update(ShaderManager *shaders)
 {
 	Shader	*textShader = shaders->get("text");
-	Shader	*waterShader = shaders->get("water");
 	Shader	*postShader = shaders->get("post");
 	Shader	*voxelShader = shaders->get("voxel");
 
@@ -206,18 +303,15 @@ void	update(ShaderManager *shaders)
 	textShader->setFloat("SCREEN_WIDTH", SCREEN_WIDTH);
 	textShader->setFloat("SCREEN_HEIGHT", SCREEN_HEIGHT);
 
-	waterShader->use();
-	CAMERA->setViewMatrix(*waterShader);
-	waterShader->setVec3("viewPos", CAMERA->pos);
-	waterShader->setFloat("time", glfwGetTime());
-	waterShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
-
 	postShader->use();
 	postShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
+	postShader->setFloat("SCREEN_WIDTH", SCREEN_WIDTH);
+	postShader->setFloat("SCREEN_HEIGHT", SCREEN_HEIGHT);
 
 	voxelShader->use();
 	voxelShader->setVec3("viewPos", CAMERA->pos);
 	voxelShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
+	voxelShader->setFloat("time", glfwGetTime());
 }
 
 /*
@@ -225,11 +319,16 @@ void	update(ShaderManager *shaders)
 */
 void	frame_key_hook(Window &window)
 {
+	if (PAUSED || TERMINAL->isActive())
+		return ;
 	float cameraSpeed = 15 * window.getDeltaTime();
 	float	speedBoost = 1.0f;
 
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 		speedBoost = 20.0f;
+
+	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+		speedBoost *= 15.0f;
 	
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_W) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos + CAMERA->front * (cameraSpeed * speedBoost);
@@ -249,9 +348,10 @@ void	frame_key_hook(Window &window)
 /*
 	Handles rotating the camera around using the mouse
 */
-void	move_mouse_hook(GLFWwindow* window, double xpos, double ypos)
+void	move_mouse_hook(GLFWwindow*, double xpos, double ypos)
 {
-	(void)window;
+	if (PAUSED || TERMINAL->isActive())
+		return ;
 
 	float xoffset = xpos - WINDOW->getLastMouseX();
 	float yoffset = WINDOW->getLastMouseY() - ypos;
@@ -280,32 +380,38 @@ struct	Engine
 {
 	Engine()
 	{
+		srand(std::time(NULL));
 		WINDOW = new Window();
 		CAMERA = new Camera();
 		CAMERA->pos.y += 40;
-		FONT = new Font();
-		SHADER_MANAGER = new ShaderManager();
-		build(SHADER_MANAGER);
 		TEXTURE_MANAGER = new TextureManager();
 		build(TEXTURE_MANAGER);
+		SHADER_MANAGER = new ShaderManager();
+		build(SHADER_MANAGER);
+		FONT = new Font();
+		INTERFACE_MANAGER = new InterfaceManager();
+		build(INTERFACE_MANAGER);
 		CHUNK_GENERATOR = new ChunkGeneratorManager();
 		MAIN_FRAME_BUFFER = new FrameBuffer();
 		DEPTH_FRAME_BUFFER = new FrameBuffer();
 		WATER_DEPTH_FRAME_BUFFER = new FrameBuffer();
 		SKYBOX = new Skybox({SKYBOX_PATHES});
 		CHUNKS = new RegionManager();
+		TERMINAL = new Terminal();
 	}
 	~Engine()
 	{
 		delete CHUNK_GENERATOR;
 		delete CHUNKS;
+		delete TERMINAL;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
 		delete DEPTH_FRAME_BUFFER;
 		delete WATER_DEPTH_FRAME_BUFFER;
-		delete TEXTURE_MANAGER;
-		delete SHADER_MANAGER;
 		delete FONT;
+		delete SHADER_MANAGER;
+		delete TEXTURE_MANAGER;
+		delete INTERFACE_MANAGER;
 		delete CAMERA;
 		consoleLog("Done.", LogSeverity::SUCCESS);
 		delete WINDOW;
@@ -317,18 +423,18 @@ struct	Engine
 */
 void	render()
 {
-	DEPTH_FRAME_BUFFER->clear();
-	WATER_DEPTH_FRAME_BUFFER->clear();
 	MAIN_FRAME_BUFFER->clear();
 	
 	MAIN_FRAME_BUFFER->use();
-	SKYBOX->draw(*CAMERA, *SHADER_MANAGER->get("skybox"));
+	SKYBOX->draw(*CAMERA);
 	Shader	*voxelShader = SHADER_MANAGER->get("voxel");
-	Texture::use("stoneTexture", TEXTURE_MANAGER->get("textures/stone.bmp")->getID(), 0, voxelShader);
-	Texture::use("dirtTexture", TEXTURE_MANAGER->get("textures/dirt.bmp")->getID(), 1, voxelShader);
-	Texture::use("grassTexture", TEXTURE_MANAGER->get("textures/grass.bmp")->getID(), 2, voxelShader);
-	Texture::use("grassSideTexture", TEXTURE_MANAGER->get("textures/grass_side.bmp")->getID(), 3, voxelShader);
-	Texture::use("sandTexture", TEXTURE_MANAGER->get("textures/sand.bmp")->getID(), 4, voxelShader);
+	Texture::use("stoneTexture", TEXTURE_MANAGER->get("textures/missing.bmp")->getID(), 0, voxelShader);
+	Texture::use("stoneTexture", TEXTURE_MANAGER->get("textures/stone.bmp")->getID(), 1, voxelShader);
+	Texture::use("dirtTexture", TEXTURE_MANAGER->get("textures/dirt.bmp")->getID(), 2, voxelShader);
+	Texture::use("grassTexture", TEXTURE_MANAGER->get("textures/grass.bmp")->getID(), 3, voxelShader);
+	Texture::use("grassSideTexture", TEXTURE_MANAGER->get("textures/grass_side.bmp")->getID(), 4, voxelShader);
+	Texture::use("sandTexture", TEXTURE_MANAGER->get("textures/sand.bmp")->getID(), 5, voxelShader);
+	Texture::use("waterTexture", TEXTURE_MANAGER->get("textures/water.bmp")->getID(), 6, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 }
 
@@ -337,7 +443,7 @@ void	render()
 */
 void	update()
 {
-	
+	INTERFACE_MANAGER->update();
 }
 
 Quadtree	*prevBranch = NULL;
@@ -348,7 +454,7 @@ int	getBlock(const glm::vec3 &pos)
 	return (0);
 }
 
-int	main(void)
+int	main(int ac, char **av)
 {
 	consoleLog("Starting...", NORMAL);
 
@@ -357,8 +463,13 @@ int	main(void)
 
 		consoleLog("Starting rendering...", NORMAL);
 
-		CAMERA->yaw = 95;
-		CAMERA->pitch = -20;
+		if (ac >= 2)
+			seed = std::atoi(av[1]);
+		else
+			seed = rand();
+
+		CAMERA->yaw = 45;
+		CAMERA->pitch = 0;
 		CAMERA->pos = {0, 100, 0};
 
 		while (WINDOW->up())
@@ -375,10 +486,13 @@ int	main(void)
 			FrameBuffer::reset();
 
 			updatePostShader(SHADER_MANAGER);
+			if (INTERFACE_MANAGER->getCurrent())
+				SHADER_MANAGER->get("post")->setBool("blur", true);
+			else
+				SHADER_MANAGER->get("post")->setBool("blur", false);
 			FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getColorexture());
 
 			drawUI();
-
 			
 			frame_key_hook(*WINDOW);
 			WINDOW->loopEnd();
