@@ -22,5 +22,5 @@ void main() {
             discard ;
     }
     else
-        FragColor = vec4(vec3(1.0, 1.0, 1.0), 1.0);
+        FragColor = vec4(texColor.rgb, 1.0);
 }

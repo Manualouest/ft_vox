@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 22:01:22 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 19:32:30 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 14:00:25 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,29 +19,71 @@
 class	Interface
 {
 	public:
-		Interface(){}
+		Interface() {}
 		~Interface()
 		{
-			for (UIElement *element : elements)
-				delete element;
+			for (auto &element : _elements)
+				delete element.second;
 		}
 
 		void	draw()
 		{
-			for (UIElement *element : elements)
-				element->draw();
+			if (_onDraw)
+				_onDraw(this);
+
+			for (auto &element : _elements)
+				element.second->draw();
 		}
 		void	update()
 		{
+			if (_onUpdate)
+				_onUpdate(this);
+
 			double mouseX, mouseY;
 			bool mousePressed = glfwGetMouseButton(WINDOW->getWindowData(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 			glfwGetCursorPos(WINDOW->getWindowData(), &mouseX, &mouseY);
-			for (UIElement *element : elements)
-				element->update(glm::vec2(mouseX, mouseY), mousePressed);
+			for (auto &element : _elements)
+				element.second->update(glm::vec2(mouseX, mouseY), mousePressed);
 		}
-		std::vector<UIElement *>	elements;
-		void						*updateData = NULL;
-		void						*drawData = NULL;
+
+		void	setUpdateFunc(std::function<void(Interface*)> func)
+		{
+			this->_onUpdate = func;
+		}
+		void	setDrawFunc(std::function<void(Interface*)> func)
+		{
+			this->_onDraw = func;
+		}
+
+		UIElement	*addElement(const std::string &key, UIElement *elem)
+		{
+			std::map<std::string, UIElement *>::iterator	finder;
+
+			finder = _elements.find(key);
+			if (finder != _elements.end())
+			{
+				consoleLog("ERROR UIElement already exists in this interface", LogSeverity::ERROR);
+				return (finder->second);
+			}
+			_elements.insert({key, elem});
+			return (elem);
+		}
+		UIElement	*getElement(const std::string &key)
+		{
+			std::map<std::string, UIElement *>::iterator	finder;
+
+			finder = _elements.find(key);
+			if (finder == _elements.end())
+			{
+				consoleLog("WARNING UIElement does not exist in this interface", LogSeverity::WARNING);
+				return (NULL);
+			}
+			return (finder->second);
+		}
+	private:
+		std::map<std::string, UIElement *>		_elements;
+		std::function<void(Interface*)>			_onUpdate = NULL;
+		std::function<void(Interface*)>			_onDraw = NULL;
 };
 
 #endif

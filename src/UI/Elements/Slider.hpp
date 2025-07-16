@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 13:36:46 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 14:48:03 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 17:31:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,8 +64,8 @@ class	Slider : public UIElement
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 			
 			glBindVertexArray(0);
-			float	labelWidth = this->label.size() * 15;
-			float	labelHeight = 15;
+			float	labelWidth = this->label.size() * 16;
+			float	labelHeight = 16;
 
 			glm::vec2	buttonCenter;
 			buttonCenter.x = (this->pos.x + this->size.x / 2.f) - labelWidth / 2.f;

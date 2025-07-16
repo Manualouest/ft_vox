@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:42:04 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:56:31 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 18:03:24 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,8 @@ enum UIAnchor
 	UI_TOP_LEFT, //Anchored on the top left of the screen
 	UI_TOP_RIGHT, //Anchored on the top right of the screen
 	UI_TOP_CENTER, //Anchored on the top center of the screen
+	UI_TOP_CENTER_HALF, //Anchored on the half top of the screen
+	UI_BOTTOM_CENTER_HALF, //Anchored on the half bottom of the screen
 	UI_CENTER, //Anchored on the center of the screen
 	UI_CENTER_LEFT, //Anchored on the center left of the screen
 	UI_CENTER_RIGHT, //Anchored on the center right of the screen
@@ -76,5 +78,6 @@ class	UIElement
 # include "Button.hpp"
 # include "Text.hpp"
 # include "Slider.hpp"
+# include "Image.hpp"
 
 #endif

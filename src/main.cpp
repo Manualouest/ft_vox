@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 11:02:48 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 18:23:09 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,39 +210,58 @@ void	build(InterfaceManager *interfaces)
 {
 	consoleLog("Loading interfaces...", LogSeverity::NORMAL);
 
-	Interface	*debug = interfaces->load("debug");
-	debug->elements.push_back(new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
+	Interface	*fps = interfaces->load("fps");
+
+	fps->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
 		[](std::string &label){label = getFPSString();}, true));
 
-	debug->elements.push_back(new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 15),
+	Interface	*debug = interfaces->load("debug");
+		
+	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 15),
 		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);}, true));
 
-	debug->elements.push_back(new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 30),
+	debug->addElement("text_chunk_pos", new Text(UIAnchor::UI_TOP_LEFT, "chunk pos", glm::vec2(0, 30),
 		[](std::string &label){label = "chunk xz: " + std::to_string((int)CAMERA->pos.x / 32) + "," + std::to_string((int)CAMERA->pos.z / 32);}, true));
 
-	debug->elements.push_back(new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
+	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
 			
-	debug->elements.push_back(new Text(UIAnchor::UI_TOP_RIGHT, "used threads", glm::vec2(0, 15),
+	debug->addElement("text_used_threads", new Text(UIAnchor::UI_TOP_RIGHT, "used threads", glm::vec2(0, 15),
 		[](std::string &label){label = "used threads: " + std::to_string(CHUNK_GENERATOR->workingThreads()) + "/" + std::to_string(GENERATION_THREAD_COUNT);}, true));
 
-	debug->elements.push_back(new Text(UIAnchor::UI_TOP_RIGHT, "rendered chunks", glm::vec2(0, 30),
+	debug->addElement("text_rendered_chunks", new Text(UIAnchor::UI_TOP_RIGHT, "rendered chunks", glm::vec2(0, 30),
 		[](std::string &label){label = "rendered chunks: " + std::to_string(CHUNKS->renderCount());}, true));
 
 	Interface	*pause = interfaces->load("pause");
 
-	pause->elements.push_back(new Button(UIAnchor::UI_CENTER, "resume", glm::vec2(0, -90), glm::vec2(300, 80), resumeGame, NULL));
-	pause->elements.push_back(new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), openOptions, NULL));
-	pause->elements.push_back(new Button(UIAnchor::UI_CENTER, "quit game", glm::vec2(0, 90), glm::vec2(300, 80), closeWindow, NULL));
+	pause->addElement("button_resume", new Button(UIAnchor::UI_CENTER, "resume", glm::vec2(0, -90), glm::vec2(300, 80), resumeGame, NULL));
+	pause->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), openOptions, NULL));
+	pause->addElement("button_quit_game", new Button(UIAnchor::UI_CENTER, "quit game", glm::vec2(0, 90), glm::vec2(300, 80), closeWindow, NULL));
+	
+	pause->addElement("text_popup", new Text(UIAnchor::UI_TOP_CENTER_HALF, "by mbatty and mbirou", glm::vec2(175, -40), NULL, false));
+	pause->addElement("image_icon", new Image(UIAnchor::UI_TOP_CENTER_HALF, glm::vec2(0, 0), glm::vec2(400, 150)));
+
+	pause->setUpdateFunc([]
+		(Interface *interface)
+		{
+			UIElement	*elem = interface->getElement("text_popup");
+			Text		*text_popup = static_cast<Text*>(elem);
+
+			float	scale = 1 + std::abs(cos(glfwGetTime())) / 10;
+
+			text_popup->setScale(glm::vec2(scale, scale));
+			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
+			text_popup->setAngle(-10 + cos(glfwGetTime()) * 10);
+		});
 
 	Interface	*options = interfaces->load("options");
 
-	options->elements.push_back(new Button(UIAnchor::UI_CENTER, "leave", glm::vec2(0, 90), glm::vec2(300, 80), [](void*)
+	options->addElement("button_leave", new Button(UIAnchor::UI_CENTER, "leave", glm::vec2(0, 90), glm::vec2(300, 80), [](void*)
 		{
 			INTERFACE_MANAGER->use("pause");
 		}, NULL));
 
-	options->elements.push_back(new Slider(UIAnchor::UI_CENTER, "render distance", glm::vec2(0, 0), glm::vec2(300, 80),
+	options->addElement("slider_render_distance", new Slider(UIAnchor::UI_CENTER, "render distance", glm::vec2(0, 0), glm::vec2(300, 80),
 		[](float val)
 		{
 			int	newRenderDistance = glm::clamp((int)(val * 32.f), 1, 32);
@@ -250,7 +269,7 @@ void	build(InterfaceManager *interfaces)
 			CHUNKS->setRenderDist(newRenderDistance);
 		}, [](Slider *slider) {slider->setLabel("render distance " + std::to_string(CHUNKS->getRenderDist()));}, 0.55));
 
-	options->elements.push_back(new Slider(UIAnchor::UI_CENTER, "fov", glm::vec2(0, -90), glm::vec2(300, 80),
+	options->addElement("slider_fov", new Slider(UIAnchor::UI_CENTER, "fov", glm::vec2(0, -90), glm::vec2(300, 80),
 		[](float val)
 		{
 			FOV = glm::clamp((int)(val * 100), 1, 100);
@@ -267,9 +286,15 @@ void    drawUI()
     glDisable(GL_DEPTH_TEST);
 
 	Interface	*debug = INTERFACE_MANAGER->get("debug");
+	Interface	*fps = INTERFACE_MANAGER->get("fps");
 
-	debug->update();
-	debug->draw();
+	fps->update();
+	fps->draw();
+	if (!PAUSED && F3)
+	{
+		debug->update();
+		debug->draw();
+	}
 
 	INTERFACE_MANAGER->draw();
 	TERMINAL->draw();
@@ -469,8 +494,10 @@ int	main(int ac, char **av)
 			seed = rand();
 
 		CAMERA->yaw = 45;
-		CAMERA->pitch = 0;
-		CAMERA->pos = {0, 100, 0};
+		CAMERA->pitch = -10;
+		CAMERA->pos = {WORLD_SIZE / 2, 130, WORLD_SIZE / 2};
+
+		pauseGame(NULL);
 
 		while (WINDOW->up())
 		{

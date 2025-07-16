@@ -108,4 +108,14 @@ void	UIElement::anchorPos()
 		this->pos.x = (SCREEN_WIDTH * 0.75) - this->size.x / 2 + this->offset.x;
 		this->pos.y = SCREEN_HEIGHT / 2 - this->size.y / 2 + this->offset.y;
 	}
+	else if (this->anchor == UIAnchor::UI_TOP_CENTER_HALF)
+	{
+		this->pos.x = (SCREEN_WIDTH / 2) - this->size.x / 2 + this->offset.x;
+		this->pos.y = (SCREEN_HEIGHT * 0.25) - this->size.y + this->offset.y;
+	}
+		else if (this->anchor == UIAnchor::UI_BOTTOM_CENTER_HALF)
+	{
+		this->pos.x = (SCREEN_WIDTH / 2) - this->size.x / 2 + this->offset.x;
+		this->pos.y = (SCREEN_HEIGHT * 0.75) - this->size.y + this->offset.y;
+	}
 }

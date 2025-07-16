@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:48:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 11:37:44 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 18:16:08 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,6 +89,43 @@ void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 size)
 		putChar(*it, glm::vec2(charPosX, charPosY), glm::vec2(offset, size.y));
 		charPosX += offset;
 	}
+}
+
+void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 rotation, float angle)
+{
+    float   fontSizeX = 16.0f * scale.x;
+    float   fontSizeY = 16.0f * scale.y;
+
+    glm::vec3   center = glm::vec3((float)str.size() * fontSizeX / 2.0f, fontSizeY / 2.0f, 1.0); //Rotate around center of string
+
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 1.0f));
+
+    model = glm::translate(model, center);
+    model = rotate(model, glm::radians(angle), rotation);
+    model = glm::translate(model, center * -1.0f);
+
+    model = glm::scale(model, glm::vec3(fontSizeX, fontSizeY, 1.0f));
+    glm::mat4 projection = glm::ortho(0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f);
+
+    int charit = 0;
+    for (std::string::iterator it = str.begin(); it != str.end(); it++)
+	{
+        initFontModel();
+        _shader->use();
+        getChar(*it).use(0);
+
+        glm::mat4   model2 = model;
+
+        model2 = glm::translate(model2, glm::vec3(charit++, 0.0, 0.0));
+
+        _shader->setMat4("projection", projection);
+        _shader->setMat4("model", model2);
+        
+        glBindVertexArray(fontVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+    }
+
 }
 
 void	Font::initFontModel()
