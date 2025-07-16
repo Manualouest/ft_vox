@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:42:04 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 13:46:48 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 10:56:31 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,9 +48,6 @@ class	UIElement
 			this->_shader = SHADER_MANAGER->get("gui");
 		}
 		virtual ~UIElement(){}
-		/*
-			Draws the button, expects GL_DEPTH_TEST to be disabled so please use this function in drawUI
-		*/
 		virtual void	draw() = 0;
 		/*
 			@brief update button's variables
@@ -61,10 +58,7 @@ class	UIElement
 		/*
 			Returns wether the mouse is in the button or not
 		*/
-		bool	isInside(glm::vec2 buttonPos, glm::vec2 size, glm::vec2 mousePos)
-		{
-			return mousePos.x >= buttonPos.x && mousePos.x <= buttonPos.x + size.x && mousePos.y >= buttonPos.y && mousePos.y <= buttonPos.y + size.y;
-		}
+		bool	isInside(glm::vec2 buttonPos, glm::vec2 size, glm::vec2 mousePos);
 		/*
 			Simple function to init the quad "model" used for all buttons
 			If the quad is already loaded, just returns

@@ -15,6 +15,11 @@
 unsigned int	UIquadVAO = 0;
 unsigned int	UIquadVBO = 0;
 
+bool	UIElement::isInside(glm::vec2 buttonPos, glm::vec2 size, glm::vec2 mousePos)
+{
+	return mousePos.x >= buttonPos.x && mousePos.x <= buttonPos.x + size.x && mousePos.y >= buttonPos.y && mousePos.y <= buttonPos.y + size.y;
+}
+
 void	UIElement::initButtonQuad()
 {
 	if (UIquadVAO != 0)

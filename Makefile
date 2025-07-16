@@ -29,9 +29,13 @@ CPP_FILES :=	main \
 				ChunkMaker/Chunk \
 				ChunkMaker/RegionManager \
 				ChunkMaker/ChunkGenerator \
+				ChunkMaker/ChunkGeneratorManager \
 				UI/UIElement \
-				Terminal/Commands
-
+				Terminal/Terminal \
+				Terminal/Commands \
+				Managers/Quadtree \
+				Managers/ShaderManager \
+				Managers/TextureManager
 
 CPP_FILES := $(addsuffix .cpp, $(CPP_FILES))
 
@@ -96,6 +100,7 @@ glm:
 	fi
 
 $(OBJECTS): $(OBJ_DIR)%.o : $(SOURCE_DIR)%.cpp
+	@echo "\033[0;32mCompiling $<\033[0m"
 	@c++ $(CFLAGS) $(CLASSE_HEADERS) $(INCLUDE_DIRS) -c $< -o $@
 
 $(OBJ_DIR):

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 16:26:10 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 11:02:48 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 #include "FrameBuffer.hpp"
 #include "Chunk.hpp"
 #include "RegionManager.hpp"
-#include "ChunkGenerator.hpp"
+#include "ChunkGeneratorManager.hpp"
 #include "InterfaceManager.hpp"
 #include "UIElement.hpp"
 #include "Terminal.hpp"

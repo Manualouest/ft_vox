@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/15 16:24:27 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 11:00:48 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -414,7 +414,7 @@ void	Chunk::gen()
 	}
 }
 
-#include "ChunkGenerator.hpp"
+#include "ChunkGeneratorManager.hpp"
 extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 void	Chunk::draw(Shader &shader)

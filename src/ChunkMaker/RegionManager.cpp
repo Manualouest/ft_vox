@@ -6,12 +6,12 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/15 16:22:38 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 10:10:28 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RegionManager.hpp"
-#include "ChunkGenerator.hpp"
+#include "ChunkGeneratorManager.hpp"
 
 extern	float SPEEDBOOST;
 

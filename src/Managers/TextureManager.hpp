@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:22:51 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/09 18:07:33 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/16 10:33:04 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,48 +29,31 @@ class	TextureManager
 {
 	public:
 		TextureManager(){}
-		~TextureManager()
-		{
-			for (auto it = loadedTextures.begin(); it != loadedTextures.end(); it++)
-				delete it->second;	
-		}
+		~TextureManager();
 
-		bool	erase(const std::string &path)
-		{
-			std::map<std::string, Texture*>::iterator	finder;
-			finder = loadedTextures.find(path);
-			if (finder == loadedTextures.end())
-			{
-				consoleLog("WARNING Tried to unload a texture thats not loaded: " + path, LogSeverity::WARNING);
-				return (0);
-			}
-			loadedTextures.erase(finder);
-			return (1);
-		}
+		/*
+			Erases a texture from the manager, freeing all its data
 
-		Texture	*load(const std::string &path)
-		{
-			if (loadedTextures.find(path) != loadedTextures.end())
-			{
-				consoleLog("WARNING Tried to load a texture thats already loaded (will be using the existing texture): " + path, LogSeverity::WARNING);
-				return (this->get(path));
-			}
-			return (loadedTextures.insert({path, new Texture(path.c_str())}).first->second);
-		}
+			@param path Texture to erase
+		*/
+		bool	erase(const std::string &path);
 
-		Texture	*get(const std::string &path)
-		{
-			std::map<std::string, Texture *>::iterator	finder;
-			finder = loadedTextures.find(path);
-			if (finder == loadedTextures.end())
-				return (load(path));
-			return (finder->second);
-		}
-		//Since TEXTURE_MANAGER is used as a pointer use this operator like (*TEXTURE_MANAGER)["path"]
-		Texture	*operator[](const std::string &path)
-		{
-			return (this->get(path));
-		}
+		/*
+			Loads a texture from the given path, if cant be created, Texture will throw
+
+			@param path Texture to load
+		*/
+		Texture	*load(const std::string &path);
+
+		/*
+			Returns a texture based on its path, if not found it will return the load method
+
+			@param path Path of the texture to load
+		*/
+		Texture	*get(const std::string &path);
+		
+		//Wrapper around get method
+		Texture	*operator[](const std::string &path);
 	private:
 		std::map<std::string, Texture*>	loadedTextures;
 };
