@@ -99,7 +99,7 @@ enum QTBranch
 /*
 	Quad tree used to store chunks, each branch has 4 branches under it,
 		if a branch reaches a size of 32 it will transform into a Leaf (Chunk).
-	
+
 	Each time a branch grows under another one, its size will be:
 	- Size of branch above / 2
 
@@ -117,19 +117,19 @@ class	Quadtree
 		*/
 		Quadtree(const glm::ivec2 &pos, QTBranch quadrant, const glm::ivec2 &size);
 		~Quadtree();
-		
+
 		/*
 			Grows branches until it finds a leaf on the given targetPos,
 				if it cant find one a warning will be printed.
-			
+
 			@param targetPos World position of a block inside the wanted leaf (chunk)
 		*/
 		Chunk	*growBranch(const glm::ivec2 &targetPos);
-		
+
 		/*
 			Goes through branches until it can find a leaf on the given position without creating new branches.
 			If it cant find a leaf, NULL will be returned.
-		
+
 			@param targetPos World position of a block inside the wanted leaf (chunk)
 		*/
 		Chunk	*getLeaf(const glm::ivec2 &targetPos);
@@ -144,28 +144,43 @@ class	Quadtree
 			@param depth Depth at wich the search should stop
 		*/
 		Quadtree	*getBranch(const glm::ivec2 &targetPos, int depth);
-		
+
 		/*
 			Frees memory by pruning branches and leaves that contain no used chunks
 		*/
 		void	pruneDeadLeaves(Quadtree *root);
 		void	pruneBranch(Quadtree *root, QTBranch quadrant);
-		
+		void	pruneAll()
+		{
+			if (_branches[QTBranch::BOTTOM_LEFT])
+				delete _branches[QTBranch::BOTTOM_LEFT];
+			if (_branches[QTBranch::BOTTOM_RIGHT])
+				delete _branches[QTBranch::BOTTOM_RIGHT];
+			if (_branches[QTBranch::TOP_LEFT])
+				delete _branches[QTBranch::TOP_LEFT];
+			if (_branches[QTBranch::TOP_RIGHT])
+				delete _branches[QTBranch::TOP_RIGHT];
+			_branches[QTBranch::BOTTOM_LEFT] = NULL;
+			_branches[QTBranch::BOTTOM_RIGHT] = NULL;
+			_branches[QTBranch::TOP_LEFT] = NULL;
+			_branches[QTBranch::TOP_RIGHT] = NULL;
+		}
+
 		glm::vec2	getSize() const {return (this->_size);}
 		glm::vec2	getPos() const {return (this->_pos);}
-		
+
 		bool	isLeaf() const {return (_leaf != NULL);}
 		bool	isInBounds(const glm::ivec2 &point);
 	private:
 		//Returns branch quadrant in wich pos is. (OUT_OF_BOUNDS can be returned but will never happen) @param pos target position of branch
 		QTBranch	_getQuadrant(const glm::ivec2 &pos) const;
-		
+
 		glm::ivec2				_size;
 		glm::ivec2				_pos;
-		
+
 		std::vector<Quadtree*>	_branches = {NULL, NULL, NULL, NULL};
 		Chunk					*_leaf = NULL;
-		
+
 		//Current branch's position in its parent's branches
 		QTBranch				_quadrantInRoot;
 };
