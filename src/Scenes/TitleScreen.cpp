@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 15:49:42 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/17 17:54:01 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,8 @@ extern SceneManager		*SCENE_MANAGER;
 
 void	resumeGame(void*);
 
-#define TITLES_COUNT 6
+#define TITLES_COUNT 7
+#define TITLE_TIME 8
 
 std::string	popupTitles[TITLES_COUNT] =
 {
@@ -30,6 +31,7 @@ std::string	popupTitles[TITLES_COUNT] =
 	"42 angouleme",
 	"also try cub3d!",
 	"chicken jockey!",
+	"scraeyme approved"
 };
 
 //A FAIRE: 1/42 d'avoir ft_xov
@@ -44,7 +46,11 @@ static void	_buildInterface(Scene *scene)
 			SCENE_MANAGER->use("game_scene");
 			resumeGame(NULL);
 		}, NULL));
-	main->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), NULL, NULL));
+	main->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), []
+		(void*)
+		{
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("options");
+		}, NULL));
 	main->addElement("button_quit_game", new Button(UIAnchor::UI_CENTER, "quit game", glm::vec2(0, 90), glm::vec2(300, 80), closeWindow, NULL));
 
 	main->addElement("text_popup", new Text(UIAnchor::UI_TOP_CENTER_HALF, "by mbatty and mbirou!", glm::vec2(175, -40), NULL, false));
@@ -57,7 +63,7 @@ static void	_buildInterface(Scene *scene)
 			UIElement	*elem = interface->getElement("text_popup");
 			Text		*text_popup = static_cast<Text*>(elem);
 
-			if (glfwGetTime() - lastUpdate >= 8)
+			if (glfwGetTime() - lastUpdate >= TITLE_TIME)
 			{
 				text_popup->setText(popupTitles[rand() % TITLES_COUNT]);
 				lastUpdate = glfwGetTime();
@@ -68,6 +74,24 @@ static void	_buildInterface(Scene *scene)
 			text_popup->setScale(glm::vec2(scale, scale));
 			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
 			text_popup->setAngle(-10);
+		});
+
+	Interface	*options = scene->getInterfaceManager()->load("options");
+
+	options->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(300, 80), [](void*)
+	{
+		SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
+	}, NULL));
+
+	options->addElement("fun_text", new Text(UIAnchor::UI_CENTER, "why are you here? ... there are no options...", glm::vec2(0, 0), NULL, false));
+
+	options->setUpdateFunc([]
+		(Interface *interface)
+		{
+			Text		*text_popup = static_cast<Text*>(interface->getElement("fun_text"));
+
+			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
+			text_popup->setAngle(cos(glfwGetTime() * 25));
 		});
 }
 

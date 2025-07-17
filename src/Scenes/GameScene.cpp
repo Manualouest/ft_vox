@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 15:31:48 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/17 17:46:21 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,7 +193,7 @@ static void	_buildInterface(Scene *scene)
 	options->addElement("slider_fov", new Slider(UIAnchor::UI_CENTER, "fov", glm::vec2(0, -90), glm::vec2(300, 80),
 		[](float val)
 		{
-			FOV = glm::clamp((int)(val * 100), 1, 100);
+			FOV = glm::clamp((int)(val * 120), 1, 120);
 		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 0.80));
 }
 
