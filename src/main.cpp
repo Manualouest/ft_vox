@@ -135,7 +135,7 @@ void	build(ShaderManager *shader)
 
 	Texture::use("screenTexture", 0, 0, postShader);
 	Texture::use("depthTex", 0, 1, postShader);
-	
+
 	Texture::use("screenTexture", 0, 0, titleBackground);
 
 	consoleLog("Finished building shaders", LogSeverity::SUCCESS);
@@ -166,29 +166,25 @@ struct	Engine
 	{
 		srand(std::time(NULL));
 		WINDOW = new Window();
-		CAMERA = new Camera();
-		CAMERA->pos.y += 40;
 		SCENE_MANAGER = new SceneManager();
 		TEXTURE_MANAGER = new TextureManager();
 		build(TEXTURE_MANAGER);
 		SHADER_MANAGER = new ShaderManager();
 		build(SHADER_MANAGER);
 		FONT = new Font();
-		CHUNK_GENERATOR = new ChunkGeneratorManager();
 		MAIN_FRAME_BUFFER = new FrameBuffer();
 		SKYBOX = new Skybox({SKYBOX_PATHES});
 		CHUNKS = new RegionManager();
 	}
 	~Engine()
 	{
-		delete CHUNK_GENERATOR;
 		delete CHUNKS;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
 		delete FONT;
 		delete SHADER_MANAGER;
 		delete TEXTURE_MANAGER;
-		delete CAMERA;
+		delete SCENE_MANAGER;
 		consoleLog("Done.", LogSeverity::SUCCESS);
 		delete WINDOW;
 	}
@@ -230,19 +226,17 @@ int	main(int ac, char **av)
 
 		seed = ac >= 2 ? seed = std::atoi(av[1]) : seed = rand();
 
-		SCENE_MANAGER->load("title_scene", TitleScreen::build, TitleScreen::render, TitleScreen::update);
-		SCENE_MANAGER->load("game_scene", GameScene::build, GameScene::render, GameScene::update);
+		SCENE_MANAGER->load("title_scene", TitleScreen::build, TitleScreen::destructor, TitleScreen::render, TitleScreen::update);
+		Scene	*gameScene = SCENE_MANAGER->load("game_scene", GameScene::build, GameScene::destructor, GameScene::render, GameScene::update);
+		gameScene->setClose(GameScene::close);
+		gameScene->setOpen(GameScene::open);
 		SCENE_MANAGER->use("title_scene");
-
-		CAMERA->yaw = 45;
-		CAMERA->pitch = -10;
-		CAMERA->pos = {WORLD_SIZE / 2, 130, WORLD_SIZE / 2};
 
 		consoleLog("Starting rendering...", NORMAL);
 		while (WINDOW->up())
 		{
 			WINDOW->loopStart();
-			
+
 			SCENE_MANAGER->update();
 			SCENE_MANAGER->render();
 
