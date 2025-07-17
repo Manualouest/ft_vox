@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:11:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 15:24:38 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/17 13:34:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,6 @@ Window::Window() : _lastFrame(0)
 	
 	this->center();
 	this->setIcon("textures/mbatty.bmp");
-	setDefaultMousePos();
 	consoleLog("Creating window, done.", LogSeverity::SUCCESS);
 }
 

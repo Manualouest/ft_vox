@@ -2,7 +2,7 @@ NAME := ft_vox
 
 OBJ_DIR := ./obj/
 INCLUDE_DIRS := ./includes/ ./GLFW/include/GLFW/ ./includes/glad/. ./includes/render ./src/ ./glm/glm/ ./glm/glm/gtc/
-CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/ UI/ UI/Elements UI/Interfaces Terminal/
+CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/ UI/ UI/Elements UI/Interfaces Terminal/ Scenes/
 
 GLFWARCHIVE = GLFW/build/src/libglfw3.a
 
@@ -35,7 +35,9 @@ CPP_FILES :=	main \
 				Terminal/Commands \
 				Managers/Quadtree \
 				Managers/ShaderManager \
-				Managers/TextureManager
+				Managers/TextureManager \
+				Scenes/TitleScreen \
+				Scenes/GameScene
 
 CPP_FILES := $(addsuffix .cpp, $(CPP_FILES))
 

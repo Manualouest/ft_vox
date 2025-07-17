@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 11:48:31 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 17:37:27 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/17 13:51:55 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ class	Text : public UIElement
 		void	setScale(glm::vec2 scale) {_scale = scale;}
 		void	setRotation(glm::vec3 rotation) {_rotation = rotation;}
 		void	setAngle(float angle) {_angle = angle;}
+		void	setText(const std::string &str) {this->_label = str;getSize();}
 	private:
 		glm::vec2							_scale;
 		glm::vec3							_rotation;
