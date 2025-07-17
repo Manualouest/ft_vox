@@ -11,14 +11,20 @@
 /* ************************************************************************** */
 
 #include "Scene.hpp"
-
-void	closeWindow(void*);
-
+#include "TitleScreen.hpp"
 #include "SceneManager.hpp"
+#include "ShaderManager.hpp"
+#include "FrameBuffer.hpp"
+#include "Skybox.hpp"
 
+extern Skybox	*SKYBOX;
+extern ShaderManager	*SHADER_MANAGER;
+void	closeWindow(void*);
 extern SceneManager		*SCENE_MANAGER;
 
 void	resumeGame(void*);
+
+//A FAIRE: 1/42 d'avoir ft_xov
 
 #define TITLES_COUNT 7
 #define TITLE_TIME 8
@@ -34,11 +40,11 @@ std::string	popupTitles[TITLES_COUNT] =
 	"scraeyme approved"
 };
 
-//A FAIRE: 1/42 d'avoir ft_xov
-
 static void	_buildInterface(Scene *scene)
 {
-	Interface	*main = scene->getInterfaceManager()->load("main");
+	InterfaceManager	*manager = scene->getInterfaceManager();
+
+	Interface	*main = manager->load("main");
 
 	main->addElement("button_singleplayer", new Button(UIAnchor::UI_CENTER, "singleplayer", glm::vec2(0, -90), glm::vec2(300, 80), []
 		(void*)
@@ -76,7 +82,7 @@ static void	_buildInterface(Scene *scene)
 			text_popup->setAngle(-10);
 		});
 
-	Interface	*options = scene->getInterfaceManager()->load("options");
+	Interface	*options = manager->load("options");
 
 	options->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(300, 80), [](void*)
 	{
@@ -100,9 +106,6 @@ static void	_frameKeyHook(Scene *scene)
 	(void)scene;
 }
 
-#include "ShaderManager.hpp"
-extern ShaderManager	*SHADER_MANAGER;
-
 static void	_updateShaders(ShaderManager *shaders)
 {
 	Shader	*textShader = shaders->get("text");
@@ -119,8 +122,6 @@ static void	_updateShaders(ShaderManager *shaders)
 	postShader->setFloat("SCREEN_HEIGHT", SCREEN_HEIGHT);
 }
 
-#include "TitleScreen.hpp"
-
 void	TitleScreen::build(Scene *scene)
 {
 	_buildInterface(scene);
@@ -130,10 +131,10 @@ void	TitleScreen::build(Scene *scene)
 	scene->getInterfaceManager()->use("main");
 }
 
-#include "FrameBuffer.hpp"
-#include "Skybox.hpp"
-
-extern Skybox	*SKYBOX;
+void	TitleScreen::destructor(Scene *scene)
+{
+	(void)scene;
+}
 
 void	TitleScreen::render(Scene *scene)
 {
@@ -149,4 +150,14 @@ void	TitleScreen::update(Scene *scene)
 	scene->getCamera()->update();
 	scene->getInterfaceManager()->update();
 	_updateShaders(SHADER_MANAGER);
+}
+
+void	TitleScreen::close(Scene *scene)
+{
+	(void)scene;
+}
+
+void	TitleScreen::open(Scene *scene)
+{
+	(void)scene;
 }

@@ -20,7 +20,7 @@ class	SceneManager
 	public:
 		SceneManager()
 		{
-			
+
 		}
 		~SceneManager()
 		{
@@ -29,6 +29,9 @@ class	SceneManager
 		}
 		void	use(const std::string &name)
 		{
+			if (_current)
+				_current->close();
+
 			_current = get(name);
 			_current->use();
 		}
@@ -44,6 +47,7 @@ class	SceneManager
 		}
 		void	reset()
 		{
+			_current->close();
 			_current = NULL;
 		}
 		bool	erase(const std::string &name)
@@ -58,14 +62,14 @@ class	SceneManager
 			_scenes.erase(finder);
 			return (1);
 		}
-		Scene	*load(std::string name, std::function<void(Scene *)> build, std::function<void(Scene*)> onRender, std::function<void(Scene*)> onUpdate)
+		Scene	*load(std::string name, std::function<void(Scene *)> build, std::function<void(Scene *)> destructor, std::function<void(Scene*)> onRender, std::function<void(Scene*)> onUpdate)
 		{
 			if (_scenes.find(name) != _scenes.end())
 			{
 				consoleLog("WARNING Tried to load a scene thats already loaded (will be using the existing scene): " + name, LogSeverity::WARNING);
 				return (this->get(name));
 			}
-			return (_scenes.insert(std::make_pair(name, new Scene(build, onRender, onUpdate))).first->second);
+			return (_scenes.insert(std::make_pair(name, new Scene(build, destructor, onRender, onUpdate))).first->second);
 		}
 		Scene	*get(const std::string &name)
 		{

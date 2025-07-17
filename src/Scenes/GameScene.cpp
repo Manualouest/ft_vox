@@ -18,7 +18,9 @@
 #include "Window.hpp"
 #include "SceneManager.hpp"
 #include "Terminal.hpp"
+#include "ChunkGeneratorManager.hpp"
 
+extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 extern SceneManager		*SCENE_MANAGER;
 extern FrameBuffer	*MAIN_FRAME_BUFFER;
 extern Skybox		*SKYBOX;
@@ -74,7 +76,7 @@ static void	_frameKeyHook(Scene *)
 
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
 		speedBoost *= 15.0f;
-	
+
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_W) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos + CAMERA->front * (cameraSpeed * speedBoost);
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_S) == GLFW_PRESS)
@@ -83,7 +85,7 @@ static void	_frameKeyHook(Scene *)
 		CAMERA->pos = CAMERA->pos + CAMERA->worldUp * (cameraSpeed * speedBoost);
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos - CAMERA->worldUp * (cameraSpeed * speedBoost);
-		
+
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_A) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos - glm::normalize(glm::cross(CAMERA->front, CAMERA->worldUp)) * (cameraSpeed * speedBoost);
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_D) == GLFW_PRESS)
@@ -97,18 +99,18 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 
 	float xoffset = xpos - WINDOW->getLastMouseX();
 	float yoffset = WINDOW->getLastMouseY() - ypos;
-	
+
 	WINDOW->setLastMouseX(xpos);
 	WINDOW->setLastMouseY(ypos);
 
 	const float sensitivity = 0.1f;
-	
+
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
-	
+
 	CAMERA->yaw += xoffset;
 	CAMERA->pitch += yoffset;
-	
+
 	if(CAMERA->pitch > 89.0f)
 		CAMERA->pitch = 89.0f;
 	if(CAMERA->pitch < -89.0f)
@@ -142,14 +144,14 @@ std::string	getFPSString();
 static void	_buildInterface(Scene *scene)
 {
 	InterfaceManager	*interfaces = scene->getInterfaceManager();
-	
+
 	Interface	*fps = interfaces->load("fps");
 
 	fps->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
 		[](std::string &label){label = getFPSString();}, true));
 
 	Interface	*debug = interfaces->load("debug");
-		
+
 	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 15),
 		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);}, true));
 
@@ -158,7 +160,7 @@ static void	_buildInterface(Scene *scene)
 
 	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
-			
+
 	debug->addElement("text_used_threads", new Text(UIAnchor::UI_TOP_RIGHT, "used threads", glm::vec2(0, 15),
 		[](std::string &label){label = "used threads: " + std::to_string(CHUNK_GENERATOR->workingThreads()) + "/" + std::to_string(GENERATION_THREAD_COUNT);}, true));
 
@@ -169,7 +171,7 @@ static void	_buildInterface(Scene *scene)
 
 	pause->addElement("button_resume", new Button(UIAnchor::UI_CENTER, "back to game", glm::vec2(0, -90), glm::vec2(300, 80), resumeGame, NULL));
 	pause->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), openOptions, NULL));
-	pause->addElement("button_quit_game", new Button(UIAnchor::UI_CENTER, "save and quit", glm::vec2(0, 90), glm::vec2(300, 80), 
+	pause->addElement("button_quit_game", new Button(UIAnchor::UI_CENTER, "save and quit", glm::vec2(0, 90), glm::vec2(300, 80),
 		[](void*)
 		{
 			SCENE_MANAGER->use("title_scene");
@@ -194,7 +196,7 @@ static void	_buildInterface(Scene *scene)
 		[](float val)
 		{
 			FOV = glm::clamp((int)(val * 120), 1, 120);
-		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 0.80));
+		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 80.f / 120.f));
 }
 
 void	_charHookFunc(Scene *, uint key)
@@ -213,6 +215,12 @@ void	GameScene::build(Scene *scene)
 	scene->setKeyHook(_keyHookFunc);
 	scene->setCharHook(_charHookFunc);
 	scene->setMoveMouseHook(_moveMouseHookFunc);
+}
+
+void	GameScene::destructor(Scene *scene)
+{
+	if (CHUNK_GENERATOR)
+		delete CHUNK_GENERATOR;
 }
 
 static void	drawUI(Scene *scene)
@@ -270,4 +278,28 @@ void	GameScene::update(Scene *scene)
 	scene->getInterfaceManager()->update();
 	_updateShaders(SHADER_MANAGER);
 	CHUNKS->getQuadTree()->pruneDeadLeaves(CHUNKS->getQuadTree());
+}
+
+void	GameScene::close(Scene *scene)
+{
+	(void)scene;
+	if (CHUNK_GENERATOR)
+	{
+		delete CHUNK_GENERATOR;
+		CHUNK_GENERATOR = NULL;
+	}
+	CHUNKS->getQuadTree()->pruneAll();
+	std::cout << "Closed a world" << std::endl;
+}
+
+void	GameScene::open(Scene *scene)
+{
+	CAMERA->yaw = 45;
+	CAMERA->pitch = -10;
+	CAMERA->pos = {WORLD_SIZE / 2, 130, WORLD_SIZE / 2};
+
+	(void)scene;
+	if (!CHUNK_GENERATOR)
+		CHUNK_GENERATOR = new ChunkGeneratorManager();
+	std::cout << "Opened a world" << std::endl;
 }

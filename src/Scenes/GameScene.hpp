@@ -18,8 +18,11 @@
 namespace	GameScene
 {
 	void	build(Scene *scene);
+	void	destructor(Scene *scene);
 	void	render(Scene *scene);
 	void	update(Scene *scene);
+	void	close(Scene *scene);
+	void	open(Scene *scene);
 };
 
 #endif
