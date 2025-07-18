@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 16:03:51 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/18 14:10:35 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,9 @@
 #include "UIElement.hpp"
 #include "Terminal.hpp"
 #include "SceneManager.hpp"
+#include "WorldManager.hpp"
 
+WorldManager	*WORLD_MANAGER;
 
 float	FOV = 80;
 float	SCREEN_WIDTH = 860;
@@ -45,39 +47,10 @@ Font				*FONT;
 Window				*WINDOW;
 Camera				*CAMERA;
 Skybox				*SKYBOX;
-
-RegionManager		*CHUNKS; //!testing
-
 TextureManager		*TEXTURE_MANAGER;
 ShaderManager		*SHADER_MANAGER;
-
 SceneManager		*SCENE_MANAGER;
-
 FrameBuffer	*MAIN_FRAME_BUFFER;
-
-ChunkGeneratorManager	*CHUNK_GENERATOR;
-
-/*
-	Keyboard input as the char so like typing on a keyboard
-*/
-void	keyboard_input(GLFWwindow *, unsigned int key)
-{
-	SCENE_MANAGER->getCurrent()->charHook(key);
-}
-
-void	pauseGame(void*)
-{
-	PAUSED = true;
-	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("pause");
-	glfwSetInputMode(WINDOW->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-}
-
-void	resumeGame(void*)
-{
-	PAUSED = false;
-	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->reset();
-	WINDOW->setDefaultMousePos();
-}
 
 void	closeWindow(void*)
 {
@@ -100,12 +73,6 @@ void	build(TextureManager *textures)
 	textures->load("textures/grass_side.bmp");
 	textures->load("textures/cobblestone.bmp");
 	consoleLog("Finished loading textures", LogSeverity::SUCCESS);
-}
-
-void	openOptions(void*)
-{
-	pauseGame(NULL);
-	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("options");
 }
 
 /*
@@ -174,17 +141,17 @@ struct	Engine
 		FONT = new Font();
 		MAIN_FRAME_BUFFER = new FrameBuffer();
 		SKYBOX = new Skybox({SKYBOX_PATHES});
-		CHUNKS = new RegionManager();
+		WORLD_MANAGER = new WorldManager();
 	}
 	~Engine()
 	{
-		delete CHUNKS;
 		delete SKYBOX;
 		delete MAIN_FRAME_BUFFER;
 		delete FONT;
 		delete SHADER_MANAGER;
 		delete TEXTURE_MANAGER;
 		delete SCENE_MANAGER;
+		delete WORLD_MANAGER;
 		consoleLog("Done.", LogSeverity::SUCCESS);
 		delete WINDOW;
 	}
@@ -192,14 +159,13 @@ struct	Engine
 
 Quadtree	*prevBranch = NULL;
 
-int	getBlock(const glm::vec3 &pos)
-{
-	CHUNKS->getQuadTree()->getLeaf(pos);
-	return (0);
-}
-
 #include "TitleScreen.hpp"
 #include "GameScene.hpp"
+
+void	keyboard_input(GLFWwindow *, unsigned int key)
+{
+	SCENE_MANAGER->getCurrent()->charHook(key);
+}
 
 void	move_mouse_hook(GLFWwindow*, double xpos, double ypos)
 {
@@ -217,19 +183,21 @@ void	key_hook(GLFWwindow *window, int key, int, int action, int)
 		SCENE_MANAGER->getCurrent()->keyHook(key, action);
 }
 
-int	main(int ac, char **av)
+int	main()
 {
 	consoleLog("Starting...", NORMAL);
 
 	try {
 		Engine	engine;
 
-		seed = ac >= 2 ? seed = std::atoi(av[1]) : seed = rand();
+		seed = rand();
 
-		SCENE_MANAGER->load("title_scene", TitleScreen::build, TitleScreen::destructor, TitleScreen::render, TitleScreen::update);
+		Scene	*titleScene = SCENE_MANAGER->load("title_scene", TitleScreen::build, TitleScreen::destructor, TitleScreen::render, TitleScreen::update);
 		Scene	*gameScene = SCENE_MANAGER->load("game_scene", GameScene::build, GameScene::destructor, GameScene::render, GameScene::update);
 		gameScene->setClose(GameScene::close);
 		gameScene->setOpen(GameScene::open);
+		titleScene->setClose(TitleScreen::close);
+		titleScene->setOpen(TitleScreen::open);
 		SCENE_MANAGER->use("title_scene");
 
 		consoleLog("Starting rendering...", NORMAL);

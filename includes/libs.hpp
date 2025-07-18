@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2025/07/17 14:44:09 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/18 13:11:55 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,9 @@
 # include <mutex>
 # include <atomic>
 # include <iomanip>
+# include <fstream>
+# include <iostream>
+# include <filesystem>
 
 # include "strings.hpp"
 
@@ -85,6 +88,11 @@ inline void	consoleLog(std::string str, LogSeverity severity)
 			std::cerr << RED_FULL << "[" << glfwGetTime() << "] " << str << RESET << std::endl;
 			break ;
 	}
+}
+
+inline void	consoleLog(std::string str)
+{
+	consoleLog(str, LogSeverity::NORMAL);
 }
 
 #endif

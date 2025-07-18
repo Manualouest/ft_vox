@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 17:46:21 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/18 12:24:15 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,20 +20,41 @@
 #include "Terminal.hpp"
 #include "ChunkGeneratorManager.hpp"
 
-extern ChunkGeneratorManager	*CHUNK_GENERATOR;
-extern SceneManager		*SCENE_MANAGER;
-extern FrameBuffer	*MAIN_FRAME_BUFFER;
-extern Skybox		*SKYBOX;
-extern ShaderManager	*SHADER_MANAGER;
-extern RegionManager	*CHUNKS;
-extern bool	PAUSED;
-extern bool	F3;
-extern Window	*WINDOW;
+/*
+	Variables used by this scene only
+*/
+ChunkGeneratorManager			*CHUNK_GENERATOR;
+RegionManager					*CHUNKS = NULL;
+Terminal						*TERMINAL;
 
-Terminal			*TERMINAL;
+/*
+	Global variables for the whole program
+*/
+extern SceneManager				*SCENE_MANAGER;
+extern FrameBuffer				*MAIN_FRAME_BUFFER;
+extern Skybox					*SKYBOX;
+extern ShaderManager			*SHADER_MANAGER;
+extern RegionManager			*CHUNKS;
+extern bool						PAUSED;
+extern bool						F3;
+extern Window					*WINDOW;
 
-void	pauseGame(void*);
-void	resumeGame(void*);
+static bool	leavingScene = false;
+
+void	pauseGame(void*)
+{
+	PAUSED = true;
+	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("pause");
+	glfwSetInputMode(WINDOW->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
+void	resumeGame(void*)
+{
+	PAUSED = false;
+	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->reset();
+	WINDOW->setDefaultMousePos();
+}
+
 void	closeWindow(void*);
 void	openOptions(void*);
 
@@ -170,16 +191,24 @@ static void	_buildInterface(Scene *scene)
 	Interface	*pause = interfaces->load("pause");
 
 	pause->addElement("button_resume", new Button(UIAnchor::UI_CENTER, "back to game", glm::vec2(0, -90), glm::vec2(300, 80), resumeGame, NULL));
-	pause->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), openOptions, NULL));
+	pause->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), []
+		(void*)
+		{
+			pauseGame(NULL);
+			SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("options");
+		}, NULL));
+		
 	pause->addElement("button_quit_game", new Button(UIAnchor::UI_CENTER, "save and quit", glm::vec2(0, 90), glm::vec2(300, 80),
 		[](void*)
 		{
-			SCENE_MANAGER->use("title_scene");
+			SCENE_MANAGER->swap("title_scene");
+			SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("leaving");
+			leavingScene = true;
 		}, NULL));
 
 	Interface	*options = interfaces->load("options");
 
-	options->addElement("button_leave", new Button(UIAnchor::UI_CENTER, "leave", glm::vec2(0, 90), glm::vec2(300, 80), [](void*)
+	options->addElement("button_done", new Button(UIAnchor::UI_CENTER, "done", glm::vec2(0, 90), glm::vec2(300, 80), [](void*)
 		{
 			SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("pause");
 		}, NULL));
@@ -197,6 +226,10 @@ static void	_buildInterface(Scene *scene)
 		{
 			FOV = glm::clamp((int)(val * 120), 1, 120);
 		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 80.f / 120.f));
+
+	Interface	*leaving = interfaces->load("leaving");
+
+	leaving->addElement("leaving", new Text(UIAnchor::UI_CENTER, "leaving world...", glm::vec2(0, 0), NULL, false));
 }
 
 void	_charHookFunc(Scene *, uint key)
@@ -217,10 +250,19 @@ void	GameScene::build(Scene *scene)
 	scene->setMoveMouseHook(_moveMouseHookFunc);
 }
 
-void	GameScene::destructor(Scene *scene)
+void	GameScene::destructor(Scene *)
 {
 	if (CHUNK_GENERATOR)
+	{
 		delete CHUNK_GENERATOR;
+		CHUNK_GENERATOR = NULL;
+	}
+	if (CHUNKS)
+	{
+		delete CHUNKS;
+		CHUNKS = NULL;
+	}
+	delete TERMINAL;
 }
 
 static void	drawUI(Scene *scene)
@@ -246,6 +288,14 @@ static void	drawUI(Scene *scene)
 
 void	GameScene::render(Scene *scene)
 {
+	if (leavingScene)
+	{
+		glDisable(GL_DEPTH_TEST);
+		FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get("textures/dirt.bmp")->getID());
+		scene->getInterfaceManager()->draw();
+		glEnable(GL_DEPTH_TEST);
+		return ;
+	}
 	MAIN_FRAME_BUFFER->clear();
 
 	MAIN_FRAME_BUFFER->use();
@@ -288,8 +338,13 @@ void	GameScene::close(Scene *scene)
 		delete CHUNK_GENERATOR;
 		CHUNK_GENERATOR = NULL;
 	}
-	CHUNKS->getQuadTree()->pruneAll();
-	std::cout << "Closed a world" << std::endl;
+	if (CHUNKS)
+	{
+		delete CHUNKS;
+		CHUNKS = NULL;
+	}
+	leavingScene = false;
+	consoleLog("Closed a world", LogSeverity::NORMAL);
 }
 
 void	GameScene::open(Scene *scene)
@@ -301,5 +356,8 @@ void	GameScene::open(Scene *scene)
 	(void)scene;
 	if (!CHUNK_GENERATOR)
 		CHUNK_GENERATOR = new ChunkGeneratorManager();
-	std::cout << "Opened a world" << std::endl;
+	if (!CHUNKS)
+		CHUNKS = new RegionManager();
+	resumeGame(NULL);
+	consoleLog("Opened a world", LogSeverity::NORMAL);
 }

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 17:54:01 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/18 16:11:13 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,9 @@
 #include "ShaderManager.hpp"
 #include "FrameBuffer.hpp"
 #include "Skybox.hpp"
+#include "WorldManager.hpp"
+
+extern WorldManager	*WORLD_MANAGER;
 
 extern Skybox	*SKYBOX;
 extern ShaderManager	*SHADER_MANAGER;
@@ -26,7 +29,7 @@ void	resumeGame(void*);
 
 //A FAIRE: 1/42 d'avoir ft_xov
 
-#define TITLES_COUNT 7
+#define TITLES_COUNT 9
 #define TITLE_TIME 8
 
 std::string	popupTitles[TITLES_COUNT] =
@@ -37,8 +40,48 @@ std::string	popupTitles[TITLES_COUNT] =
 	"42 angouleme",
 	"also try cub3d!",
 	"chicken jockey!",
-	"scraeyme approved"
+	"scraeyme approved",
+	"dont forget to git push"
 };
+
+extern uint	seed;
+
+void	startGame(void *)
+{
+	SCENE_MANAGER->swap("game_scene");
+	SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("leaving");
+}
+
+
+
+void	startWorld1(void *)
+{
+	World	*world = WORLD_MANAGER->get("world_1");
+	if (!world)
+		world = WORLD_MANAGER->load("world_1", rand());
+	seed = world->getSeed();
+	startGame(NULL);
+}
+
+void	startWorld2(void *)
+{
+	World	*world = WORLD_MANAGER->get("world_2");
+	if (!world)
+		world = WORLD_MANAGER->load("world_2", rand());
+	seed = world->getSeed();
+	startGame(NULL);
+}
+
+void	startWorld3(void *)
+{
+	World	*world = WORLD_MANAGER->get("world_3");
+	if (!world)
+		world = WORLD_MANAGER->load("world_3", rand());
+	seed = world->getSeed();
+	startGame(NULL);
+}
+
+
 
 static void	_buildInterface(Scene *scene)
 {
@@ -49,8 +92,7 @@ static void	_buildInterface(Scene *scene)
 	main->addElement("button_singleplayer", new Button(UIAnchor::UI_CENTER, "singleplayer", glm::vec2(0, -90), glm::vec2(300, 80), []
 		(void*)
 		{
-			SCENE_MANAGER->use("game_scene");
-			resumeGame(NULL);
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_selection");
 		}, NULL));
 	main->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), []
 		(void*)
@@ -82,6 +124,38 @@ static void	_buildInterface(Scene *scene)
 			text_popup->setAngle(-10);
 		});
 
+	
+		
+	Interface	*worldSelection = manager->load("world_selection");
+
+	worldSelection->addElement("select_text", new Text(UIAnchor::UI_TOP_CENTER_HALF, "select world", glm::vec2(0, -50), NULL, false));
+
+	worldSelection->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(0, -10), glm::vec2(300, 80), [](void*)
+	{
+		SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
+	}, NULL));
+
+	worldSelection->addElement("button_world1", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, -90), glm::vec2(300, 80), startWorld1, NULL));
+	worldSelection->addElement("button_world2", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 0), glm::vec2(300, 80), startWorld2, NULL));
+	worldSelection->addElement("button_world3", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 90), glm::vec2(300, 80), startWorld3, NULL));
+
+	worldSelection->setUpdateFunc([]
+		(Interface *)
+		{
+			World	*world1 = WORLD_MANAGER->get("world_1");
+			World	*world2 = WORLD_MANAGER->get("world_2");
+			World	*world3 = WORLD_MANAGER->get("world_3");
+
+			if (world1)
+				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("button_world1"))->label = "world_1";
+			if (world2)
+				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("button_world2"))->label = "world_2";
+			if (world3)
+				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("button_world3"))->label = "world_3";
+		});
+
+
+		
 	Interface	*options = manager->load("options");
 
 	options->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(300, 80), [](void*)
@@ -99,6 +173,10 @@ static void	_buildInterface(Scene *scene)
 			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
 			text_popup->setAngle(cos(glfwGetTime() * 25));
 		});
+
+	Interface	*leaving = manager->load("leaving");
+
+	leaving->addElement("leaving", new Text(UIAnchor::UI_CENTER, "joining world...", glm::vec2(0, 0), NULL, false));
 }
 
 static void	_frameKeyHook(Scene *scene)
@@ -160,4 +238,5 @@ void	TitleScreen::close(Scene *scene)
 void	TitleScreen::open(Scene *scene)
 {
 	(void)scene;
+	scene->getInterfaceManager()->use("main");
 }

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 11:48:31 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 13:51:55 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/18 11:04:00 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,8 @@ class	Text : public UIElement
 		void	draw()
 		{
 			getSize();
+			if (this->anchor != UIAnchor::UI_NONE)
+				anchorPos();
 			if (_drawBG)
 				SHADER_MANAGER->get("text")->setBool("drawBackground", true);
 

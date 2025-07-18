@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/14 18:34:43 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 17:47:02 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/18 14:16:40 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,6 +108,10 @@ class	Button : public UIElement
     		}
 
 			this->previousMousePressed = mousePressed;
+		}
+		void	setClickData(void *data)
+		{
+			this->clickData = data;
 		}
 
 		bool						wasPressedInside = false;

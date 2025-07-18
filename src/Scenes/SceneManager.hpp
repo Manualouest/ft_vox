@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:05:13 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 11:12:05 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/18 10:53:07 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,13 @@ class	SceneManager
 			for (auto &pair : _scenes)
 				delete pair.second;
 		}
+		/*
+			Swap is like use() but instead of switching scene instantly it switches on the next frame.
+		*/
+		void	swap(const std::string &name)
+		{
+			_swap = get(name);
+		}
 		void	use(const std::string &name)
 		{
 			if (_current)
@@ -37,6 +44,15 @@ class	SceneManager
 		}
 		void	update()
 		{
+			if (_swap)
+			{
+				if (_current)
+					_current->close();
+					
+				_current = _swap;
+				_swap = NULL;
+				_current->use();
+			}
 			if (_current)
 				_current->update();
 		}
@@ -89,6 +105,7 @@ class	SceneManager
 	private:
 		std::map<std::string, Scene *>		_scenes;
 		Scene								*_current = NULL;
+		Scene								*_swap = NULL;
 };
 
 #endif

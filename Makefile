@@ -2,7 +2,7 @@ NAME := ft_vox
 
 OBJ_DIR := ./obj/
 INCLUDE_DIRS := ./includes/ ./GLFW/include/GLFW/ ./includes/glad/. ./includes/render ./src/ ./glm/glm/ ./glm/glm/gtc/
-CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/ UI/ UI/Elements UI/Interfaces Terminal/ Scenes/
+CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/ UI/ UI/Elements UI/Interfaces Terminal/ Scenes/ World/
 
 GLFWARCHIVE = GLFW/build/src/libglfw3.a
 
@@ -46,7 +46,7 @@ SOURCES := $(addprefix $(SOURCE_DIR), $(CPP_FILES))
 OBJECTS := $(addprefix $(OBJ_DIR), $(CPP_FILES:.cpp=.o))
 DEPS := $(addprefix $(OBJ_DIR), $(CPP_FILES:.cpp=.d))
 
-CFLAGS = -MP -MMD -g -Wall -Wextra -Werror
+CFLAGS = -MP -MMD -g -Wall -Wextra -Werror -std=c++17
 
 GLAD_PATH = libs/glad
 
