@@ -47,9 +47,26 @@ class	WorldManager
 		}
 		return (_worlds.insert(std::make_pair(id, new World(id, seed))).first->second);
 	}
+	void	use(const std::string &id)
+	{
+		this->_current = get(id);
+	}
+	void	reset()
+	{
+		this->_current = NULL;
+	}
+	void	saveCurrent()
+	{
+		if (_current)
+			this->_current->save();
+	}
+	World	*getCurrent()
+	{
+		return (this->_current);
+	}
 
 
-	
+
 	void	loadSaveFiles()
 	{
 		std::filesystem::create_directories(SAVES_PATH);
@@ -62,6 +79,7 @@ class	WorldManager
 	}
 	private:
 		std::map<std::string, World*>	_worlds;
+		World							*_current = NULL;
 };
 
 #endif

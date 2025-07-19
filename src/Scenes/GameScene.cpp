@@ -19,17 +19,19 @@
 #include "SceneManager.hpp"
 #include "Terminal.hpp"
 #include "ChunkGeneratorManager.hpp"
+#include "WorldManager.hpp"
 
 /*
-	Variables used by this scene only
+Variables used by this scene only
 */
 ChunkGeneratorManager			*CHUNK_GENERATOR;
 RegionManager					*CHUNKS = NULL;
 Terminal						*TERMINAL;
 
 /*
-	Global variables for the whole program
+Global variables for the whole program
 */
+extern WorldManager	*WORLD_MANAGER;
 extern SceneManager				*SCENE_MANAGER;
 extern FrameBuffer				*MAIN_FRAME_BUFFER;
 extern Skybox					*SKYBOX;
@@ -41,31 +43,40 @@ extern Window					*WINDOW;
 
 static bool	leavingScene = false;
 
-void	pauseGame(void*)
+void	pauseGame()
 {
 	PAUSED = true;
 	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("pause");
 	glfwSetInputMode(WINDOW->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
-void	resumeGame(void*)
+void	pauseGameButton(ButtonInfo)
+{
+	pauseGame();
+}
+
+void	resumeGame()
 {
 	PAUSED = false;
 	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->reset();
 	WINDOW->setDefaultMousePos();
 }
 
-void	closeWindow(void*);
-void	openOptions(void*);
+void	resumeGameButton(ButtonInfo)
+{
+	resumeGame();
+}
+
+void	closeWindow(ButtonInfo);
 
 static void	_keyHookFunc(Scene *, int key, int action)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && !TERMINAL->isActive())
 	{
 		if (PAUSED)
-			resumeGame(NULL);
+			resumeGame();
 		else
-			pauseGame(NULL);
+			pauseGame();
 	}
 	else if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
 		F3 = !F3;
@@ -190,16 +201,16 @@ static void	_buildInterface(Scene *scene)
 
 	Interface	*pause = interfaces->load("pause");
 
-	pause->addElement("button_resume", new Button(UIAnchor::UI_CENTER, "back to game", glm::vec2(0, -90), glm::vec2(300, 80), resumeGame, NULL));
+	pause->addElement("button_resume", new Button(UIAnchor::UI_CENTER, "back to game", glm::vec2(0, -90), glm::vec2(300, 80), resumeGameButton, NULL));
 	pause->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), []
-		(void*)
+		(ButtonInfo)
 		{
-			pauseGame(NULL);
+			pauseGame();
 			SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("options");
 		}, NULL));
-		
+
 	pause->addElement("button_quit_game", new Button(UIAnchor::UI_CENTER, "save and quit", glm::vec2(0, 90), glm::vec2(300, 80),
-		[](void*)
+		[](ButtonInfo)
 		{
 			SCENE_MANAGER->swap("title_scene");
 			SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("leaving");
@@ -208,7 +219,8 @@ static void	_buildInterface(Scene *scene)
 
 	Interface	*options = interfaces->load("options");
 
-	options->addElement("button_done", new Button(UIAnchor::UI_CENTER, "done", glm::vec2(0, 90), glm::vec2(300, 80), [](void*)
+	options->addElement("button_done", new Button(UIAnchor::UI_CENTER, "done", glm::vec2(0, 90), glm::vec2(300, 80), []
+		(ButtonInfo)
 		{
 			SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("pause");
 		}, NULL));
@@ -353,11 +365,13 @@ void	GameScene::open(Scene *scene)
 	CAMERA->pitch = -10;
 	CAMERA->pos = {WORLD_SIZE / 2, 130, WORLD_SIZE / 2};
 
+	CAMERA->pos = WORLD_MANAGER->getCurrent()->getPlayerPos();
+
 	(void)scene;
 	if (!CHUNK_GENERATOR)
 		CHUNK_GENERATOR = new ChunkGeneratorManager();
 	if (!CHUNKS)
 		CHUNKS = new RegionManager();
-	resumeGame(NULL);
+	resumeGame();
 	consoleLog("Opened a world", LogSeverity::NORMAL);
 }

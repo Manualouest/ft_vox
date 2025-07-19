@@ -52,12 +52,17 @@ ShaderManager		*SHADER_MANAGER;
 SceneManager		*SCENE_MANAGER;
 FrameBuffer	*MAIN_FRAME_BUFFER;
 
-void	closeWindow(void*)
+void	closeWindow()
 {
 	if (!WINDOW->up())
 		return ;
 	glfwSetWindowShouldClose(WINDOW->getWindowData(), true);
 	consoleLog("Quitting game.", LogSeverity::WARNING);
+}
+
+void	closeWindow(ButtonInfo)
+{
+	closeWindow();
 }
 
 /*

@@ -15,6 +15,13 @@
 
 #include "UIElement.hpp"
 
+struct	ButtonInfo
+{
+	void				*data;
+	const std::string	id;
+	const std::string	label;
+};
+
 /*
 	@brief	Represents a simple clickable UI element
 
@@ -36,7 +43,7 @@ class	Button : public UIElement
 			@param	onClick     function to be called when button is clicked, NULL to do nothing
 			@param	clickData   Data passed to the onClick function
 		*/
-		Button(UIAnchor anchor, std::string label, glm::vec2 offset, glm::vec2 size, std::function<void(void*)> onClick, void *clickData)
+		Button(UIAnchor anchor, std::string label, glm::vec2 offset, glm::vec2 size, std::function<void(ButtonInfo)> onClick, void *clickData)
 		{
 			this->label = label;
 			this->offset = offset;
@@ -49,14 +56,14 @@ class	Button : public UIElement
 			anchorPos();
 		}
 		~Button(){}
-		
+
 		void	draw()
 		{
 			if (!this->currentTexture)
 				return ;
-			
+
 			initButtonQuad();
-			
+
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
 
@@ -88,7 +95,7 @@ class	Button : public UIElement
 			bool inside = isInside(this->pos, this->size, mousePos);
 
 			this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");;
-			
+
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
 
@@ -103,7 +110,7 @@ class	Button : public UIElement
     		else
     		{
     			if (this->wasPressedInside && inside && onClick)
-    				this->onClick(clickData);
+    				this->onClick({clickData, id, label});
     			this->wasPressedInside = false;
     		}
 
@@ -117,7 +124,7 @@ class	Button : public UIElement
 		bool						wasPressedInside = false;
 		bool						previousMousePressed = false;
 
-		std::function<void(void*)>	onClick = NULL;
+		std::function<void(ButtonInfo)>	onClick = NULL;
 		void						*clickData = NULL;
 
 		std::string					label;

@@ -67,10 +67,15 @@ class	UIElement
 		*/
 		void	initButtonQuad();
 		void	anchorPos();
+		void	setID(const std::string &id)
+		{
+			this->id = id;
+		}
 
 		glm::vec2	offset;
 		glm::vec2	pos;
 		glm::vec2	size;
+		std::string	id; //ID of the ui element inside of an interface (Set by the interface).
 		UIAnchor	anchor = UIAnchor::UI_NONE;
 		Shader		*_shader;
 };

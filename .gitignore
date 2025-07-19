@@ -10,6 +10,7 @@ GLFW/
 src/glad/
 includes/glad/
 glm/
+saves/
 
 # Ignore useless things
 *.png

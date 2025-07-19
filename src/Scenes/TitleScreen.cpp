@@ -22,7 +22,7 @@ extern WorldManager	*WORLD_MANAGER;
 
 extern Skybox	*SKYBOX;
 extern ShaderManager	*SHADER_MANAGER;
-void	closeWindow(void*);
+void	closeWindow(ButtonInfo);
 extern SceneManager		*SCENE_MANAGER;
 
 void	resumeGame(void*);
@@ -46,39 +46,25 @@ std::string	popupTitles[TITLES_COUNT] =
 
 extern uint	seed;
 
-void	startGame(void *)
+void	startGame()
 {
 	SCENE_MANAGER->swap("game_scene");
 	SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("leaving");
 }
 
-
-
-void	startWorld1(void *)
+void	startGame(ButtonInfo)
 {
-	World	*world = WORLD_MANAGER->get("world_1");
-	if (!world)
-		world = WORLD_MANAGER->load("world_1", rand());
-	seed = world->getSeed();
-	startGame(NULL);
+	startGame();
 }
 
-void	startWorld2(void *)
+void	startWorldButton(ButtonInfo infos)
 {
-	World	*world = WORLD_MANAGER->get("world_2");
+	World	*world = WORLD_MANAGER->get(infos.id);
 	if (!world)
-		world = WORLD_MANAGER->load("world_2", rand());
+		world = WORLD_MANAGER->load(infos.id, rand());
 	seed = world->getSeed();
-	startGame(NULL);
-}
-
-void	startWorld3(void *)
-{
-	World	*world = WORLD_MANAGER->get("world_3");
-	if (!world)
-		world = WORLD_MANAGER->load("world_3", rand());
-	seed = world->getSeed();
-	startGame(NULL);
+	WORLD_MANAGER->use(infos.id);
+	startGame();
 }
 
 
@@ -90,12 +76,12 @@ static void	_buildInterface(Scene *scene)
 	Interface	*main = manager->load("main");
 
 	main->addElement("button_singleplayer", new Button(UIAnchor::UI_CENTER, "singleplayer", glm::vec2(0, -90), glm::vec2(300, 80), []
-		(void*)
+		(ButtonInfo)
 		{
 			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_selection");
 		}, NULL));
 	main->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), []
-		(void*)
+		(ButtonInfo)
 		{
 			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("options");
 		}, NULL));
@@ -124,20 +110,21 @@ static void	_buildInterface(Scene *scene)
 			text_popup->setAngle(-10);
 		});
 
-	
-		
+
+
 	Interface	*worldSelection = manager->load("world_selection");
 
 	worldSelection->addElement("select_text", new Text(UIAnchor::UI_TOP_CENTER_HALF, "select world", glm::vec2(0, -50), NULL, false));
 
-	worldSelection->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(0, -10), glm::vec2(300, 80), [](void*)
-	{
-		SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
-	}, NULL));
+	worldSelection->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(0, -10), glm::vec2(300, 80), []
+		(ButtonInfo)
+		{
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
+		}, NULL));
 
-	worldSelection->addElement("button_world1", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, -90), glm::vec2(300, 80), startWorld1, NULL));
-	worldSelection->addElement("button_world2", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 0), glm::vec2(300, 80), startWorld2, NULL));
-	worldSelection->addElement("button_world3", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 90), glm::vec2(300, 80), startWorld3, NULL));
+	worldSelection->addElement("world_1", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, -90), glm::vec2(300, 80), startWorldButton, NULL));
+	worldSelection->addElement("world_2", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 0), glm::vec2(300, 80), startWorldButton, NULL));
+	worldSelection->addElement("world_3", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 90), glm::vec2(300, 80), startWorldButton, NULL));
 
 	worldSelection->setUpdateFunc([]
 		(Interface *)
@@ -147,21 +134,22 @@ static void	_buildInterface(Scene *scene)
 			World	*world3 = WORLD_MANAGER->get("world_3");
 
 			if (world1)
-				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("button_world1"))->label = "world_1";
+				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_1"))->label = "world_1";
 			if (world2)
-				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("button_world2"))->label = "world_2";
+				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_2"))->label = "world_2";
 			if (world3)
-				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("button_world3"))->label = "world_3";
+				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_3"))->label = "world_3";
 		});
 
 
-		
+
 	Interface	*options = manager->load("options");
 
-	options->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(300, 80), [](void*)
-	{
-		SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
-	}, NULL));
+	options->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(300, 80), []
+		(ButtonInfo)
+		{
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
+		}, NULL));
 
 	options->addElement("fun_text", new Text(UIAnchor::UI_CENTER, "why are you here? ... there are no options...", glm::vec2(0, 0), NULL, false));
 
@@ -238,5 +226,7 @@ void	TitleScreen::close(Scene *scene)
 void	TitleScreen::open(Scene *scene)
 {
 	(void)scene;
+	WORLD_MANAGER->saveCurrent();
+	WORLD_MANAGER->reset();
 	scene->getInterfaceManager()->use("main");
 }

@@ -49,7 +49,6 @@ class	World
 			this->_seed = seed;
 			saveInfo("seed", std::to_string(seed));
 			this->_path = "./saves/" + id;
-			save();
 		}
 		World(const std::string &id, const std::string &path)
 		{
@@ -59,7 +58,6 @@ class	World
 		}
 		~World()
 		{
-			save();
 		}
 		void	saveInfo(const std::string &key, const std::string &value)
 		{
@@ -68,7 +66,7 @@ class	World
 		void	save()
 		{
 			std::ofstream	file;
-			
+
 			std::filesystem::create_directories(_path);
 			std::filesystem::create_directories(_path + "/playerdata");
 			std::filesystem::create_directories(_path + "/world");
@@ -84,7 +82,7 @@ class	World
 		}
 		void	saveChunk()
 		{
-			
+
 		}
 		void	load()
 		{
@@ -99,7 +97,8 @@ class	World
 				std::string	key;
 				std::string	value;
 
-				iss >> key >> value;
+				if (!(iss >> key >> value))
+					throw std::runtime_error("Bad format in world file.");
 
 				_worldInfos.insert({key, value});
 			}
@@ -108,6 +107,23 @@ class	World
 		void	loadValues()
 		{
 			_seed = std::atol(_worldInfos["seed"].c_str());
+		}
+		float	getFloatInfo(std::string id)
+		{
+			auto finder = _worldInfos.find(id);
+
+			if (finder == _worldInfos.end())
+				return (0);
+			return (std::atof(finder->second.c_str()));
+		}
+		glm::vec3	getPlayerPos()
+		{
+			glm::vec3	res;
+
+			res.x = getFloatInfo("pos_x");
+			res.y = getFloatInfo("pos_y");
+			res.z = getFloatInfo("pos_z");
+			return (res);
 		}
 		uint	getSeed() {return (this->_seed);}
 	private:

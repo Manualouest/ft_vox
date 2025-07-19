@@ -65,6 +65,7 @@ class	Interface
 				consoleLog("ERROR UIElement already exists in this interface", LogSeverity::ERROR);
 				return (finder->second);
 			}
+			elem->setID(key);
 			_elements.insert({key, elem});
 			return (elem);
 		}

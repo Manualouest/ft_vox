@@ -16,7 +16,7 @@
 extern uint		seed;
 extern Camera	*CAMERA;
 
-void	closeWindow(void*);
+void	closeWindow();
 
 std::string	command_seed(std::istringstream &)
 {
@@ -34,7 +34,7 @@ std::string	command_tp(std::istringstream &args)
 
 std::string	command_quit(std::istringstream &)
 {
-	closeWindow(NULL);
+	closeWindow();
 	return ("quitting game");
 }
 
