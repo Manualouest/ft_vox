@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/18 16:11:13 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 15:12:50 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,14 @@ void	startGame(ButtonInfo)
 	startGame();
 }
 
+std::string	selectedWorld;
+
+void	selectWorld(ButtonInfo infos)
+{
+	selectedWorld = infos.id;
+	SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_creation");
+}
+
 void	startWorldButton(ButtonInfo infos)
 {
 	World	*world = WORLD_MANAGER->get(infos.id);
@@ -66,8 +74,6 @@ void	startWorldButton(ButtonInfo infos)
 	WORLD_MANAGER->use(infos.id);
 	startGame();
 }
-
-
 
 static void	_buildInterface(Scene *scene)
 {
@@ -87,15 +93,17 @@ static void	_buildInterface(Scene *scene)
 		}, NULL));
 	main->addElement("button_quit_game", new Button(UIAnchor::UI_CENTER, "quit game", glm::vec2(0, 90), glm::vec2(300, 80), closeWindow, NULL));
 
-	main->addElement("text_popup", new Text(UIAnchor::UI_TOP_CENTER_HALF, "by mbatty and mbirou!", glm::vec2(175, -40), NULL, false));
+	Text	*text_popup = static_cast<Text*>(main->addElement("text_popup", new Text(UIAnchor::UI_TOP_CENTER_HALF, "by mbatty and mbirou!", glm::vec2(175, -40), NULL, false)));
 	main->addElement("image_icon", new Image(UIAnchor::UI_TOP_CENTER_HALF, glm::vec2(0, 0), glm::vec2(400, 150)));
+
+	text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
+	text_popup->setAngle(-10);
 
 	main->setUpdateFunc([]
 		(Interface *interface)
 		{
 			static double	lastUpdate = 0;
-			UIElement	*elem = interface->getElement("text_popup");
-			Text		*text_popup = static_cast<Text*>(elem);
+			Text		*text_popup = static_cast<Text*>(interface->getElement("text_popup"));
 
 			if (glfwGetTime() - lastUpdate >= TITLE_TIME)
 			{
@@ -106,8 +114,6 @@ static void	_buildInterface(Scene *scene)
 			float	scale = 1 + std::abs(cos(glfwGetTime() * 5)) / 10;
 
 			text_popup->setScale(glm::vec2(scale, scale));
-			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
-			text_popup->setAngle(-10);
 		});
 
 
@@ -116,36 +122,37 @@ static void	_buildInterface(Scene *scene)
 
 	worldSelection->addElement("select_text", new Text(UIAnchor::UI_TOP_CENTER_HALF, "select world", glm::vec2(0, -50), NULL, false));
 
-	worldSelection->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(0, -10), glm::vec2(300, 80), []
+	worldSelection->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(210, -10), glm::vec2(200, 60), []
 		(ButtonInfo)
 		{
 			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
 		}, NULL));
 
+	worldSelection->addElement("toggle_delete", new Toggle(UIAnchor::UI_BOTTOM_CENTER, "delete", glm::vec2(0, -10), glm::vec2(200, 60), NULL, NULL));
+	worldSelection->addElement("button_new", new Button(UIAnchor::UI_BOTTOM_CENTER, "new", glm::vec2(-210, -10), glm::vec2(200, 60), []
+		(ButtonInfo)
+		{
+			static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_name"))->clear();
+			static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_seed"))->clear();
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_creation");
+		}, NULL));
+
 	worldSelection->addElement("world_1", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, -90), glm::vec2(300, 80), startWorldButton, NULL));
-	worldSelection->addElement("world_2", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 0), glm::vec2(300, 80), startWorldButton, NULL));
-	worldSelection->addElement("world_3", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, 90), glm::vec2(300, 80), startWorldButton, NULL));
 
 	worldSelection->setUpdateFunc([]
 		(Interface *)
 		{
 			World	*world1 = WORLD_MANAGER->get("world_1");
-			World	*world2 = WORLD_MANAGER->get("world_2");
-			World	*world3 = WORLD_MANAGER->get("world_3");
 
 			if (world1)
-				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_1"))->label = "world_1";
-			if (world2)
-				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_2"))->label = "world_2";
-			if (world3)
-				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_3"))->label = "world_3";
+				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_1"))->label = world1->getWorldInfo("display_name");
 		});
 
 
 
 	Interface	*options = manager->load("options");
 
-	options->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(300, 80), []
+	options->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(200, 60), []
 		(ButtonInfo)
 		{
 			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
@@ -161,6 +168,30 @@ static void	_buildInterface(Scene *scene)
 			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
 			text_popup->setAngle(cos(glfwGetTime() * 25));
 		});
+
+	Interface	*worldCreation = manager->load("world_creation");
+
+	worldCreation->addElement("text_world_name", new Text(UIAnchor::UI_CENTER, "world name", glm::vec2(0, -170), NULL, false));
+	worldCreation->addElement("textbox_world_name", new TextBox(UIAnchor::UI_CENTER, glm::vec2(0, -120), glm::vec2(200, 60), []
+		(TextBoxInfo infos)
+		{
+			std::cout << infos.input << std::endl;
+		}, NULL));
+
+	worldCreation->addElement("text_world_seed", new Text(UIAnchor::UI_CENTER, "world seed", glm::vec2(0, -50), NULL, false));
+	worldCreation->addElement("textbox_world_seed", new TextBox(UIAnchor::UI_CENTER, glm::vec2(0, 0), glm::vec2(200, 60), []
+		(TextBoxInfo infos)
+		{
+			std::cout << infos.input << std::endl;
+		}, NULL));
+
+	worldCreation->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(110, -10), glm::vec2(200, 60), []
+		(ButtonInfo)
+		{
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_selection");
+		}, NULL));
+
+	worldCreation->addElement("create_world_button", new Button(UIAnchor::UI_BOTTOM_CENTER, "create new world", glm::vec2(-110, -10), glm::vec2(200, 60), NULL, NULL));
 
 	Interface	*leaving = manager->load("leaving");
 
@@ -188,12 +219,24 @@ static void	_updateShaders(ShaderManager *shaders)
 	postShader->setFloat("SCREEN_HEIGHT", SCREEN_HEIGHT);
 }
 
+static void	_keyHookFunc(Scene *scene, int key, int action)
+{
+	scene->getInterfaceManager()->getCurrent()->specialInput(key, action);
+}
+
+static void	_charHookFunc(Scene *scene, uint key)
+{
+	scene->getInterfaceManager()->getCurrent()->charInput(key);
+}
+
 void	TitleScreen::build(Scene *scene)
 {
 	_buildInterface(scene);
 	scene->getCamera()->pos = glm::vec3(0, 0, 0);
 	scene->getCamera()->pitch = 0;
 	scene->getCamera()->yaw = 0;
+	scene->setKeyHook(_keyHookFunc);
+	scene->setCharHook(_charHookFunc);
 	scene->getInterfaceManager()->use("main");
 }
 
@@ -226,7 +269,5 @@ void	TitleScreen::close(Scene *scene)
 void	TitleScreen::open(Scene *scene)
 {
 	(void)scene;
-	WORLD_MANAGER->saveCurrent();
-	WORLD_MANAGER->reset();
 	scene->getInterfaceManager()->use("main");
 }

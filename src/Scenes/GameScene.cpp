@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/18 12:24:15 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 13:35:51 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -244,7 +244,7 @@ static void	_buildInterface(Scene *scene)
 	leaving->addElement("leaving", new Text(UIAnchor::UI_CENTER, "leaving world...", glm::vec2(0, 0), NULL, false));
 }
 
-void	_charHookFunc(Scene *, uint key)
+static void	_charHookFunc(Scene *, uint key)
 {
 	TERMINAL->input(key);
 }
@@ -345,6 +345,8 @@ void	GameScene::update(Scene *scene)
 void	GameScene::close(Scene *scene)
 {
 	(void)scene;
+	WORLD_MANAGER->getCurrent()->save();
+	WORLD_MANAGER->reset();
 	if (CHUNK_GENERATOR)
 	{
 		delete CHUNK_GENERATOR;
@@ -361,11 +363,9 @@ void	GameScene::close(Scene *scene)
 
 void	GameScene::open(Scene *scene)
 {
-	CAMERA->yaw = 45;
-	CAMERA->pitch = -10;
-	CAMERA->pos = {WORLD_SIZE / 2, 130, WORLD_SIZE / 2};
-
 	CAMERA->pos = WORLD_MANAGER->getCurrent()->getPlayerPos();
+	CAMERA->pitch = WORLD_MANAGER->getCurrent()->getFloatInfo("pitch");
+	CAMERA->yaw = WORLD_MANAGER->getCurrent()->getFloatInfo("yaw");
 
 	(void)scene;
 	if (!CHUNK_GENERATOR)
