@@ -1,51 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Button.hpp                                         :+:      :+:    :+:   */
+/*   Toggle.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/14 18:34:43 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:25:59 by mbatty           ###   ########.fr       */
+/*   Created: 2025/07/20 13:07:11 by mbatty            #+#    #+#             */
+/*   Updated: 2025/07/20 13:29:05 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUTTON_HPP
-# define BUTTON_HPP
+#ifndef TOGGLE_HPP
+# define TOGGLE_HPP
 
-#include "UIElement.hpp"
-
-struct	ButtonInfo
+struct	ToggleInfo
 {
 	void				*data;
+	bool				pressed;
 	const std::string	id;
 	const std::string	label;
 };
 
-/*
-	@brief	Represents a simple clickable UI element
-
-	When initialized the button will use basic textures/shaders from the Texture/ShaderManager, use the setter functions to use custom shaders
-*/
-class	Button : public UIElement
+class	Toggle : public UIElement
 {
 	public:
-		/*
-			@brief	Simple anchored button
-
-			Constructor for anchored buttons, the pos argument will be added to the anchor point so
-			use positive/negative values to move the button around its anchor
-
-			@param	anchor      Where the button should be anchored
-			@param	label       Label of the button to be displayed
-			@param	offset      Offset from anchor
-			@param	size        Size of the button
-			@param	onClick     function to be called when button is clicked, NULL to do nothing
-			@param	clickData   Data passed to the onClick function
-		*/
-		Button(UIAnchor anchor, std::string label, glm::vec2 offset, glm::vec2 size, std::function<void(ButtonInfo)> onClick, void *clickData)
+		Toggle(UIAnchor anchor, std::string label, glm::vec2 offset, glm::vec2 size, std::function<void(ToggleInfo)> onClick, void *clickData)
 		{
-			type = UIElementType::UITYPE_BUTTON;
+			type = UIElementType::UITYPE_TOGGLE;
 			this->label = label;
 			this->offset = offset;
 			this->pos = glm::vec2(0);
@@ -56,7 +37,7 @@ class	Button : public UIElement
 
 			anchorPos();
 		}
-		~Button(){}
+		~Toggle(){}
 
 		void	draw()
 		{
@@ -95,7 +76,10 @@ class	Button : public UIElement
 		{
 			bool inside = isInside(this->pos, this->size, mousePos);
 
-			this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");;
+			if (pressed)
+				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");
+			else
+				this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");
 
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
@@ -103,15 +87,10 @@ class	Button : public UIElement
 			if (mousePressed && !this->previousMousePressed)
     			this->wasPressedInside = inside;
 
-    		if (mousePressed)
-    		{
-    			if (inside && this->wasPressedInside)
-    				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");
-    		}
     		else
     		{
-    			if (this->wasPressedInside && inside && onClick)
-    				this->onClick({clickData, id, label});
+    			if (this->wasPressedInside && inside)
+    				click();
     			this->wasPressedInside = false;
     		}
 
@@ -121,11 +100,18 @@ class	Button : public UIElement
 		{
 			this->clickData = data;
 		}
+		void	click()
+		{
+			pressed = !pressed;
+			if (onClick)
+				this->onClick({clickData, pressed, id, label});
+		}
 
 		bool						wasPressedInside = false;
 		bool						previousMousePressed = false;
+		bool						pressed = false;
 
-		std::function<void(ButtonInfo)>	onClick = NULL;
+		std::function<void(ToggleInfo)>	onClick = NULL;
 		void						*clickData = NULL;
 
 		std::string					label;

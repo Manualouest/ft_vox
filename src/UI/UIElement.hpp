@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:42:04 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 18:03:24 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 13:25:44 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,11 +42,23 @@ enum UIAnchor
 	UI_CENTER_HALF_RIGHT //Anchored on the half right of the screen
 };
 
+enum UIElementType
+{
+	UITYPE_UNSET,
+	UITYPE_BUTTON,
+	UITYPE_IMAGE,
+	UITYPE_SLIDER,
+	UITYPE_TEXT,
+	UITYPE_TEXTBOX,
+	UITYPE_TOGGLE,
+};
+
 class	UIElement
 {
 	public:
 		UIElement()
 		{
+			type = UIElementType::UITYPE_UNSET;
 			this->_shader = SHADER_MANAGER->get("gui");
 		}
 		virtual ~UIElement(){}
@@ -78,11 +90,14 @@ class	UIElement
 		std::string	id; //ID of the ui element inside of an interface (Set by the interface).
 		UIAnchor	anchor = UIAnchor::UI_NONE;
 		Shader		*_shader;
+		UIElementType	type;
 };
 
 # include "Button.hpp"
 # include "Text.hpp"
 # include "Slider.hpp"
 # include "Image.hpp"
+# include "Toggle.hpp"
+# include "TextBox.hpp"
 
 #endif

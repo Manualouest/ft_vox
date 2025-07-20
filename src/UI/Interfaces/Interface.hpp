@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 22:01:22 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 14:00:25 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 13:32:41 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,28 @@ class	Interface
 				return (NULL);
 			}
 			return (finder->second);
+		}
+		void	charInput(unsigned int key)
+		{
+			UIElement	*elementPTR = NULL;
+
+			for (auto &element : _elements)
+			{
+				elementPTR = element.second;
+				if (elementPTR->type == UIElementType::UITYPE_TEXTBOX)
+					static_cast<TextBox*>(elementPTR)->charInput(key);
+			}
+		}
+		void	specialInput(int key, int action)
+		{
+			UIElement	*elementPTR = NULL;
+
+			for (auto &element : _elements)
+			{
+				elementPTR = element.second;
+				if (elementPTR->type == UIElementType::UITYPE_TEXTBOX)
+					static_cast<TextBox*>(elementPTR)->specialInput(key, action);
+			}
 		}
 	private:
 		std::map<std::string, UIElement *>		_elements;

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 13:36:46 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 17:31:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 13:26:13 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ class	Slider : public UIElement
 	public:
 		Slider(UIAnchor anchor, std::string label, glm::vec2 offset, glm::vec2 size, std::function<void(float)> onChange, std::function<void(Slider *)> onUpdate, float startValue)
 		{
+			type = UIElementType::UITYPE_SLIDER;
 			_buttonShader = SHADER_MANAGER->get("gui");
 			backgroundTexture = TEXTURE_MANAGER->get("textures/dirt.bmp");
 			currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");
@@ -52,9 +53,9 @@ class	Slider : public UIElement
 
 			_buttonShader->use();
 			_buttonShader->setMat4("projection", projection);
-			
+
 			glBindVertexArray(UIquadVAO);
-			
+
 			this->backgroundTexture->use(0);
 			_buttonShader->setMat4("model", model); //Draws the background
 			glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -62,7 +63,7 @@ class	Slider : public UIElement
 			this->currentTexture->use(0);
 			_buttonShader->setMat4("model", sliderModel); //Draws the slider
 			glDrawArrays(GL_TRIANGLES, 0, 6);
-			
+
 			glBindVertexArray(0);
 			float	labelWidth = this->label.size() * 16;
 			float	labelHeight = 16;
@@ -80,7 +81,7 @@ class	Slider : public UIElement
 				anchorPos();
 				setSlider(value);
 			}
-			
+
 			if (onUpdate)
 				onUpdate(this);
 
@@ -103,7 +104,7 @@ class	Slider : public UIElement
 				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");;
 				this->sliderPos.x = mousePos.x - (sliderWidth / 2);
 			}
-			
+
 			if (!mousePressed)
 				this->dragging = false;
 
@@ -112,7 +113,7 @@ class	Slider : public UIElement
 			float sliderCenter = sliderPos.x + (sliderWidth / 2);
     		float normalizedValue = (sliderCenter - minCenter) / (maxCenter - minCenter);
     		normalizedValue = glm::clamp(normalizedValue, 0.0f, 1.0f);
-            
+
     		value = normalizedValue;
 			if (value != previousValue)
 				onChange(value);
@@ -121,11 +122,11 @@ class	Slider : public UIElement
 		{
 			value = glm::clamp(value, 0.0f, 1.0f);
 			this->value = value;
-		
+
 			float minCenter = pos.x + (sliderWidth / 2);
 			float maxCenter = pos.x + size.x - (sliderWidth / 2);
 			float centerX = minCenter + value * (maxCenter - minCenter);
-		
+
 			sliderPos.x = centerX - (sliderWidth / 2);
 			sliderPos.y = pos.y;
 		}

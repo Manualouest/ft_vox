@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 17:43:25 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 18:36:39 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 13:26:07 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ class	Image : public UIElement
 	public:
 		Image(UIAnchor anchor, glm::vec2 offset, glm::vec2 size)
 		{
+			type = UIElementType::UITYPE_IMAGE;
 			this->offset = offset;
 			this->pos = glm::vec2(0);
 			this->size = size;
@@ -28,14 +29,14 @@ class	Image : public UIElement
 			anchorPos();
 		}
 		~Image(){}
-		
+
 		void	draw()
 		{
 			if (!this->currentTexture)
 				return ;
-			
+
 			initButtonQuad();
-			
+
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
 

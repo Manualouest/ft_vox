@@ -1,52 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Button.hpp                                         :+:      :+:    :+:   */
+/*   TextBox.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/14 18:34:43 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:25:59 by mbatty           ###   ########.fr       */
+/*   Created: 2025/07/20 13:17:26 by mbatty            #+#    #+#             */
+/*   Updated: 2025/07/20 14:57:29 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef BUTTON_HPP
-# define BUTTON_HPP
+#ifndef TEXTBOX_HPP
+# define TEXTBOX_HPP
 
-#include "UIElement.hpp"
-
-struct	ButtonInfo
+struct	TextBoxInfo
 {
 	void				*data;
+	const std::string	input;
 	const std::string	id;
-	const std::string	label;
 };
 
-/*
-	@brief	Represents a simple clickable UI element
-
-	When initialized the button will use basic textures/shaders from the Texture/ShaderManager, use the setter functions to use custom shaders
-*/
-class	Button : public UIElement
+class	TextBox : public UIElement
 {
 	public:
-		/*
-			@brief	Simple anchored button
-
-			Constructor for anchored buttons, the pos argument will be added to the anchor point so
-			use positive/negative values to move the button around its anchor
-
-			@param	anchor      Where the button should be anchored
-			@param	label       Label of the button to be displayed
-			@param	offset      Offset from anchor
-			@param	size        Size of the button
-			@param	onClick     function to be called when button is clicked, NULL to do nothing
-			@param	clickData   Data passed to the onClick function
-		*/
-		Button(UIAnchor anchor, std::string label, glm::vec2 offset, glm::vec2 size, std::function<void(ButtonInfo)> onClick, void *clickData)
+		TextBox(UIAnchor anchor, glm::vec2 offset, glm::vec2 size, std::function<void(TextBoxInfo)> onClick, void *clickData)
 		{
-			type = UIElementType::UITYPE_BUTTON;
-			this->label = label;
+			type = UIElementType::UITYPE_TEXTBOX;
 			this->offset = offset;
 			this->pos = glm::vec2(0);
 			this->size = size;
@@ -56,7 +35,7 @@ class	Button : public UIElement
 
 			anchorPos();
 		}
-		~Button(){}
+		~TextBox(){}
 
 		void	draw()
 		{
@@ -82,20 +61,26 @@ class	Button : public UIElement
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 			glBindVertexArray(0);
 
-			float	labelWidth = this->label.size() * 15;
+			float	labelWidth = this->input.size() * 15;
 			float	labelHeight = 15;
 
 			glm::vec2	buttonCenter;
 			buttonCenter.x = (this->pos.x + this->size.x / 2.f) - labelWidth / 2.f;
 			buttonCenter.y = (this->pos.y + this->size.y / 2.f) - labelHeight / 2.f;
 
-			FONT->putString(this->label, buttonCenter, glm::vec2(labelWidth, labelHeight));
+			FONT->putString(this->input, buttonCenter, glm::vec2(labelWidth, labelHeight));
 		}
 		void	update(glm::vec2 mousePos, bool mousePressed)
 		{
 			bool inside = isInside(this->pos, this->size, mousePos);
 
-			this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");;
+			if (mousePressed && !inside && pressed)
+				validate();
+
+			if (pressed)
+				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");
+			else
+				this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");
 
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
@@ -103,15 +88,10 @@ class	Button : public UIElement
 			if (mousePressed && !this->previousMousePressed)
     			this->wasPressedInside = inside;
 
-    		if (mousePressed)
-    		{
-    			if (inside && this->wasPressedInside)
-    				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");
-    		}
     		else
     		{
-    			if (this->wasPressedInside && inside && onClick)
-    				this->onClick({clickData, id, label});
+    			if (this->wasPressedInside && inside)
+    				pressed = !pressed;
     			this->wasPressedInside = false;
     		}
 
@@ -121,14 +101,44 @@ class	Button : public UIElement
 		{
 			this->clickData = data;
 		}
+		void	charInput(unsigned int key)
+		{
+			(void)key;
+			if (!pressed)
+				return ;
+
+			if (key >= 32 && key <= 126)
+				input.insert(input.end(), 1, (char)key);
+		}
+		void	specialInput(int key, int action)
+		{
+			(void)key;(void)action;
+			if (!pressed || (action != GLFW_PRESS && action != GLFW_REPEAT))
+				return ;
+
+			if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_ENTER)
+				validate();
+			if (key == GLFW_KEY_BACKSPACE && input.size() > 0)
+				input.pop_back();
+		}
+		void	validate()
+		{
+			pressed = false;
+			if (onClick)
+				this->onClick({clickData, input, id});
+		}
+		void	clear()
+		{
+			input.clear();
+		}
 
 		bool						wasPressedInside = false;
 		bool						previousMousePressed = false;
+		bool						pressed = false;
+		std::string					input;
 
-		std::function<void(ButtonInfo)>	onClick = NULL;
+		std::function<void(TextBoxInfo)>	onClick = NULL;
 		void						*clickData = NULL;
-
-		std::string					label;
 
 		Texture						*currentTexture = NULL;
 };

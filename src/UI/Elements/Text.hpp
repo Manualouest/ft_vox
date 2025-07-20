@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 11:48:31 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/18 11:04:00 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 13:26:19 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ class	Text : public UIElement
 		~Text(){}
 		Text(UIAnchor anchor, std::string label, glm::vec2 offset, std::function<void(std::string&)> updatefc, bool drawBG)
 		{
+			type = UIElementType::UITYPE_TEXT;
 			this->_angle = 0;
 			this->_rotation = glm::vec3(1);
 			this->_scale = glm::vec2(1);
