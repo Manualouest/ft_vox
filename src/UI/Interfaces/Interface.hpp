@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 22:01:22 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:32:41 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 19:11:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,13 @@ class	Interface
 		{
 			for (auto &element : _elements)
 				delete element.second;
+		}
+
+		void	clear()
+		{
+			for (auto &element : _elements)
+				delete element.second;
+			_elements.clear();
 		}
 
 		void	draw()

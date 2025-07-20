@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 15:12:50 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 21:26:13 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,14 +65,83 @@ void	selectWorld(ButtonInfo infos)
 	SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_creation");
 }
 
+static void	_buildWorldSelection(Interface *interface);
+
 void	startWorldButton(ButtonInfo infos)
 {
+	Toggle	*deleteToggle = static_cast<Toggle*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("toggle_delete"));
+
+	if (deleteToggle->pressed)
+	{
+		WORLD_MANAGER->clear(infos.id);
+		std::filesystem::path	path = "./saves/" + infos.id;
+		std::error_code	ec;
+		std::filesystem::remove_all(path, ec); //!!!!!! Check the error code !!!!!!!!!
+		_buildWorldSelection(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection"));
+		return ;
+	}
 	World	*world = WORLD_MANAGER->get(infos.id);
 	if (!world)
 		world = WORLD_MANAGER->load(infos.id, rand());
 	seed = world->getSeed();
 	WORLD_MANAGER->use(infos.id);
 	startGame();
+}
+
+static void	_buildWorldSelection(Interface *interface)
+{
+	interface->clear();
+
+	interface->addElement("select_text", new Text(UIAnchor::UI_TOP_CENTER, "select world", glm::vec2(0, 10), NULL, false));
+
+	interface->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(210, -10), glm::vec2(200, 60), []
+		(ButtonInfo)
+		{
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
+		}, NULL));
+
+	interface->addElement("toggle_delete", new Toggle(UIAnchor::UI_BOTTOM_CENTER, "delete", glm::vec2(0, -10), glm::vec2(200, 60), NULL, NULL));
+	interface->addElement("button_new", new Button(UIAnchor::UI_BOTTOM_CENTER, "new", glm::vec2(-210, -10), glm::vec2(200, 60), []
+		(ButtonInfo)
+		{
+			static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_name"))->clear();
+			static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_seed"))->clear();
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_creation");
+		}, NULL));
+
+	if (WORLD_MANAGER->data().size() <= 0)
+		return ;
+
+	int	offset = -90 * (WORLD_MANAGER->data().size() - 1) / 2;
+
+	for (auto &pair : WORLD_MANAGER->data())
+	{
+		std::string	id = pair.second->getID();
+		interface->addElement(id, new Button(UIAnchor::UI_CENTER, id, glm::vec2(0, offset), glm::vec2(300, 80), startWorldButton, NULL));
+		offset += 90;
+	}
+
+	interface->setUpdateFunc([]
+		(Interface *)
+		{
+			for (auto &pair : WORLD_MANAGER->data())
+			{
+				std::string	id = pair.second->getID();
+				World	*world = WORLD_MANAGER->get(id);
+
+				if (world)
+					static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement(id))->label = world->getWorldInfo("display_name");
+			}
+
+		});
+}
+
+static void	_createNewWorld(std::string name, uint seed)
+{
+	if (name.size() <= 0)
+		return ;
+	WORLD_MANAGER->load(name, seed);
+	_buildWorldSelection(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection"));
 }
 
 static void	_buildInterface(Scene *scene)
@@ -84,6 +153,7 @@ static void	_buildInterface(Scene *scene)
 	main->addElement("button_singleplayer", new Button(UIAnchor::UI_CENTER, "singleplayer", glm::vec2(0, -90), glm::vec2(300, 80), []
 		(ButtonInfo)
 		{
+			_buildWorldSelection(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection"));
 			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_selection");
 		}, NULL));
 	main->addElement("button_options", new Button(UIAnchor::UI_CENTER, "options", glm::vec2(0, 0), glm::vec2(300, 80), []
@@ -120,35 +190,7 @@ static void	_buildInterface(Scene *scene)
 
 	Interface	*worldSelection = manager->load("world_selection");
 
-	worldSelection->addElement("select_text", new Text(UIAnchor::UI_TOP_CENTER_HALF, "select world", glm::vec2(0, -50), NULL, false));
-
-	worldSelection->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(210, -10), glm::vec2(200, 60), []
-		(ButtonInfo)
-		{
-			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
-		}, NULL));
-
-	worldSelection->addElement("toggle_delete", new Toggle(UIAnchor::UI_BOTTOM_CENTER, "delete", glm::vec2(0, -10), glm::vec2(200, 60), NULL, NULL));
-	worldSelection->addElement("button_new", new Button(UIAnchor::UI_BOTTOM_CENTER, "new", glm::vec2(-210, -10), glm::vec2(200, 60), []
-		(ButtonInfo)
-		{
-			static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_name"))->clear();
-			static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_seed"))->clear();
-			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_creation");
-		}, NULL));
-
-	worldSelection->addElement("world_1", new Button(UIAnchor::UI_CENTER, "- empty -", glm::vec2(0, -90), glm::vec2(300, 80), startWorldButton, NULL));
-
-	worldSelection->setUpdateFunc([]
-		(Interface *)
-		{
-			World	*world1 = WORLD_MANAGER->get("world_1");
-
-			if (world1)
-				static_cast<Button*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("world_1"))->label = world1->getWorldInfo("display_name");
-		});
-
-
+	_buildWorldSelection(worldSelection);
 
 	Interface	*options = manager->load("options");
 
@@ -191,7 +233,22 @@ static void	_buildInterface(Scene *scene)
 			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_selection");
 		}, NULL));
 
-	worldCreation->addElement("create_world_button", new Button(UIAnchor::UI_BOTTOM_CENTER, "create new world", glm::vec2(-110, -10), glm::vec2(200, 60), NULL, NULL));
+	worldCreation->addElement("create_world_button", new Button(UIAnchor::UI_BOTTOM_CENTER, "create new world", glm::vec2(-110, -10), glm::vec2(200, 60), []
+		(ButtonInfo)
+		{
+			TextBox	*worldNameTextBox = static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_name"));
+			TextBox	*worldSeedTextBox = static_cast<TextBox*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_creation")->getElement("textbox_world_seed"));
+
+			std::string	name = worldNameTextBox->getInput();
+			uint		seed = 0;
+			try
+			{
+				seed = std::stoul(worldSeedTextBox->getInput().c_str(), NULL, 10);
+			} catch (...) {}
+
+			_createNewWorld(name, seed);
+			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("world_selection");
+		}, NULL));
 
 	Interface	*leaving = manager->load("leaving");
 

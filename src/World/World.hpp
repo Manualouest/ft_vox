@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 12:41:57 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/18 16:11:46 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 20:57:46 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ class	World
 		{
 			this->_id = id;
 			saveWorldInfo("seed", std::to_string(seed));
+			saveWorldInfo("display_name", _id);
 			this->_path = "./saves/" + id;
 		}
 		World(const std::string &id, const std::string &path)
@@ -140,6 +141,7 @@ class	World
 			return (res);
 		}
 		uint	getSeed() {return (getUintInfo("seed"));}
+		std::string	getID() {return (this->_id);}
 	private:
 		void	_createWorldFolders()
 		{
@@ -151,7 +153,7 @@ class	World
 		}
 		void	_saveWorldInfos()
 		{
-			saveWorldInfo("display_name", "monde du caca");
+			saveWorldInfo("display_name", _id);
 			saveWorldInfo("pos_x", std::to_string(CAMERA->pos.x));
 			saveWorldInfo("pos_y", std::to_string(CAMERA->pos.y));
 			saveWorldInfo("pos_z", std::to_string(CAMERA->pos.z));

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/20 13:17:26 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 14:57:29 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 19:33:50 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,6 +126,10 @@ class	TextBox : public UIElement
 			pressed = false;
 			if (onClick)
 				this->onClick({clickData, input, id});
+		}
+		std::string	getInput()
+		{
+			return (this->input);
 		}
 		void	clear()
 		{

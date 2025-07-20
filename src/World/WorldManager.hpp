@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 13:12:52 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 15:25:30 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 21:15:35 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,13 @@ class	WorldManager
 	{
 		for (auto &pair : _worlds)
 			delete pair.second;
+	}
+	void	clear(const std::string &name)
+	{
+		std::map<std::string, World *>::iterator	finder = _worlds.find(name);
+		if (finder == _worlds.end())
+			return ;
+		_worlds.erase(finder);
 	}
 	World	*get(const std::string &name)
 	{
@@ -63,6 +70,11 @@ class	WorldManager
 	World	*getCurrent()
 	{
 		return (this->_current);
+	}
+
+	const std::map<std::string, World*>	&data()
+	{
+		return (_worlds);
 	}
 
 	void	loadSaveFiles()
