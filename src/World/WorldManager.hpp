@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 13:12:52 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/18 15:42:21 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/20 15:25:30 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,8 +64,6 @@ class	WorldManager
 	{
 		return (this->_current);
 	}
-
-
 
 	void	loadSaveFiles()
 	{

@@ -46,8 +46,7 @@ class	World
 		World(const std::string &id, uint seed)
 		{
 			this->_id = id;
-			this->_seed = seed;
-			saveInfo("seed", std::to_string(seed));
+			saveWorldInfo("seed", std::to_string(seed));
 			this->_path = "./saves/" + id;
 		}
 		World(const std::string &id, const std::string &path)
@@ -59,19 +58,19 @@ class	World
 		~World()
 		{
 		}
-		void	saveInfo(const std::string &key, const std::string &value)
+		/*
+			Saves informating inside of the world_info.txt file
+		*/
+		void	saveWorldInfo(const std::string &key, const std::string &value)
 		{
 			_worldInfos[key] = value;
 		}
 		void	save()
 		{
-			std::ofstream	file;
+			_createWorldFolders();
+			_saveWorldInfos();
 
-			std::filesystem::create_directories(_path);
-			std::filesystem::create_directories(_path + "/playerdata");
-			std::filesystem::create_directories(_path + "/world");
-			std::filesystem::create_directories(_path + "/world/regions");
-			std::filesystem::create_directories(_path + "/world/entities");
+			std::ofstream	file;
 
 			file.open(_path + "/world_info.txt");
 			for (auto &pair : _worldInfos)
@@ -97,16 +96,19 @@ class	World
 				std::string	key;
 				std::string	value;
 
-				if (!(iss >> key >> value))
+				if (!(iss >> key))
 					throw std::runtime_error("Bad format in world file.");
+
+				try {
+					std::getline(iss, value);
+					value.erase(0, value.find_first_not_of(" \t\r\n"));
+					value.erase(value.find_last_not_of(" \t\r\n") + 1);
+				} catch (const std::exception &e) {
+					throw std::runtime_error(e.what());
+				}
 
 				_worldInfos.insert({key, value});
 			}
-			loadValues();
-		}
-		void	loadValues()
-		{
-			_seed = std::atol(_worldInfos["seed"].c_str());
 		}
 		float	getFloatInfo(std::string id)
 		{
@@ -115,6 +117,18 @@ class	World
 			if (finder == _worldInfos.end())
 				return (0);
 			return (std::atof(finder->second.c_str()));
+		}
+		uint	getUintInfo(std::string id)
+		{
+			auto finder = _worldInfos.find(id);
+
+			if (finder == _worldInfos.end())
+				return (0);
+			return (std::strtoul(finder->second.c_str(), NULL, 10));
+		}
+		std::string	getWorldInfo(std::string id)
+		{
+			return (_worldInfos[id]);
 		}
 		glm::vec3	getPlayerPos()
 		{
@@ -125,10 +139,26 @@ class	World
 			res.z = getFloatInfo("pos_z");
 			return (res);
 		}
-		uint	getSeed() {return (this->_seed);}
+		uint	getSeed() {return (getUintInfo("seed"));}
 	private:
+		void	_createWorldFolders()
+		{
+			std::filesystem::create_directories(_path);
+			std::filesystem::create_directories(_path + "/playerdata");
+			std::filesystem::create_directories(_path + "/world");
+			std::filesystem::create_directories(_path + "/world/regions");
+			std::filesystem::create_directories(_path + "/world/entities");
+		}
+		void	_saveWorldInfos()
+		{
+			saveWorldInfo("display_name", "monde du caca");
+			saveWorldInfo("pos_x", std::to_string(CAMERA->pos.x));
+			saveWorldInfo("pos_y", std::to_string(CAMERA->pos.y));
+			saveWorldInfo("pos_z", std::to_string(CAMERA->pos.z));
+			saveWorldInfo("yaw", std::to_string(CAMERA->yaw));
+			saveWorldInfo("pitch", std::to_string(CAMERA->pitch));
+		}
 		std::string							_path;
-		uint								_seed = 0;
 		std::string							_id;
 		std::map<std::string, std::string>	_worldInfos;
 };
