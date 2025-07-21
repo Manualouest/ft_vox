@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 12:41:57 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 20:57:46 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/21 12:23:40 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ class	World
 			saveWorldInfo("seed", std::to_string(seed));
 			saveWorldInfo("display_name", _id);
 			this->_path = "./saves/" + id;
+			save();
 		}
 		World(const std::string &id, const std::string &path)
 		{

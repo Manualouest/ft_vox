@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 13:12:52 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 21:15:35 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/21 12:54:12 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,13 @@ class	WorldManager
 	{
 		for (auto &pair : _worlds)
 			delete pair.second;
+	}
+	void	reload()
+	{
+		for (auto &pair : _worlds)
+			delete pair.second;
+		_worlds.clear();
+		loadSaveFiles();
 	}
 	void	clear(const std::string &name)
 	{
