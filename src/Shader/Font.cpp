@@ -6,11 +6,13 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:48:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/17 15:00:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/21 16:05:17 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Font.hpp"
+
+#include "TextureManager.hpp"
 
 GLuint fontVAO = 0;
 GLuint fontVBO = 0;
@@ -31,46 +33,19 @@ Font::~Font()
 Font::Font()
 {
     this->_shader = SHADER_MANAGER->get("text");
-	std::ifstream	tmpFile;
-	for (unsigned char c = 32; c < 128; ++c)
-	{
-		std::string path = "src/assets/textures/font/" + std::to_string((int)c) + ".bmp";
-		tmpFile.open(path);
-		if (tmpFile.is_open())
-		{
-			Texture	tmp(path.c_str());
-			font[c].cut(tmp);
-		}
-		tmpFile.close();
-	}
-	Texture	tmp("src/assets/textures/font/63.bmp");
-	font[127].cut(tmp);
-}
-
-Texture &Font::operator[](char c)
-{
-	if (c < 0 || c > 127 || font[c].getID() <= 0)
-		return (font[127]);
-	return (font[c]);
-}
-
-Texture	&Font::getChar(char c)
-{
-	if (c < 0 || c > 127 || font[c].getID() <= 0)
-		return (font[127]);
-	return (font[c]);
+    this->_atlas = TEXTURE_MANAGER->get("src/assets/ascii.bmp");
 }
 
 void    Font::putChar(char c, glm::vec2 pos, glm::vec2 size)
 {
     initFontModel();
     _shader->use();
-    getChar(c).use(0);
-    
+    _atlas->use(0);
+
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f));
     model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
     glm::mat4 projection = glm::ortho(0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f);
-    
+
     _shader->setMat4("projection", projection);
     _shader->setMat4("model", model);
 
@@ -86,6 +61,8 @@ void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 size)
 	float	charPosY = pos.y;
 	for (std::string::iterator it = str.begin(); it != str.end(); it++)
 	{
+        _shader->setInt("charIndex", (int)*it);
+        _shader->setVec3("color", glm::vec3(1.0, 1.0, 1.0));
 		putChar(*it, glm::vec2(charPosX, charPosY), glm::vec2(offset, size.y));
 		charPosX += offset;
 	}
@@ -112,15 +89,30 @@ void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 
 	{
         initFontModel();
         _shader->use();
-        getChar(*it).use(0);
+        _atlas->use(0);
 
         glm::mat4   model2 = model;
+
+        model2 = glm::translate(model2, glm::vec3(charit + 0.125, 0.125, 0.0));
+
+        _shader->setMat4("projection", projection);
+        _shader->setMat4("model", model2);
+        _shader->setInt("charIndex", (int)*it);
+        _shader->setVec3("color", glm::vec3(0.0, 0.0, 0.0));
+
+        glBindVertexArray(fontVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
+        model2 = model;
 
         model2 = glm::translate(model2, glm::vec3(charit++, 0.0, 0.0));
 
         _shader->setMat4("projection", projection);
         _shader->setMat4("model", model2);
-        
+        _shader->setInt("charIndex", (int)*it);
+        _shader->setVec3("color", glm::vec3(1.0, 1.0, 1.0));
+
         glBindVertexArray(fontVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -131,17 +123,17 @@ void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 
 void	Font::initFontModel()
 {
     if (fontVAO != 0) return;
-        
+
     if (DEBUG)
         consoleLog("Loading font quad", LogSeverity::NORMAL);
 
     float vertices[] = {
-        0.0f, 0.0f,
-        1.0f, 1.0f,
-        0.0f, 1.0f,
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, 1.0f
+        0.0f, 0.0f,  0.0f, 0.0f,
+        1.0f, 1.0f,  1.0f, 1.0f,
+        0.0f, 1.0f,  0.0f, 1.0f,
+        0.0f, 0.0f,  0.0f, 0.0f,
+        1.0f, 0.0f,  1.0f, 0.0f,
+        1.0f, 1.0f,  1.0f, 1.0f
     };
 
     glGenVertexArrays(1, &fontVAO);
@@ -152,7 +144,10 @@ void	Font::initFontModel()
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     glBindVertexArray(0);
 }

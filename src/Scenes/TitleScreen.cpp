@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/21 13:10:05 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/21 15:28:32 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,18 +212,10 @@ static void	_buildOptionsInterface(Interface *interface)
 static void	_buildWorldCreationInterface(Interface *interface)
 {
 	interface->addElement("text_world_name", new Text(UIAnchor::UI_CENTER, "world name", glm::vec2(0, -170), NULL, false));
-	interface->addElement("textbox_world_name", new TextBox(UIAnchor::UI_CENTER, glm::vec2(0, -120), glm::vec2(200, 60), []
-		(TextBoxInfo infos)
-		{
-			std::cout << infos.input << std::endl;
-		}, NULL));
+	interface->addElement("textbox_world_name", new TextBox(UIAnchor::UI_CENTER, glm::vec2(0, -120), glm::vec2(200, 60), NULL, NULL));
 
 	interface->addElement("text_world_seed", new Text(UIAnchor::UI_CENTER, "world seed", glm::vec2(0, -50), NULL, false));
-	interface->addElement("textbox_world_seed", new TextBox(UIAnchor::UI_CENTER, glm::vec2(0, 0), glm::vec2(200, 60), []
-		(TextBoxInfo infos)
-		{
-			std::cout << infos.input << std::endl;
-		}, NULL));
+	interface->addElement("textbox_world_seed", new TextBox(UIAnchor::UI_CENTER, glm::vec2(0, 0), glm::vec2(200, 60), NULL, NULL));
 
 	interface->addElement("button_cancel", new Button(UIAnchor::UI_BOTTOM_CENTER, "cancel", glm::vec2(110, -10), glm::vec2(200, 60), []
 		(ButtonInfo)

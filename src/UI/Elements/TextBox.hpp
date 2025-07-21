@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/20 13:17:26 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 19:33:50 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/21 15:17:23 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,11 @@ class	TextBox : public UIElement
     		else
     		{
     			if (this->wasPressedInside && inside)
+				{
     				pressed = !pressed;
+					if (!pressed)
+						validate();
+				}
     			this->wasPressedInside = false;
     		}
 

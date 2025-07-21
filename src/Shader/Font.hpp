@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:45:03 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 17:28:26 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/21 15:53:22 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,16 +28,14 @@ class	Font
 	public:
 		~Font();
 		Font();
-		Texture	&operator[](char c);
-		Texture	&getChar(char c);
 		void	initFontModel();
 		void    putChar(char c, glm::vec2 pos, glm::vec2 size);
 		void	putString(std::string str, glm::vec2 pos, glm::vec2 size);
 		void	putString(std::string str, glm::vec2 pos, glm::vec2 size, glm::vec3 rotation, float angle);
 
 	private:
-		std::array<Texture, 128>	font;
 		Shader						*_shader;
+		Texture						*_atlas;
 };
 
 extern Font	*FONT;
