@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:57:17 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 13:37:34 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,8 @@ std::string	popupTitles[TITLES_COUNT] =
 	"also try cub3d!",
 	"chicken jockey!",
 	"scraeyme approved",
-	"dont forget to git push"
+	"dont forget to git push",
+	"c++ > all"
 };
 
 extern uint	seed;
