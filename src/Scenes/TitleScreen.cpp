@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/21 15:28:32 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:57:17 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,6 +170,7 @@ static void	_buildMainInterface(Interface *interface)
 
 	text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
 	text_popup->setAngle(-10);
+	text_popup->setColor(glm::vec3(1.0, 1.0, 0.0));
 
 	interface->setUpdateFunc([]
 		(Interface *interface)
@@ -204,6 +205,7 @@ static void	_buildOptionsInterface(Interface *interface)
 		{
 			Text		*text_popup = static_cast<Text*>(interface->getElement("fun_text"));
 
+			text_popup->setColor(glm::vec3(1.0, 0.2, 0.2));
 			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
 			text_popup->setAngle(cos(glfwGetTime() * 25));
 		});

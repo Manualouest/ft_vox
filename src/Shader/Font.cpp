@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:48:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:35:55 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:50:35 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,14 +36,14 @@ Font::Font()
     this->_atlas = TEXTURE_MANAGER->get("src/assets/ascii.bmp");
 }
 
-void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 size, bool background, bool shadow)
+void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 color, bool background, bool shadow)
 {
-    putString(str, pos, glm::vec2(1), glm::vec3(1), 0, background, shadow);
+    putString(str, pos, glm::vec2(1), color, glm::vec3(1), 0, background, shadow);
 }
 
 #define FONT_SIZE 16.0
 
-void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 rotation, float angle, bool background, bool shadow)
+void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 color, glm::vec3 rotation, float angle, bool background, bool shadow)
 {
     float   charSizeX = FONT_SIZE * scale.x;
     float   charSizeY = FONT_SIZE * scale.y;
@@ -95,7 +95,7 @@ void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 
         else
             SHADER_MANAGER->get("text")->setBool("drawBackground", false);
 
-        _shader->setVec3("color", glm::vec3(1.0, 1.0, 1.0));
+        _shader->setVec3("color", color);
         _shader->setMat4("model", charModel);
         glBindVertexArray(fontVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);

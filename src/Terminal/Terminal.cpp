@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:35:00 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:10:20 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 13:17:16 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,7 +98,7 @@ void	Terminal::_drawLine(std::string line, float offset)
 	pos.x = 0;
 	pos.y = SCREEN_HEIGHT - (offset * 16);
 
-	FONT->putString(line, pos, {1, 1}, true, false);
+	FONT->putString(line, pos, {1, 1}, glm::vec3(1), true, false);
 }
 
 void	Terminal::_deleteOne()

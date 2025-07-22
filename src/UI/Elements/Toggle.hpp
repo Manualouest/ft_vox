@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/20 13:07:11 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:13:26 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:49:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ class	Toggle : public UIElement
 			buttonCenter.x = (this->pos.x + this->size.x / 2.f) - labelWidth / 2.f;
 			buttonCenter.y = (this->pos.y + this->size.y / 2.f) - labelHeight / 2.f;
 
-			FONT->putString(this->label, buttonCenter, glm::vec2(1, 1), false, false);
+			FONT->putString(this->label, buttonCenter, glm::vec2(1, 1), glm::vec3(1), false, false);
 		}
 		void	update(glm::vec2 mousePos, bool mousePressed)
 		{
