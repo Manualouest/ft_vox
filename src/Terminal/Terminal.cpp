@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:35:00 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 17:31:49 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:10:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,14 +72,13 @@ void	Terminal::input(uint key)
 
 void	Terminal::draw()
 {
-	int	i = _history.size();
-	
-	SHADER_MANAGER->get("text")->setBool("drawBackground", true);
+	int	i = _history.size() + 1;
+
 	if (_active)
 	{
 		std::string	tmp = _input;
 		tmp.insert(_cursor - _input.begin(), 1, '_');
-		_drawLine(tmp, 0);
+		_drawLine(tmp, 1);
 	}
 	for (Command line : _history)
 	{
@@ -89,20 +88,17 @@ void	Terminal::draw()
 		}
 		i--;
 	}
-	SHADER_MANAGER->get("text")->setBool("drawBackground", false);
 }
 
 void	Terminal::_drawLine(std::string line, float offset)
-{			
+{
 	glm::vec2	size;
-	size.x = line.size() * 16;
-	size.y = 16;
-	
-	glm::vec2	pos;
-	pos.x = 2;
-	pos.y = SCREEN_HEIGHT - size.y - 2 - (offset * 16);
 
-	FONT->putString(line, pos, size);
+	glm::vec2	pos;
+	pos.x = 0;
+	pos.y = SCREEN_HEIGHT - (offset * 16);
+
+	FONT->putString(line, pos, {1, 1}, true, false);
 }
 
 void	Terminal::_deleteOne()
@@ -120,7 +116,7 @@ void	Terminal::_clear()
 {
 	_active = false;
 	_historyCursor = _history.end();
-	_input.clear();	
+	_input.clear();
 	WINDOW->setDefaultMousePos();
 }
 
@@ -167,7 +163,7 @@ void	Terminal::_getHistoryUp()
 {
 	if (_historyCursor == _history.begin())
 		return ;
-	
+
 	_historyCursor--;
 	_input = (*_historyCursor).command;
 	_cursor = _input.end();

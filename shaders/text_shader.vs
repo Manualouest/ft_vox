@@ -12,7 +12,7 @@ out vec2 texPos;
 uniform int charIndex;
 
 void main() {
-    fragPos = vec2(aPos.x, -aPos.y);
+    fragPos = vec2(aPos.x, aPos.y);
     gl_Position = projection * model * vec4(aPos, 0.0, 1.0);
     clip = gl_Position;
 

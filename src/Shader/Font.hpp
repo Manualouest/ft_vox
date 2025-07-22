@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:45:03 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/21 15:53:22 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:32:07 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,9 +29,9 @@ class	Font
 		~Font();
 		Font();
 		void	initFontModel();
-		void    putChar(char c, glm::vec2 pos, glm::vec2 size);
-		void	putString(std::string str, glm::vec2 pos, glm::vec2 size);
-		void	putString(std::string str, glm::vec2 pos, glm::vec2 size, glm::vec3 rotation, float angle);
+		void	putString(std::string str, glm::vec2 pos, glm::vec2 size, bool background, bool shadow);
+		void	putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 rotation, float angle, bool background, bool shadow);
+		void	putChar(char c, glm::vec2 offset, glm::mat4 model);
 
 	private:
 		Shader						*_shader;

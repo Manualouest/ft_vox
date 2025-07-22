@@ -14,7 +14,8 @@ uniform float SCREEN_HEIGHT;
 uniform bool    drawBackground;
 uniform vec3    color;
 
-void main() {
+void main()
+{
     vec4 texColor = texture(tex0, texPos);
     if (texColor.r == 0, texColor.g == 0 && texColor.b == 0)
     {

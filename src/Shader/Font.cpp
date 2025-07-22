@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:48:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/21 16:05:17 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:35:55 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,83 +36,67 @@ Font::Font()
     this->_atlas = TEXTURE_MANAGER->get("src/assets/ascii.bmp");
 }
 
-void    Font::putChar(char c, glm::vec2 pos, glm::vec2 size)
+void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 size, bool background, bool shadow)
 {
-    initFontModel();
-    _shader->use();
-    _atlas->use(0);
-
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f));
-    model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
-    glm::mat4 projection = glm::ortho(0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f);
-
-    _shader->setMat4("projection", projection);
-    _shader->setMat4("model", model);
-
-    glBindVertexArray(fontVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
+    putString(str, pos, glm::vec2(1), glm::vec3(1), 0, background, shadow);
 }
 
-void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 size)
+#define FONT_SIZE 16.0
+
+void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 rotation, float angle, bool background, bool shadow)
 {
-	float	offset = size.x / str.size();
-	float	charPosX = pos.x;
-	float	charPosY = pos.y;
-	for (std::string::iterator it = str.begin(); it != str.end(); it++)
-	{
-        _shader->setInt("charIndex", (int)*it);
-        _shader->setVec3("color", glm::vec3(1.0, 1.0, 1.0));
-		putChar(*it, glm::vec2(charPosX, charPosY), glm::vec2(offset, size.y));
-		charPosX += offset;
-	}
-}
+    float   charSizeX = FONT_SIZE * scale.x;
+    float   charSizeY = FONT_SIZE * scale.y;
+    float   strSizeX = charSizeX * (float)str.size() - (charSizeX / 2);
+    float   strSizeY = charSizeY;
 
-void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 rotation, float angle)
-{
-    float   fontSizeX = 16.0f * scale.x;
-    float   fontSizeY = 16.0f * scale.y;
+    glm::vec3   center = glm::vec3(strSizeX / 2.0f, strSizeY / 2.0f, 1.0f);
 
-    glm::vec3   center = glm::vec3((float)str.size() * fontSizeX / 2.0f, fontSizeY / 2.0f, 1.0); //Rotate around center of string
+    glm::mat4   model(1);
 
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 1.0f));
+    model = glm::translate(model, glm::vec3(pos.x, pos.y, 1.0f));
 
     model = glm::translate(model, center);
     model = rotate(model, glm::radians(angle), rotation);
     model = glm::translate(model, center * -1.0f);
 
-    model = glm::scale(model, glm::vec3(fontSizeX, fontSizeY, 1.0f));
+    model = glm::scale(model, glm::vec3(charSizeX, charSizeY, 1.0f));
+
     glm::mat4 projection = glm::ortho(0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f);
 
-    int charit = 0;
+    uint    count = 0;
+
     for (std::string::iterator it = str.begin(); it != str.end(); it++)
-	{
+    {
         initFontModel();
         _shader->use();
         _atlas->use(0);
 
-        glm::mat4   model2 = model;
-
-        model2 = glm::translate(model2, glm::vec3(charit + 0.125, 0.125, 0.0));
-
         _shader->setMat4("projection", projection);
-        _shader->setMat4("model", model2);
         _shader->setInt("charIndex", (int)*it);
-        _shader->setVec3("color", glm::vec3(0.0, 0.0, 0.0));
 
-        glBindVertexArray(fontVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
+        glm::mat4 charModel = model;
 
-        model2 = model;
+        charModel = translate(charModel, glm::vec3(count++, 0, 0));
 
-        model2 = glm::translate(model2, glm::vec3(charit++, 0.0, 0.0));
+        if (shadow)
+        {
+            glm::mat4   shadowModel = glm::translate(charModel, glm::vec3(0.125, 0.125, 0.0));
+            SHADER_MANAGER->get("text")->setBool("drawBackground", false);
+            _shader->setVec3("color", glm::vec3(0));
+            _shader->setMat4("model", shadowModel);
+            glBindVertexArray(fontVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+        }
 
-        _shader->setMat4("projection", projection);
-        _shader->setMat4("model", model2);
-        _shader->setInt("charIndex", (int)*it);
+        if (background)
+            SHADER_MANAGER->get("text")->setBool("drawBackground", true);
+        else
+            SHADER_MANAGER->get("text")->setBool("drawBackground", false);
+
         _shader->setVec3("color", glm::vec3(1.0, 1.0, 1.0));
-
+        _shader->setMat4("model", charModel);
         glBindVertexArray(fontVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);

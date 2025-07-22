@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 11:48:31 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:26:19 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:23:05 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,19 +35,15 @@ class	Text : public UIElement
 		}
 		void	getSize()
 		{
-			this->size.x = _label.size() * 16;
-			this->size.y = 16;
+			this->size.x = _label.size() * 16.0f;
+			this->size.y = 16.0f;
 		}
 		void	draw()
 		{
 			getSize();
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
-			if (_drawBG)
-				SHADER_MANAGER->get("text")->setBool("drawBackground", true);
-
-			FONT->putString(this->_label, glm::vec2(this->pos.x, this->pos.y - this->size.y / 8), this->_scale, _rotation, _angle);
-			SHADER_MANAGER->get("text")->setBool("drawBackground", false);
+			FONT->putString(this->_label, glm::vec2(this->pos.x, this->pos.y), this->_scale, _rotation, _angle, _drawBG, true);
 		}
 		void	update(glm::vec2, bool)
 		{

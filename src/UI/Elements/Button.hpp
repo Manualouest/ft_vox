@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/14 18:34:43 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:25:59 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:12:41 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,14 +82,14 @@ class	Button : public UIElement
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 			glBindVertexArray(0);
 
-			float	labelWidth = this->label.size() * 15;
-			float	labelHeight = 15;
+			float	labelWidth = this->label.size() * 16;
+			float	labelHeight = 16;
 
 			glm::vec2	buttonCenter;
 			buttonCenter.x = (this->pos.x + this->size.x / 2.f) - labelWidth / 2.f;
 			buttonCenter.y = (this->pos.y + this->size.y / 2.f) - labelHeight / 2.f;
 
-			FONT->putString(this->label, buttonCenter, glm::vec2(labelWidth, labelHeight));
+			FONT->putString(this->label, buttonCenter, glm::vec2(1, 1), false, false);
 		}
 		void	update(glm::vec2 mousePos, bool mousePressed)
 		{

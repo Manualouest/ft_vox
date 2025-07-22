@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 13:36:46 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:26:13 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/22 12:13:10 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ class	Slider : public UIElement
 			buttonCenter.x = (this->pos.x + this->size.x / 2.f) - labelWidth / 2.f;
 			buttonCenter.y = (this->pos.y + this->size.y / 2.f) - labelHeight / 2.f;
 
-			FONT->putString(this->label, buttonCenter, glm::vec2(labelWidth, labelHeight));
+			FONT->putString(this->label, buttonCenter, glm::vec2(1, 1), false, false);
 		}
 		void	update(glm::vec2 mousePos, bool mousePressed)
 		{
