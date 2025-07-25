@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 12:17:41 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:28:19 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:25:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ class	ShaderManager
 
 		/*
 			Erases a shader from the manager, freing all its data
-			
+
 			@param name Key of the shader to remove
 		*/
 		bool	erase(const std::string &name);
@@ -59,7 +59,7 @@ class	ShaderManager
 		//Wrapper around get method
 		Shader	*operator[](const std::string &name);
 	private:
-		std::map<std::string, Shader *>	shaders;
+		std::unordered_map<std::string, Shader *>	shaders;
 };
 
 extern	ShaderManager	*SHADER_MANAGER;

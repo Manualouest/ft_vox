@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:22:51 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:33:04 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:24:50 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,11 +51,11 @@ class	TextureManager
 			@param path Path of the texture to load
 		*/
 		Texture	*get(const std::string &path);
-		
+
 		//Wrapper around get method
 		Texture	*operator[](const std::string &path);
 	private:
-		std::map<std::string, Texture*>	loadedTextures;
+		std::unordered_map<std::string, Texture*>	loadedTextures;
 };
 
 extern TextureManager	*TEXTURE_MANAGER;

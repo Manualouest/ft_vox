@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/14 19:19:36 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 14:13:48 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:24:21 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ class	InterfaceManager
 	public:
 		InterfaceManager()
 		{
-			
+
 		}
 		~InterfaceManager()
 		{
@@ -47,7 +47,7 @@ class	InterfaceManager
 		}
 		bool	erase(const std::string &name)
 		{
-			std::map<std::string, Interface *>::iterator	finder;
+			std::unordered_map<std::string, Interface *>::iterator	finder;
 			finder = _interfaces.find(name);
 			if (finder == _interfaces.end())
 			{
@@ -57,7 +57,7 @@ class	InterfaceManager
 			_interfaces.erase(finder);
 			return (1);
 		}
-		Interface	*load(std::string name)
+		Interface	*load(const std::string &name)
 		{
 			if (_interfaces.find(name) != _interfaces.end())
 			{
@@ -68,7 +68,7 @@ class	InterfaceManager
 		}
 		Interface	*get(const std::string &name)
 		{
-			std::map<std::string, Interface *>::iterator	finder = _interfaces.find(name);
+			std::unordered_map<std::string, Interface *>::iterator	finder = _interfaces.find(name);
 			if (finder == _interfaces.end())
 			{
 				consoleLog("ERROR Tried to access an interface thats not loaded, might cause a crash: " + name, LogSeverity::ERROR);
@@ -82,7 +82,7 @@ class	InterfaceManager
 		}
 		Interface	*getCurrent() {return (this->_current);}
 	private:
-		std::map<std::string, Interface *>	_interfaces;
+		std::unordered_map<std::string, Interface *>	_interfaces;
 		Interface							*_current = NULL;
 };
 

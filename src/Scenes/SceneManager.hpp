@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:05:13 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/18 10:53:07 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:33:47 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ class	SceneManager
 			{
 				if (_current)
 					_current->close();
-					
+
 				_current = _swap;
 				_swap = NULL;
 				_current->use();
@@ -68,7 +68,7 @@ class	SceneManager
 		}
 		bool	erase(const std::string &name)
 		{
-			std::map<std::string, Scene *>::iterator	finder;
+			std::unordered_map<std::string, Scene *>::iterator	finder;
 			finder = _scenes.find(name);
 			if (finder == _scenes.end())
 			{
@@ -89,7 +89,7 @@ class	SceneManager
 		}
 		Scene	*get(const std::string &name)
 		{
-			std::map<std::string, Scene *>::iterator	finder = _scenes.find(name);
+			std::unordered_map<std::string, Scene *>::iterator	finder = _scenes.find(name);
 			if (finder == _scenes.end())
 			{
 				consoleLog("ERROR Tried to access a scene thats not loaded, might cause a crash: " + name, LogSeverity::ERROR);
@@ -103,7 +103,7 @@ class	SceneManager
 		}
 		Scene	*getCurrent() {return (this->_current);}
 	private:
-		std::map<std::string, Scene *>		_scenes;
+		std::unordered_map<std::string, Scene *>		_scenes;
 		Scene								*_current = NULL;
 		Scene								*_swap = NULL;
 };

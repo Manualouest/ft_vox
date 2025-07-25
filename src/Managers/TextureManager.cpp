@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:28:58 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:30:49 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:25:02 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,12 @@
 TextureManager::~TextureManager()
 {
 	for (auto it = loadedTextures.begin(); it != loadedTextures.end(); it++)
-		delete it->second;	
+		delete it->second;
 }
 
 bool	TextureManager::erase(const std::string &path)
 {
-	std::map<std::string, Texture*>::iterator	finder;
+	std::unordered_map<std::string, Texture*>::iterator	finder;
 	finder = loadedTextures.find(path);
 	if (finder == loadedTextures.end())
 	{
@@ -43,7 +43,7 @@ Texture	*TextureManager::load(const std::string &path)
 
 Texture	*TextureManager::get(const std::string &path)
 {
-	std::map<std::string, Texture *>::iterator	finder;
+	std::unordered_map<std::string, Texture *>::iterator	finder;
 	finder = loadedTextures.find(path);
 	if (finder == loadedTextures.end())
 		return (load(path));

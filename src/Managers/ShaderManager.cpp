@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:23:08 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:24:47 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:25:30 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ ShaderManager::~ShaderManager()
 
 bool	ShaderManager::erase(const std::string &name)
 {
-	std::map<std::string, Shader *>::iterator	finder;
+	std::unordered_map<std::string, Shader *>::iterator	finder;
 	finder = shaders.find(name);
 	if (finder == shaders.end())
 	{
@@ -43,7 +43,7 @@ Shader	*ShaderManager::load(ShaderInfos infos)
 
 Shader	*ShaderManager::get(const std::string &name)
 {
-	std::map<std::string, Shader *>::iterator	finder = shaders.find(name);
+	std::unordered_map<std::string, Shader *>::iterator	finder = shaders.find(name);
 	if (finder == shaders.end())
 	{
 		consoleLog("ERROR Tried to access a shader thats not loaded, might cause a crash: " + name, LogSeverity::ERROR);
