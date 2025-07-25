@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 19:52:17 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 20:09:32 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,12 +86,12 @@ void	build(TextureManager *textures)
 void	build(ShaderManager *shader)
 {
 	consoleLog("Building shaders...", LogSeverity::NORMAL);
-	Shader *textShader = shader->load({"text", TEXT_VERT_SHADER, TEXT_FRAG_SHADER});
-	Shader *skyboxShader = shader->load({"skybox", SKYBOX_VERT_SHADER, SKYBOX_FRAG_SHADER});
-	Shader *postShader = shader->load({"post", "shaders/post.vs", "shaders/post.fs"});
-	shader->load({"voxel", "shaders/voxel.vs", "shaders/voxel.fs"});
-	Shader *guiShader = shader->load({"gui", "shaders/gui_shader.vs", "shaders/gui_shader.fs"});
-	Shader *titleBackground = shader->load({"title_bg", "shaders/title_bg.vs", "shaders/title_bg.fs"});
+	Shader *textShader = shader->load({"text", TEXT_VERT_SHADER_PATH, TEXT_FRAG_SHADER_PATH});
+	Shader *skyboxShader = shader->load({"skybox", SKYBOX_VERT_SHADER_PATH, SKYBOX_FRAG_SHADER_PATH});
+	Shader *postShader = shader->load({"post", POST_VERT_SHADER_PATH, POST_FRAG_SHADER_PATH});
+	shader->load({"voxel", VOXEL_VERT_SHADER_PATH, VOXEL_FRAG_SHADER_PATH});
+	Shader *guiShader = shader->load({"gui", GUI_VERT_SHADER_PATH, GUI_FRAG_SHADER_PATH});
+	Shader *titleBackground = shader->load({"title_bg", BACKGROUND_VERT_SHADER_PATH, BACKGROUND_FRAG_SHADER_PATH});
 
 	guiShader->setInt("tex0", 0);
 

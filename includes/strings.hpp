@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 12:15:48 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 20:00:36 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 20:11:24 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,18 @@
 
 # define MISSING_TEXTURE_PATH "assets/textures/missing.bmp"
 
-# define TEXT_VERT_SHADER "shaders/text_shader.vs"
-# define TEXT_FRAG_SHADER "shaders/text_shader.fs"
-# define SKYBOX_VERT_SHADER "shaders/skybox.vs"
-# define SKYBOX_FRAG_SHADER "shaders/skybox.fs"
+# define TEXT_VERT_SHADER_PATH "shaders/text_shader.vs"
+# define TEXT_FRAG_SHADER_PATH "shaders/text_shader.fs"
+# define SKYBOX_VERT_SHADER_PATH "shaders/skybox.vs"
+# define SKYBOX_FRAG_SHADER_PATH "shaders/skybox.fs"
+#define POST_VERT_SHADER_PATH "shaders/post.vs"
+#define POST_FRAG_SHADER_PATH "shaders/post.fs"
+#define VOXEL_VERT_SHADER_PATH "shaders/voxel.vs"
+#define VOXEL_FRAG_SHADER_PATH "shaders/voxel.fs"
+#define GUI_VERT_SHADER_PATH "shaders/gui_shader.vs"
+#define GUI_FRAG_SHADER_PATH "shaders/gui_shader.fs"
+#define BACKGROUND_VERT_SHADER_PATH "shaders/title_bg.vs"
+#define BACKGROUND_FRAG_SHADER_PATH "shaders/title_bg.fs"
 
 # define ASCII_FONT_TEXTURE_PATH "assets/textures/font/ascii.bmp"
 
