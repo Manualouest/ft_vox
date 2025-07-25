@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 17:43:25 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:26:07 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 20:00:05 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ class	Image : public UIElement
 		}
 		void	update(glm::vec2, bool)
 		{
-			this->currentTexture = TEXTURE_MANAGER->get("textures/title.bmp");;
+			this->currentTexture = TEXTURE_MANAGER->get(TITLE_TEXTURE_PATH);;
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
 		}

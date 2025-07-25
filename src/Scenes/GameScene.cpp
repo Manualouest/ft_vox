@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:35:51 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 20:00:45 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -303,7 +303,7 @@ void	GameScene::render(Scene *scene)
 	if (leavingScene)
 	{
 		glDisable(GL_DEPTH_TEST);
-		FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get("textures/dirt.bmp")->getID());
+		FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID());
 		scene->getInterfaceManager()->draw();
 		glEnable(GL_DEPTH_TEST);
 		return ;
@@ -313,13 +313,13 @@ void	GameScene::render(Scene *scene)
 	MAIN_FRAME_BUFFER->use();
 	SKYBOX->draw(*CAMERA);
 	Shader	*voxelShader = SHADER_MANAGER->get("voxel");
-	Texture::use("stoneTexture", TEXTURE_MANAGER->get("textures/missing.bmp")->getID(), 0, voxelShader);
-	Texture::use("stoneTexture", TEXTURE_MANAGER->get("textures/stone.bmp")->getID(), 1, voxelShader);
-	Texture::use("dirtTexture", TEXTURE_MANAGER->get("textures/dirt.bmp")->getID(), 2, voxelShader);
-	Texture::use("grassTexture", TEXTURE_MANAGER->get("textures/grass.bmp")->getID(), 3, voxelShader);
-	Texture::use("grassSideTexture", TEXTURE_MANAGER->get("textures/grass_side.bmp")->getID(), 4, voxelShader);
-	Texture::use("sandTexture", TEXTURE_MANAGER->get("textures/sand.bmp")->getID(), 5, voxelShader);
-	Texture::use("waterTexture", TEXTURE_MANAGER->get("textures/water.bmp")->getID(), 6, voxelShader);
+	Texture::use("stoneTexture", TEXTURE_MANAGER->get(MISSING_TEXTURE_PATH)->getID(), 0, voxelShader);
+	Texture::use("stoneTexture", TEXTURE_MANAGER->get(STONE_TEXTURE_PATH)->getID(), 1, voxelShader);
+	Texture::use("dirtTexture", TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID(), 2, voxelShader);
+	Texture::use("grassTexture", TEXTURE_MANAGER->get(GRASS_TOP_TEXTURE_PATH)->getID(), 3, voxelShader);
+	Texture::use("grassSideTexture", TEXTURE_MANAGER->get(GRASS_SIDE_TEXTURE_PATH)->getID(), 4, voxelShader);
+	Texture::use("sandTexture", TEXTURE_MANAGER->get(SAND_TEXTURE_PATH)->getID(), 5, voxelShader);
+	Texture::use("waterTexture", TEXTURE_MANAGER->get(WATER_TEXTURE_PATH)->getID(), 6, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 
 	FrameBuffer::reset();

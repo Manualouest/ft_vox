@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:48:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:50:35 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 20:00:52 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ Font::~Font()
 Font::Font()
 {
     this->_shader = SHADER_MANAGER->get("text");
-    this->_atlas = TEXTURE_MANAGER->get("src/assets/ascii.bmp");
+    this->_atlas = TEXTURE_MANAGER->get(ASCII_FONT_TEXTURE_PATH);
 }
 
 void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 color, bool background, bool shadow)

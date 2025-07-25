@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/20 13:17:26 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:49:16 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 20:01:39 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,9 +78,9 @@ class	TextBox : public UIElement
 				validate();
 
 			if (pressed)
-				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");
+				this->currentTexture = TEXTURE_MANAGER->get(COBBLESTONE_TEXTURE_PATH);
 			else
-				this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");
+				this->currentTexture = TEXTURE_MANAGER->get(STONE_TEXTURE_PATH);
 
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();

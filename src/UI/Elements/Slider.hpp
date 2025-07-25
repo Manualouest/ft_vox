@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 13:36:46 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:49:13 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 20:01:28 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,8 +27,8 @@ class	Slider : public UIElement
 		{
 			type = UIElementType::UITYPE_SLIDER;
 			_buttonShader = SHADER_MANAGER->get("gui");
-			backgroundTexture = TEXTURE_MANAGER->get("textures/dirt.bmp");
-			currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");
+			backgroundTexture = TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH);
+			currentTexture = TEXTURE_MANAGER->get(STONE_TEXTURE_PATH);
 			this->label = label;
 			this->offset = offset;
 			this->pos = glm::vec2(0);
@@ -91,7 +91,7 @@ class	Slider : public UIElement
 			bool	insideButton = isInside(this->pos, size, mousePos);
 			float	previousValue = value;
 
-			this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");;
+			this->currentTexture = TEXTURE_MANAGER->get(STONE_TEXTURE_PATH);;
 
 			if (mousePressed && !this->previousMousePressed)
 			{
@@ -101,7 +101,7 @@ class	Slider : public UIElement
 
 			if (mousePressed && this->dragging)
 			{
-				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");;
+				this->currentTexture = TEXTURE_MANAGER->get(COBBLESTONE_TEXTURE_PATH);;
 				this->sliderPos.x = mousePos.x - (sliderWidth / 2);
 			}
 

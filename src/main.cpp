@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/18 14:10:35 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 19:52:17 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,12 +71,12 @@ void	closeWindow(ButtonInfo)
 void	build(TextureManager *textures)
 {
 	consoleLog("Loading textures...", LogSeverity::NORMAL);
-	textures->load("textures/mbatty.bmp");
-	textures->load("textures/stone.bmp");
-	textures->load("textures/dirt.bmp");
-	textures->load("textures/grass.bmp");
-	textures->load("textures/grass_side.bmp");
-	textures->load("textures/cobblestone.bmp");
+	textures->load(MBATTY_TEXTURE_PATH);
+	textures->load(STONE_TEXTURE_PATH);
+	textures->load(DIRT_TEXTURE_PATH);
+	textures->load(GRASS_TOP_TEXTURE_PATH);
+	textures->load(GRASS_SIDE_TEXTURE_PATH);
+	textures->load(COBBLESTONE_TEXTURE_PATH);
 	consoleLog("Finished loading textures", LogSeverity::SUCCESS);
 }
 

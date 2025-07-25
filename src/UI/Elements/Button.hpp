@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/14 18:34:43 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 12:49:08 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 19:59:55 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,7 @@ class	Button : public UIElement
 		{
 			bool inside = isInside(this->pos, this->size, mousePos);
 
-			this->currentTexture = TEXTURE_MANAGER->get("textures/stone.bmp");;
+			this->currentTexture = TEXTURE_MANAGER->get(STONE_TEXTURE_PATH);;
 
 			if (this->anchor != UIAnchor::UI_NONE)
 				anchorPos();
@@ -106,7 +106,7 @@ class	Button : public UIElement
     		if (mousePressed)
     		{
     			if (inside && this->wasPressedInside)
-    				this->currentTexture = TEXTURE_MANAGER->get("textures/cobblestone.bmp");
+    				this->currentTexture = TEXTURE_MANAGER->get(COBBLESTONE_TEXTURE_PATH);
     		}
     		else
     		{

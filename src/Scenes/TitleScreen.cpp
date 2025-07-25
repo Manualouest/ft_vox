@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 13:37:34 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 19:59:40 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -324,7 +324,7 @@ void	TitleScreen::destructor(Scene *scene)
 void	TitleScreen::render(Scene *scene)
 {
     glDisable(GL_DEPTH_TEST);
-	FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get("textures/dirt.bmp")->getID());
+	FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID());
 	scene->getInterfaceManager()->draw();
     glEnable(GL_DEPTH_TEST);
 }
