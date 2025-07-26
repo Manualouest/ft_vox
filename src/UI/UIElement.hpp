@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:42:04 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/20 13:25:44 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/26 20:49:01 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,11 +77,29 @@ class	UIElement
 			Simple function to init the quad "model" used for all buttons
 			If the quad is already loaded, just returns
 		*/
-		void	initButtonQuad();
+		static void	initButtonQuad();
 		void	anchorPos();
 		void	setID(const std::string &id)
 		{
 			this->id = id;
+		}
+		static void	draw(glm::vec2 pos, glm::vec2 size, glm::vec3 color)
+		{
+			Shader	*shader = SHADER_MANAGER->get("colored_quad");
+			initButtonQuad();
+
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f));
+			model = glm::scale(model, glm::vec3(size.x, size.y, 1.0f));
+			glm::mat4 projection = glm::ortho(0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f);
+
+			shader->use();
+			shader->setMat4("model", model);
+			shader->setMat4("projection", projection);
+			shader->setVec3("color", color);
+
+			glBindVertexArray(UIquadVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
 		}
 
 		glm::vec2	offset;

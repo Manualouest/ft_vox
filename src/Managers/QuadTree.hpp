@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:20:42 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 23:48:10 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,12 +165,30 @@ class	Quadtree
 			_branches[QTBranch::TOP_LEFT] = NULL;
 			_branches[QTBranch::TOP_RIGHT] = NULL;
 		}
+		void	print()
+		{
+			std::cout << "size : " << this->_size.x << " pos: " << this->_pos.x << std::endl;
+			if (isLeaf())
+				return ;
+			if (_branches[QTBranch::BOTTOM_LEFT])
+				_branches[QTBranch::BOTTOM_LEFT]->print();
+			if (_branches[QTBranch::BOTTOM_RIGHT])
+				_branches[QTBranch::BOTTOM_RIGHT]->print();
+			if (_branches[QTBranch::TOP_LEFT])
+				_branches[QTBranch::TOP_LEFT]->print();
+			if (_branches[QTBranch::TOP_RIGHT])
+				_branches[QTBranch::TOP_RIGHT]->print();
+		}
 
 		glm::vec2	getSize() const {return (this->_size);}
 		glm::vec2	getPos() const {return (this->_pos);}
 
 		bool	isLeaf() const {return (_leaf != NULL);}
 		bool	isInBounds(const glm::ivec2 &point);
+		float	getDistance()
+		{
+			return (glm::length(glm::vec2(CAMERA->pos.x, CAMERA->pos.y) - glm::vec2(_pos + (_size / 2))));
+		}
 	private:
 		//Returns branch quadrant in wich pos is. (OUT_OF_BOUNDS can be returned but will never happen) @param pos target position of branch
 		QTBranch	_getQuadrant(const glm::ivec2 &pos) const;

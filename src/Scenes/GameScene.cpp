@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 20:00:45 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/26 21:18:17 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,8 @@ extern bool						F3;
 extern Window					*WINDOW;
 
 static bool	leavingScene = false;
+
+std::vector<double>	frameRenderTimes;
 
 void	pauseGame()
 {
@@ -199,6 +201,21 @@ static void	_buildInterface(Scene *scene)
 	debug->addElement("text_rendered_chunks", new Text(UIAnchor::UI_TOP_RIGHT, "rendered chunks", glm::vec2(0, 30),
 		[](std::string &label){label = "rendered chunks: " + std::to_string(CHUNKS->renderCount());}, true));
 
+	debug->addElement("text_render_time_label", new Text(UIAnchor::UI_BOTTOM_RIGHT, "time per frame", glm::vec2(-320, 0), NULL, true));
+
+	debug->setDrawFunc([]
+		(Interface*)
+		{
+			int	i = 1;
+			for (double time : frameRenderTimes)
+			{
+				float	barSize = time * 10000.0f;
+				float	posX = SCREEN_WIDTH - (i++ * 5.0f);
+				float	posY = SCREEN_HEIGHT - barSize;
+				UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(1, 0, 0));
+			}
+		});
+
 	Interface	*pause = interfaces->load("pause");
 
 	pause->addElement("button_resume", new Button(UIAnchor::UI_CENTER, "back to game", glm::vec2(0, -90), glm::vec2(300, 80), resumeGameButton, NULL));
@@ -300,6 +317,7 @@ static void	drawUI(Scene *scene)
 
 void	GameScene::render(Scene *scene)
 {
+	double	startTime = glfwGetTime();
 	if (leavingScene)
 	{
 		glDisable(GL_DEPTH_TEST);
@@ -331,6 +349,10 @@ void	GameScene::render(Scene *scene)
 		SHADER_MANAGER->get("post")->setBool("blur", false);
 	FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getColorexture());
 	drawUI(scene);
+
+	if (frameRenderTimes.size() >= 64)
+		frameRenderTimes.pop_back();
+	frameRenderTimes.insert(frameRenderTimes.begin(), glfwGetTime() - startTime);
 }
 
 void	GameScene::update(Scene *scene)

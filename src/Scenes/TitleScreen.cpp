@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 19:59:40 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:45:46 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -282,17 +282,11 @@ static void	_frameKeyHook(Scene *scene)
 static void	_updateShaders(ShaderManager *shaders)
 {
 	Shader	*textShader = shaders->get("text");
-	Shader	*postShader = shaders->get("post");
 
 	textShader->use();
 	textShader->setFloat("time", glfwGetTime());
 	textShader->setFloat("SCREEN_WIDTH", SCREEN_WIDTH);
 	textShader->setFloat("SCREEN_HEIGHT", SCREEN_HEIGHT);
-
-	postShader->use();
-	postShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
-	postShader->setFloat("SCREEN_WIDTH", SCREEN_WIDTH);
-	postShader->setFloat("SCREEN_HEIGHT", SCREEN_HEIGHT);
 }
 
 static void	_keyHookFunc(Scene *scene, int key, int action)
@@ -332,7 +326,6 @@ void	TitleScreen::render(Scene *scene)
 void	TitleScreen::update(Scene *scene)
 {
 	_frameKeyHook(scene);
-	scene->getCamera()->update();
 	scene->getInterfaceManager()->update();
 	_updateShaders(SHADER_MANAGER);
 }
