@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 20:09:32 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/27 15:16:11 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,8 +38,6 @@ float	RENDER_DISTANCE = 1024;
 bool		F3 = false;
 bool		PAUSED = false;
 bool		SKYBOX_ACTIVE = false;
-
-int		currentFPS = 60;
 
 uint	seed = 0;
 
@@ -92,6 +90,7 @@ void	build(ShaderManager *shader)
 	shader->load({"voxel", VOXEL_VERT_SHADER_PATH, VOXEL_FRAG_SHADER_PATH});
 	Shader *guiShader = shader->load({"gui", GUI_VERT_SHADER_PATH, GUI_FRAG_SHADER_PATH});
 	Shader *titleBackground = shader->load({"title_bg", BACKGROUND_VERT_SHADER_PATH, BACKGROUND_FRAG_SHADER_PATH});
+	shader->load({"colored_quad", "shaders/coloredquad.vs", "shaders/coloredquad.fs"});
 
 	guiShader->setInt("tex0", 0);
 
@@ -111,22 +110,6 @@ void	build(ShaderManager *shader)
 	Texture::use("screenTexture", 0, 0, titleBackground);
 
 	consoleLog("Finished building shaders", LogSeverity::SUCCESS);
-}
-
-/*
-	Returns current FPS as a string
-*/
-std::string	getFPSString()
-{
-	static int			frame = 0;
-	static std::string	fpsString = "0 fps";
-	if (frame++ >= currentFPS / 10)
-	{
-		currentFPS = (int)(1.0f / WINDOW->getDeltaTime());
-		fpsString = std::to_string(currentFPS) + " fps";
-		frame = 0;
-	}
-	return (fpsString);
 }
 
 /*

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/26 21:18:17 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/27 16:14:47 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,14 @@ extern Window					*WINDOW;
 
 static bool	leavingScene = false;
 
-std::vector<double>	frameRenderTimes;
+struct	DebugTimes
+{
+	double	fullFrameTIme;
+	double	renderTime;
+	double	updateTime;
+};
+
+std::vector<DebugTimes>	frameTimes;
 
 void	pauseGame()
 {
@@ -81,7 +88,10 @@ static void	_keyHookFunc(Scene *, int key, int action)
 			pauseGame();
 	}
 	else if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
+	{
 		F3 = !F3;
+		frameTimes.clear();
+	}
 	else
 		TERMINAL->specialInput(key, action);
 }
@@ -173,7 +183,43 @@ static void	_updateShaders(ShaderManager *shaders)
 	voxelShader->setFloat("time", glfwGetTime());
 }
 
-std::string	getFPSString();
+int		currentFPS = 60;
+
+std::string	getFPSString(bool debug)
+{
+	double	currentTime = glfwGetTime();
+	static double		lastUpdate = 0;
+	static double		lastMinMaxUpdate = 0;
+	static std::string	fpsString = "0 fps";
+
+	static int	minFPS = INT_MAX;
+	static int	maxFPS = 0;
+
+	if (currentTime - lastMinMaxUpdate >= 10)
+	{
+		minFPS = INT_MAX;
+		maxFPS = 0;
+		lastMinMaxUpdate = currentTime;
+	}
+
+	currentFPS = (int)(1.0f / WINDOW->getDeltaTime());
+	if (currentFPS > maxFPS)
+		maxFPS = currentFPS;
+	if (currentFPS < minFPS)
+		minFPS = currentFPS;
+
+	if (currentTime - lastUpdate >= 0.1)
+	{
+		fpsString = std::to_string(currentFPS) + " fps";
+		if (debug)
+		{
+			fpsString += " |" + std::to_string(minFPS) + " min";
+			fpsString += " |" + std::to_string(maxFPS) + " max";
+		}
+		lastUpdate = currentTime;
+	}
+	return (fpsString);
+}
 
 static void	_buildInterface(Scene *scene)
 {
@@ -182,7 +228,10 @@ static void	_buildInterface(Scene *scene)
 	Interface	*fps = interfaces->load("fps");
 
 	fps->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
-		[](std::string &label){label = getFPSString();}, true));
+		[](std::string &label)
+		{
+			label = getFPSString(F3);
+		}, true));
 
 	Interface	*debug = interfaces->load("debug");
 
@@ -207,12 +256,31 @@ static void	_buildInterface(Scene *scene)
 		(Interface*)
 		{
 			int	i = 1;
-			for (double time : frameRenderTimes)
+			for (DebugTimes time : frameTimes)
 			{
-				float	barSize = time * 10000.0f;
-				float	posX = SCREEN_WIDTH - (i++ * 5.0f);
+				float	barSize = time.fullFrameTIme * 10000.0f;
+				float	posX = SCREEN_WIDTH - (i * 5.0f);
 				float	posY = SCREEN_HEIGHT - barSize;
 				UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(1, 0, 0));
+				if (time.renderTime > time.updateTime)
+				{
+					barSize = time.renderTime * 10000.0f;
+					posY = SCREEN_HEIGHT - barSize;
+					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 1, 0));
+					barSize = time.updateTime * 10000.0f;
+					posY = SCREEN_HEIGHT - barSize;
+					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 0, 1));
+				}
+				else
+				{
+					barSize = time.updateTime * 10000.0f;
+					posY = SCREEN_HEIGHT - barSize;
+					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 0, 1));
+					barSize = time.renderTime * 10000.0f;
+					posY = SCREEN_HEIGHT - barSize;
+					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 1, 0));
+				}
+				i++;
 			}
 		});
 
@@ -315,9 +383,14 @@ static void	drawUI(Scene *scene)
     glEnable(GL_DEPTH_TEST);
 }
 
+double	frameStartTime = 0;
+double	renderStartTime = 0;
+double	updateTime = 0;
+
 void	GameScene::render(Scene *scene)
 {
-	double	startTime = glfwGetTime();
+	renderStartTime = glfwGetTime();
+
 	if (leavingScene)
 	{
 		glDisable(GL_DEPTH_TEST);
@@ -350,18 +423,25 @@ void	GameScene::render(Scene *scene)
 	FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getColorexture());
 	drawUI(scene);
 
-	if (frameRenderTimes.size() >= 64)
-		frameRenderTimes.pop_back();
-	frameRenderTimes.insert(frameRenderTimes.begin(), glfwGetTime() - startTime);
+	if (frameTimes.size() >= 64)
+		frameTimes.pop_back();
+
+	double	currentTime = glfwGetTime();
+	if (F3)
+		frameTimes.insert(frameTimes.begin(), {currentTime - frameStartTime, currentTime - renderStartTime, updateTime});
 }
 
 void	GameScene::update(Scene *scene)
 {
+	frameStartTime = glfwGetTime();
+	double updateStartTime = glfwGetTime();
+
 	_frameKeyHook(scene);
 	scene->getCamera()->update();
 	scene->getInterfaceManager()->update();
 	_updateShaders(SHADER_MANAGER);
 	CHUNKS->getQuadTree()->pruneDeadLeaves(CHUNKS->getQuadTree());
+	updateTime = glfwGetTime() - updateStartTime;
 }
 
 void	GameScene::close(Scene *scene)
