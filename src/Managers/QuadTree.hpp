@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 23:48:10 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/28 16:58:28 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,9 @@
 #include "ChunkGeneratorManager.hpp"
 
 extern ChunkGeneratorManager	*CHUNK_GENERATOR;
+
+extern uint	_QT_SizeBranches;
+extern uint	_QT_SizeLeaves;
 
 struct Plane
 {
@@ -94,6 +97,17 @@ enum QTBranch
 	BOTTOM_LEFT,
 	BOTTOM_RIGHT,
 	OUT_OF_BOUNDS
+};
+
+struct QTSize
+{
+	QTSize(uint branchessize, uint leavessize)
+	{
+		this->branches = branchessize;
+		this->leaves = leavessize;
+	}
+	uint	branches;
+	uint	leaves;
 };
 
 /*
@@ -189,7 +203,31 @@ class	Quadtree
 		{
 			return (glm::length(glm::vec2(CAMERA->pos.x, CAMERA->pos.y) - glm::vec2(_pos + (_size / 2))));
 		}
+		const QTSize	size()
+		{
+			_QT_SizeBranches = 0;
+			_QT_SizeLeaves = 0;
+			this->_getSizeRec();
+			return (QTSize(_QT_SizeBranches, _QT_SizeLeaves));
+		}
 	private:
+		void	_getSizeRec()
+		{
+			if (isLeaf())
+			{
+				_QT_SizeLeaves++;
+				return ;
+			}
+			_QT_SizeBranches++;
+			if (_branches[QTBranch::BOTTOM_LEFT])
+				_branches[QTBranch::BOTTOM_LEFT]->_getSizeRec();
+			if (_branches[QTBranch::BOTTOM_RIGHT])
+				_branches[QTBranch::BOTTOM_RIGHT]->_getSizeRec();
+			if (_branches[QTBranch::TOP_LEFT])
+				_branches[QTBranch::TOP_LEFT]->_getSizeRec();
+			if (_branches[QTBranch::TOP_RIGHT])
+				_branches[QTBranch::TOP_RIGHT]->_getSizeRec();
+		}
 		//Returns branch quadrant in wich pos is. (OUT_OF_BOUNDS can be returned but will never happen) @param pos target position of branch
 		QTBranch	_getQuadrant(const glm::ivec2 &pos) const;
 

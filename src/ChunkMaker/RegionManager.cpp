@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/16 10:10:28 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/28 16:26:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,12 +72,10 @@ extern ShaderManager *SHADER_MANAGER;
 
 void	RegionManager::Render(Shader &shader)
 {
-	UpdateChunks();
-	sortChunks();
+    glEnable(GL_DEPTH_TEST);
+	CAMERA->setViewMatrix(shader);
 	for (auto *chunk : _renderChunks)
-	{
 		chunk->draw(shader);
-	}
 }
 
 void	RegionManager::sortChunks()

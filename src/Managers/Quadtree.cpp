@@ -6,11 +6,14 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:19:53 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/28 16:55:03 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "QuadTree.hpp"
+
+uint	_QT_SizeBranches;
+uint	_QT_SizeLeaves;
 
 Quadtree::Quadtree(const glm::ivec2 &pos, QTBranch quadrant, const glm::ivec2 &size)
 {
@@ -100,7 +103,7 @@ Quadtree	*Quadtree::getBranch(const glm::ivec2 &targetPos, int depth)
 		return (this);
 
 	QTBranch	quadrant = _getQuadrant(targetPos);
-		
+
 	if (quadrant != QTBranch::OUT_OF_BOUNDS && _branches[quadrant] != NULL)
 	{
 		if (!_branches[quadrant]->isInBounds(targetPos))
@@ -115,7 +118,7 @@ Chunk	*Quadtree::getLeaf(const glm::ivec2 &targetPos)
 {
 	if (isLeaf())
 		return (_leaf);
-	
+
 	QTBranch	quadrant = _getQuadrant(targetPos);
 
 	if (quadrant != QTBranch::OUT_OF_BOUNDS && _branches[quadrant] != NULL)
@@ -170,11 +173,10 @@ void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 	if (branch != NULL)
 	{
 		if (branch->isLeaf())
-			if (branch->_leaf->isUploaded() && branch->_leaf->isGenerated()
-				&& !branch->_leaf->isGenerating()
+			if (!branch->_leaf->isGenerating()
 				&& !branch->_leaf->rendered)
 			{
-				if (branch->_leaf->getDistance() > RENDER_DISTANCE)
+				if (branch->_leaf->getDistance() > RENDER_DISTANCE) // !FIX HERE, WRONG RENDER DISTANCE BEING USED OR SMTH (TOO MANY CHUNKS ARE STAYING)
 				{
 					delete branch;
 					_branches[quadrant] = NULL;

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/16 11:00:48 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/28 16:26:34 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ extern uint	seed;
 glm::vec2 randomGradient(int ix, int iy)
 {
     const unsigned w = 8 * sizeof(unsigned);
-    const unsigned s = w / 2; 
+    const unsigned s = w / 2;
     unsigned a = ix, b = iy;
     a *= 3284157443 + (seed + 1);
 
@@ -52,7 +52,7 @@ float interpolate(float a0, float a1, float w)
 
 float perlin(float x, float y)
 {
-    int x0 = (int)x; 
+    int x0 = (int)x;
     int y0 = (int)y;
     int x1 = x0 + 1;
     int y1 = y0 + 1;
@@ -69,7 +69,7 @@ float perlin(float x, float y)
     float ix1 = interpolate(n0, n1, sx);
 
     float value = interpolate(ix0, ix1, sy);
-    
+
     return (value);
 }
 
@@ -79,16 +79,16 @@ float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, floa
 	for (int i = 0; i < noisiness; i++)
 	{
 		res += perlin(pos.x * freq, pos.y * freq) * amp;
-	
+
 		freq *= 2;
-		amp /= 2;	
+		amp /= 2;
 	}
 
 	if (res > 1.0f)
 		res = 1.0f;
 	else if (res < -1.0f)
 		res = -1.0f;
-		
+
 	res = ((res + 1.0f) * 0.5f) * heightScale;
 
 	return (res);
@@ -215,15 +215,16 @@ void	Chunk::clear()
 
 void	Chunk::makeBuffers()
 {
-	glGenVertexArrays(1, &_VAO);
-    glGenBuffers(1, &_VBO);
-	glGenBuffers(1, &_EBO);
+	if (_VAO <= 0)
+		glGenVertexArrays(1, &_VAO);
+	if (_VBO <= 0)
+    	glGenBuffers(1, &_VBO);
+	if (_EBO <= 0)
+		glGenBuffers(1, &_EBO);
+
     glBindVertexArray(_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(float), _vertices.data(), GL_STATIC_DRAW);
-    
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(GLuint), (GLuint*)_indices.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glEnableVertexAttribArray(0);
@@ -234,6 +235,9 @@ void	Chunk::makeBuffers()
 	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, LINELEN * sizeof(float), (void*)(6 * sizeof(float)));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(GLuint), (GLuint*)_indices.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -325,7 +329,7 @@ void	Chunk::genMesh()
 					addVertices(block.northFace, _vertices, _indices, {1 + (31 - z), 1 + y, 1 + (31 - x)}, {0 + (31 - z), 1 + y, 1 + (31 - x)}, {1 + (31 - z), 0 + y, 1 + (31 - x)}, {0 + (31 - z), 0 + y, 1 + (31 - x)}, {0, 0, 1});
 				if ((southFaces >> x) & 1)
 					addVertices(block.southFace, _vertices, _indices, {0 + (31 - z), 1 + y, 0 + (31 - x)}, {1 + (31 - z), 1 + y, 0 + (31 - x)}, {0 + (31 - z), 0 + y, 0 + (31 - x)}, {1 + (31 - z), 0 + y, 0 + (31 - x)}, {0, 0, -1});
-				if ((chunkSlice >> x) & 1 && 
+				if ((chunkSlice >> x) & 1 &&
 					((groundData.find(((y + 1) * 32 + z)) != groundData.end() && !((groundData.find(((y + 1) * 32 + z))->second >> x) & 1))
 						|| groundData.find(((y + 1) * 32 + z)) == groundData.end()))
 					addVertices(block.topFace, _vertices, _indices, {0 + x, 1 + y, 1 + z}, {1 + x, 1 + y, 1 + z}, {0 + x, 1 + y, 0 + z}, {1 + x, 1 + y, 0 + z}, {0, 1, 0});
@@ -377,7 +381,7 @@ void	Chunk::gen()
 		for (int ii = 0; ii < 32; ++ii)
 		{
 			std::unordered_map<int, char32_t>::iterator chunkSlice = groundData.find((i * 32 + ii));
-			
+
 			if (chunkSlice != groundData.end())
 			{
 				std::unordered_map<int, char32_t>::iterator underSlice = groundData.find(((i - 1) * 32 + ii));
@@ -422,17 +426,17 @@ void	Chunk::draw(Shader &shader)
 	if (_generating)
 		return ;
 	if (!_uploaded && _generated)
+	{
 		upload();
+		return ;
+	}
 
-    glEnable(GL_DEPTH_TEST);
 	shader.use();
 	shader.setMat4("model", model);
-	CAMERA->setViewMatrix(shader);
 
 	glBindVertexArray(_VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 	glDrawElements(GL_TRIANGLES, _indicesSize, GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
-    glDisable(GL_DEPTH_TEST);
 }

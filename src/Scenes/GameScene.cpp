@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/27 16:14:47 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/28 17:01:36 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,25 +230,41 @@ static void	_buildInterface(Scene *scene)
 	fps->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
 		[](std::string &label)
 		{
-			label = getFPSString(F3);
+			label = getFPSString(F3 && !PAUSED);
 		}, true));
 
 	Interface	*debug = interfaces->load("debug");
 
-	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 15),
+	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 16),
 		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);}, true));
 
-	debug->addElement("text_chunk_pos", new Text(UIAnchor::UI_TOP_LEFT, "chunk pos", glm::vec2(0, 30),
+	debug->addElement("text_chunk_pos", new Text(UIAnchor::UI_TOP_LEFT, "chunk pos", glm::vec2(0, 32),
 		[](std::string &label){label = "chunk xz: " + std::to_string((int)CAMERA->pos.x / 32) + "," + std::to_string((int)CAMERA->pos.z / 32);}, true));
 
 	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
 
-	debug->addElement("text_used_threads", new Text(UIAnchor::UI_TOP_RIGHT, "used threads", glm::vec2(0, 15),
+	debug->addElement("text_used_threads", new Text(UIAnchor::UI_TOP_RIGHT, "used threads", glm::vec2(0, 16),
 		[](std::string &label){label = "used threads: " + std::to_string(CHUNK_GENERATOR->workingThreads()) + "/" + std::to_string(GENERATION_THREAD_COUNT);}, true));
 
-	debug->addElement("text_rendered_chunks", new Text(UIAnchor::UI_TOP_RIGHT, "rendered chunks", glm::vec2(0, 30),
+	debug->addElement("text_rendered_chunks", new Text(UIAnchor::UI_TOP_RIGHT, "rendered chunks", glm::vec2(0, 32),
 		[](std::string &label){label = "rendered chunks: " + std::to_string(CHUNKS->renderCount());}, true));
+
+	debug->addElement("text_loaded_chunks", new Text(UIAnchor::UI_TOP_RIGHT, "loaded chunks", glm::vec2(0, 48),
+		[]
+		(std::string &label)
+		{
+			static uint	size = 0;
+			static double	lastUpdate = 0;
+
+			if (glfwGetTime() - lastUpdate >= 1)
+			{
+				size = CHUNKS->getQuadTree()->size().leaves;
+				lastUpdate = glfwGetTime();
+			}
+			label = "loaded chunks: " + std::to_string(size);
+		}, true));
+
 
 	debug->addElement("text_render_time_label", new Text(UIAnchor::UI_BOTTOM_RIGHT, "time per frame", glm::vec2(-320, 0), NULL, true));
 
@@ -423,7 +439,7 @@ void	GameScene::render(Scene *scene)
 	FrameBuffer::drawFrame(SHADER_MANAGER->get("post"), MAIN_FRAME_BUFFER->getColorexture());
 	drawUI(scene);
 
-	if (frameTimes.size() >= 64)
+	if (F3 && frameTimes.size() >= 64)
 		frameTimes.pop_back();
 
 	double	currentTime = glfwGetTime();
@@ -440,6 +456,7 @@ void	GameScene::update(Scene *scene)
 	scene->getCamera()->update();
 	scene->getInterfaceManager()->update();
 	_updateShaders(SHADER_MANAGER);
+	CHUNKS->UpdateChunks();
 	CHUNKS->getQuadTree()->pruneDeadLeaves(CHUNKS->getQuadTree());
 	updateTime = glfwGetTime() - updateStartTime;
 }
