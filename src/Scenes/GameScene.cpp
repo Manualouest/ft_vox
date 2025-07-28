@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/28 17:01:36 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 00:01:22 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,10 +155,14 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 	CAMERA->yaw += xoffset;
 	CAMERA->pitch += yoffset;
 
-	if(CAMERA->pitch > 89.0f)
+	if (CAMERA->pitch > 89.0f)
 		CAMERA->pitch = 89.0f;
-	if(CAMERA->pitch < -89.0f)
+	if (CAMERA->pitch < -89.0f)
 		CAMERA->pitch = -89.0f;
+	if (CAMERA->yaw > 360)
+		CAMERA->yaw = 0;
+	if (CAMERA->yaw < 0)
+		CAMERA->yaw = 360;
 }
 
 static void	_updateShaders(ShaderManager *shaders)
@@ -235,11 +239,28 @@ static void	_buildInterface(Scene *scene)
 
 	Interface	*debug = interfaces->load("debug");
 
-	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "camera pos", glm::vec2(0, 16),
+	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "pos", glm::vec2(0, 16),
 		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);}, true));
 
-	debug->addElement("text_chunk_pos", new Text(UIAnchor::UI_TOP_LEFT, "chunk pos", glm::vec2(0, 32),
+	debug->addElement("text_cam_pitch_yaw", new Text(UIAnchor::UI_TOP_LEFT, "pitch/yaw", glm::vec2(0, 32),
+		[](std::string &label){label = "pitch/yaw: " + std::to_string(CAMERA->pitch) + "," + std::to_string(CAMERA->yaw);}, true));
+
+	debug->addElement("text_chunk_pos", new Text(UIAnchor::UI_TOP_LEFT, "chunk pos", glm::vec2(0, 48),
 		[](std::string &label){label = "chunk xz: " + std::to_string((int)CAMERA->pos.x / 32) + "," + std::to_string((int)CAMERA->pos.z / 32);}, true));
+
+	debug->addElement("text_camera_speed", new Text(UIAnchor::UI_TOP_LEFT, "speed", glm::vec2(0, 64),
+		[](std::string &label)
+		{
+			static double	lastUpdate = 0;
+			static float	speed = 0;
+
+			if (glfwGetTime() - lastUpdate >= 0.1) //JUST FOR READABILITY NOT PERFORMANCE
+			{
+				speed = CAMERA->getSpeed();
+				lastUpdate = glfwGetTime();
+			}
+			label = "speed: " + std::to_string(speed);
+		}, true));
 
 	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
@@ -264,7 +285,6 @@ static void	_buildInterface(Scene *scene)
 			}
 			label = "loaded chunks: " + std::to_string(size);
 		}, true));
-
 
 	debug->addElement("text_render_time_label", new Text(UIAnchor::UI_BOTTOM_RIGHT, "time per frame", glm::vec2(-320, 0), NULL, true));
 

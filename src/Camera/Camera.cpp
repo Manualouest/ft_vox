@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Camera.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 20:54:38 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/13 21:24:32 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/28 23:25:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,9 @@ void	Camera::update()
 	front = glm::normalize(direction);
 	right = glm::normalize(glm::cross(front, worldUp));
 	up = glm::normalize(glm::cross(right, front));
+
+	speed = glm::length(pos - lastPos) / WINDOW->getDeltaTime();
+	lastPos = pos;
 }
 
 void	Camera::setViewMatrix(Shader &shader)
