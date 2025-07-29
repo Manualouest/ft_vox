@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 15:22:58 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 11:07:07 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 18:21:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,9 +60,9 @@ Skybox::~Skybox()
 {
     if (DEBUG)
         consoleLog("Destroying skybox", NORMAL);
-	glDeleteTextures(1, &ID);
-	glDeleteBuffers(1, &VBO);
-	glDeleteVertexArrays(1, &VAO);
+    glDeleteTextures(1, &ID);
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
 }
 
 Skybox::Skybox(const std::vector<std::string> &faces)

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/14 18:34:43 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 19:59:55 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 14:10:42 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ struct	ButtonInfo
 	void				*data;
 	const std::string	id;
 	const std::string	label;
+	class Button				*button;
 };
 
 /*
@@ -111,7 +112,7 @@ class	Button : public UIElement
     		else
     		{
     			if (this->wasPressedInside && inside && onClick)
-    				this->onClick({clickData, id, label});
+    				this->onClick({clickData, id, label, this});
     			this->wasPressedInside = false;
     		}
 

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:35:00 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/22 13:17:16 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 18:22:10 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,8 +92,6 @@ void	Terminal::draw()
 
 void	Terminal::_drawLine(std::string line, float offset)
 {
-	glm::vec2	size;
-
 	glm::vec2	pos;
 	pos.x = 0;
 	pos.y = SCREEN_HEIGHT - (offset * 16);

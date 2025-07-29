@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 00:01:22 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 18:20:00 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include "Terminal.hpp"
 #include "ChunkGeneratorManager.hpp"
 #include "WorldManager.hpp"
+#include "TextureManager.hpp"
 
 /*
 Variables used by this scene only
@@ -42,6 +43,8 @@ extern bool						F3;
 extern Window					*WINDOW;
 
 static bool	leavingScene = false;
+
+static bool crosshair = false;
 
 struct	DebugTimes
 {
@@ -170,6 +173,7 @@ static void	_updateShaders(ShaderManager *shaders)
 	Shader	*textShader = shaders->get("text");
 	Shader	*postShader = shaders->get("post");
 	Shader	*voxelShader = shaders->get("voxel");
+	Shader	*skyboxShader = shaders->get("skybox");
 
 	textShader->use();
 	textShader->setFloat("time", glfwGetTime());
@@ -185,6 +189,9 @@ static void	_updateShaders(ShaderManager *shaders)
 	voxelShader->setVec3("viewPos", CAMERA->pos);
 	voxelShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
 	voxelShader->setFloat("time", glfwGetTime());
+
+	skyboxShader->use();
+	skyboxShader->setFloat("time", glfwGetTime());
 }
 
 int		currentFPS = 60;
@@ -240,13 +247,13 @@ static void	_buildInterface(Scene *scene)
 	Interface	*debug = interfaces->load("debug");
 
 	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "pos", glm::vec2(0, 16),
-		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + "," + std::to_string((int)CAMERA->pos.y) + "," + std::to_string((int)CAMERA->pos.z);}, true));
+		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + " | " + std::to_string((int)CAMERA->pos.y) + " | " + std::to_string((int)CAMERA->pos.z);}, true));
 
 	debug->addElement("text_cam_pitch_yaw", new Text(UIAnchor::UI_TOP_LEFT, "pitch/yaw", glm::vec2(0, 32),
-		[](std::string &label){label = "pitch/yaw: " + std::to_string(CAMERA->pitch) + "," + std::to_string(CAMERA->yaw);}, true));
+		[](std::string &label){label = "pitch/yaw: " + std::to_string(CAMERA->pitch) + " | " + std::to_string(CAMERA->yaw);}, true));
 
 	debug->addElement("text_chunk_pos", new Text(UIAnchor::UI_TOP_LEFT, "chunk pos", glm::vec2(0, 48),
-		[](std::string &label){label = "chunk xz: " + std::to_string((int)CAMERA->pos.x / 32) + "," + std::to_string((int)CAMERA->pos.z / 32);}, true));
+		[](std::string &label){label = "chunk xz: " + std::to_string((int)CAMERA->pos.x / 32) + " | " + std::to_string((int)CAMERA->pos.z / 32);}, true));
 
 	debug->addElement("text_camera_speed", new Text(UIAnchor::UI_TOP_LEFT, "speed", glm::vec2(0, 64),
 		[](std::string &label)
@@ -291,30 +298,37 @@ static void	_buildInterface(Scene *scene)
 	debug->setDrawFunc([]
 		(Interface*)
 		{
+			Shader	*shader = SHADER_MANAGER->get("colored_quad");
 			int	i = 1;
+			float	graphScale = 10000.0f;
 			for (DebugTimes time : frameTimes)
 			{
-				float	barSize = time.fullFrameTIme * 10000.0f;
+				float	barSize = time.fullFrameTIme * graphScale;
 				float	posX = SCREEN_WIDTH - (i * 5.0f);
 				float	posY = SCREEN_HEIGHT - barSize;
-				UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(1, 0, 0));
+				shader->setVec3("color", glm::vec3(1, 0, 0));
+				UIElement::draw(shader, glm::vec2(posX, posY), glm::vec2(5, barSize));
 				if (time.renderTime > time.updateTime)
 				{
-					barSize = time.renderTime * 10000.0f;
+					barSize = time.renderTime * graphScale;
 					posY = SCREEN_HEIGHT - barSize;
-					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 1, 0));
-					barSize = time.updateTime * 10000.0f;
+					shader->setVec3("color", glm::vec3(0, 1, 0));
+					UIElement::draw(shader, glm::vec2(posX, posY), glm::vec2(5, barSize));
+					barSize = time.updateTime * graphScale;
 					posY = SCREEN_HEIGHT - barSize;
-					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 0, 1));
+					shader->setVec3("color", glm::vec3(0, 0, 1));
+					UIElement::draw(shader, glm::vec2(posX, posY), glm::vec2(5, barSize));
 				}
 				else
 				{
-					barSize = time.updateTime * 10000.0f;
+					barSize = time.updateTime * graphScale;
 					posY = SCREEN_HEIGHT - barSize;
-					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 0, 1));
-					barSize = time.renderTime * 10000.0f;
+					shader->setVec3("color", glm::vec3(0, 0, 1));
+					UIElement::draw(shader, glm::vec2(posX, posY), glm::vec2(5, barSize));
+					barSize = time.renderTime * graphScale;
 					posY = SCREEN_HEIGHT - barSize;
-					UIElement::draw(glm::vec2(posX, posY), glm::vec2(5, barSize), glm::vec3(0, 1, 0));
+					shader->setVec3("color", glm::vec3(0, 1, 0));
+					UIElement::draw(shader, glm::vec2(posX, posY), glm::vec2(5, barSize));
 				}
 				i++;
 			}
@@ -359,6 +373,21 @@ static void	_buildInterface(Scene *scene)
 		{
 			FOV = glm::clamp((int)(val * 120), 1, 120);
 		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 80.f / 120.f));
+
+	options->addElement("button_crosshair", new Button(UIAnchor::UI_CENTER, "crosshair: off", glm::vec2(-310, 0), glm::vec2(300, 80), []
+	(ButtonInfo info)
+	{
+		if (!crosshair)
+		{
+			crosshair = true;
+			info.button->label = "crosshair: on";
+		}
+		else
+		{
+			crosshair = false;
+			info.button->label = "crosshair: off";
+		}
+	}, NULL));
 
 	Interface	*leaving = interfaces->load("leaving");
 
@@ -415,6 +444,15 @@ static void	drawUI(Scene *scene)
 
 	scene->getInterfaceManager()->draw();
 	TERMINAL->draw();
+
+	if (crosshair && !PAUSED)
+	{
+		float	crossHairSize = 20;
+		Shader	*shader = SHADER_MANAGER->get("crosshair");
+		Texture::use("screenTexture", MAIN_FRAME_BUFFER->getColorexture(), 0, shader);
+		Texture::use("crossHairTexture", TEXTURE_MANAGER->get("assets/textures/ui/crosshair.bmp")->getID(), 1, shader);
+		UIElement::draw(shader, glm::vec2(SCREEN_WIDTH / 2 - crossHairSize / 2, SCREEN_HEIGHT / 2 - crossHairSize / 2), glm::vec2(crossHairSize));
+	}
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -481,9 +519,8 @@ void	GameScene::update(Scene *scene)
 	updateTime = glfwGetTime() - updateStartTime;
 }
 
-void	GameScene::close(Scene *scene)
+void	GameScene::close(Scene *)
 {
-	(void)scene;
 	WORLD_MANAGER->getCurrent()->save();
 	WORLD_MANAGER->reset();
 	if (CHUNK_GENERATOR)
@@ -500,13 +537,12 @@ void	GameScene::close(Scene *scene)
 	consoleLog("Closed a world", LogSeverity::NORMAL);
 }
 
-void	GameScene::open(Scene *scene)
+void	GameScene::open(Scene *)
 {
 	CAMERA->pos = WORLD_MANAGER->getCurrent()->getPlayerPos();
 	CAMERA->pitch = WORLD_MANAGER->getCurrent()->getFloatInfo("pitch");
 	CAMERA->yaw = WORLD_MANAGER->getCurrent()->getFloatInfo("yaw");
 
-	(void)scene;
 	if (!CHUNK_GENERATOR)
 		CHUNK_GENERATOR = new ChunkGeneratorManager();
 	if (!CHUNKS)

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:42:04 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/26 20:49:01 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 14:04:39 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,9 +83,11 @@ class	UIElement
 		{
 			this->id = id;
 		}
-		static void	draw(glm::vec2 pos, glm::vec2 size, glm::vec3 color)
+		/*
+			Simply draws a quad using any shader. Its up the the caller to define the uniforms used by the shader outside of this function
+		*/
+		static void	draw(Shader *shader, glm::vec2 pos, glm::vec2 size)
 		{
-			Shader	*shader = SHADER_MANAGER->get("colored_quad");
 			initButtonQuad();
 
 			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f));
@@ -95,7 +97,6 @@ class	UIElement
 			shader->use();
 			shader->setMat4("model", model);
 			shader->setMat4("projection", projection);
-			shader->setVec3("color", color);
 
 			glBindVertexArray(UIquadVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 6);

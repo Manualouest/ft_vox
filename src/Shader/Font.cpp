@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/21 14:48:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 20:00:52 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 18:21:09 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ Font::Font()
 
 void	Font::putString(std::string str, glm::vec2 pos, glm::vec2 scale, glm::vec3 color, bool background, bool shadow)
 {
-    putString(str, pos, glm::vec2(1), color, glm::vec3(1), 0, background, shadow);
+    putString(str, pos, scale, color, glm::vec3(1), 0, background, shadow);
 }
 
 #define FONT_SIZE 16.0
