@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/28 16:26:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 23:56:00 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,6 @@ void	RegionManager::UpdateChunks()
 	for (Chunk *chunk : _renderChunks)
 		chunk->rendered = false;
 	_renderChunks.clear();
-	_renderChunks.shrink_to_fit();
 
 	Frustum	camFrustum = createFrustumFromCamera(SCREEN_WIDTH / SCREEN_HEIGHT, glm::radians(FOV), 0.0001f, RenderDist * 32);
 	VolumeAABB	boundingBox(glm::vec3(16.0f, 0.0f, 16.0f), glm::vec3(16.0f, 256.0f, 16.0f));

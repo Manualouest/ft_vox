@@ -6,13 +6,13 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:09:04 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/29 23:56:06 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ChunkGeneratorManager.hpp"
 
-void	ChunkGeneratorManager::deposit(std::vector<Chunk *> chunks)
+void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 {
 	if (!_depositMutex.try_lock())
 		return ;
@@ -36,7 +36,7 @@ void	ChunkGeneratorManager::_send()
 {
 	if (workingThreads() >= GENERATION_THREAD_COUNT)
 		return ;
-		
+
 	LOCK(_depositMutex);
 
 	for (ChunkGenerator *generator : _generators)
@@ -99,7 +99,7 @@ void	ChunkGeneratorManager::stop()
 {
 	if (!_running)
 		return ;
-		
+
 	for (ChunkGenerator *generator : _generators)
 		generator->stop();
 	_running = false;
