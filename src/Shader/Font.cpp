@@ -48,14 +48,14 @@ Font::Font()
 
 Texture &Font::operator[](char c)
 {
-	if (c < 0 || c > 127 || font[c].getID() <= 0)
+	if (c < 0 || c >= 127 || font[c].getID() <= 0)
 		return (font[127]);
 	return (font[c]);
 }
 
 Texture	&Font::getChar(char c)
 {
-	if (c < 0 || c > 127 || font[c].getID() <= 0)
+	if (c < 0 || c >= 127 || font[c].getID() <= 0)
 		return (font[127]);
 	return (font[c]);
 }

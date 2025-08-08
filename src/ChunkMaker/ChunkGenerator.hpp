@@ -50,7 +50,7 @@ class	ChunkGenerator
 			while (_running)
 			{
 				_process();
-				usleep(200);
+				usleep(100);
 				_working = false;
 			}
 		}
@@ -80,7 +80,7 @@ class	ChunkGenerator
 		std::thread				_thread;
 };
 
-#define	GENERATION_THREAD_COUNT 1
+#define	GENERATION_THREAD_COUNT 12
 #define CHUNKS_PER_THREAD 2
 
 class	ChunkGeneratorManager
@@ -89,7 +89,7 @@ class	ChunkGeneratorManager
 		ChunkGeneratorManager();
 		~ChunkGeneratorManager();
 		void	start();
-		void	stop();
+		void	stop();	
 		void	deposit(std::vector<Chunk *> chunks)
 		{
 			LOCK(_depositMutex);
@@ -101,6 +101,21 @@ class	ChunkGeneratorManager
 				{
 					chunk->setGenerating(true);
 					_deposit.push_back(chunk);
+				}
+
+			_deposit.shrink_to_fit();
+		}
+		void	depositVIP(std::vector<Chunk *> chunks)
+		{
+			LOCK(_depositMutex);
+
+			_deposit.reserve(chunks.size());
+
+			for (Chunk * chunk : chunks)
+				if (!chunk->isGenerated() && !chunk->isGenerating())
+				{
+					chunk->setGenerating(true);
+					_deposit.insert(_deposit.begin(), chunk);
 				}
 
 			_deposit.shrink_to_fit();
@@ -134,7 +149,7 @@ class	ChunkGeneratorManager
 			while (_running)
 			{
 				_send();
-				usleep(200);
+				usleep(100);
 			}
 		}
 		std::vector<Chunk *>			_deposit;

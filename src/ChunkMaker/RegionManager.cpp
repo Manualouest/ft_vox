@@ -50,14 +50,14 @@ void	RegionManager::UpdateChunks()
 		chunk->rendered = false;
 	_renderChunks.clear();
 
-	Frustum	camFrustum = createFrustumFromCamera(SCREEN_WIDTH / SCREEN_HEIGHT, glm::radians(FOV), 0.0001f, RenderDist);
+	Frustum	camFrustum = createFrustumFromCamera(SCREEN_WIDTH / SCREEN_HEIGHT, glm::radians(FOV), 0.0001f, RenderDist * 32);
 	VolumeAABB	boundingBox(glm::vec3(16.0f, 0.0f, 16.0f), glm::vec3(16.0f, 256.0f, 16.0f));
 
 
 	_QT->getVisibleChunks(_renderChunks, camFrustum, boundingBox);
 
 
-	sortChunks();
+	// sortChunks();	
 	CHUNK_GENERATOR->deposit(_renderChunks);
 }
 
@@ -75,17 +75,30 @@ void	RegionManager::Render(Shader &shader)
 	UpdateChunks();
 	sortChunks();
 	MAIN_FRAME_BUFFER->use();
+
+
+    glEnable(GL_DEPTH_TEST);
+	shader.use();
+	CAMERA->setViewMatrix(shader);
+
+
 	for (auto *chunk : _renderChunks)
 	{
 		chunk->draw(shader);
 	}
+
+    glDisable(GL_DEPTH_TEST);
+
 }
 
 void	RegionManager::sortChunks()
 {
+	for (std::vector<Chunk *>::iterator it = _renderChunks.begin(); it != _renderChunks.end(); ++it)
+		(*it)->initDist();
+
 	std::sort(_renderChunks.begin(), _renderChunks.end(),
 		[](const Chunk *cp1, const Chunk *cp2)
 		{
-			return (cp1->getDistance() > cp2->getDistance());
+			return (cp1->getDist() > cp2->getDist());
 		});
 }

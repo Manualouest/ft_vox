@@ -225,7 +225,7 @@ void	update(ShaderManager *shaders)
 */
 void	frame_key_hook(Window &window)
 {
-	float cameraSpeed = 15 * window.getDeltaTime();
+	float cameraSpeed = 15.0f * window.getDeltaTime();
 	float	speedBoost = 1.0f;
 
 	if (glfwGetKey(window.getWindowData(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
@@ -272,18 +272,56 @@ void	move_mouse_hook(GLFWwindow* window, double xpos, double ypos)
 		CAMERA->pitch = -89.0f;
 }
 
-bool	breaking = false;
-
 void	mouseBtnCallback(GLFWwindow* window, int button, int action, int mods)
 {
 	(void)window;
 	(void)mods;
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		breaking = true;
+		glm::vec3	rayDir = CAMERA->front;
+		glm::vec3	rayPos = CAMERA->pos;
+		glm::ivec3	mapPos = CAMERA->pos;
+		glm::vec3	deltaDist = glm::abs(glm::vec3(glm::length(rayDir)) / rayDir);
+		glm::ivec3	rayStep = glm::ivec3(glm::sign(rayDir));
+		glm::vec3	sideDist = (sign(rayDir) * (glm::vec3(mapPos) - rayPos) + (glm::sign(rayDir) * 0.5f) + 0.5f) * deltaDist;
+
+		// std::cout << "ray started at: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
+
+		int	MAX_RAY_STEPS = 8;
+		for (int i = 0; i < MAX_RAY_STEPS; ++i)
+		{
+			if (sideDist.x < sideDist.y) {
+				if (sideDist.x < sideDist.z)
+				{
+					sideDist.x += deltaDist.x;
+					mapPos.x += rayStep.x;
+				}
+				else
+				{
+					sideDist.z += deltaDist.z;
+					mapPos.z += rayStep.z;
+				}
+			}
+			else
+			{
+				if (sideDist.y < sideDist.z)
+				{
+					sideDist.y += deltaDist.y;
+					mapPos.y += rayStep.y;
+				}
+				else
+				{
+					sideDist.z += deltaDist.z;
+					mapPos.z += rayStep.z;
+				}
+			}
+			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+			if (chunk && chunk->removeBlock(mapPos))
+				break;
+			// std::cout << "	ray passed by: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
+		}
+		// std::cout << "		ray finished at: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
 	}
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-		breaking = false;
 }
 
 /*
@@ -360,53 +398,6 @@ int	getBlock(const glm::vec3 &pos)
 	return (0);
 }
 
-void	breakBlock()
-{
-	glm::vec3	rayDir = CAMERA->front;
-	glm::vec3	rayPos = CAMERA->pos;
-	glm::ivec3	mapPos = CAMERA->pos;
-	glm::vec3	deltaDist = glm::abs(glm::vec3(glm::length(rayDir)) / rayDir);
-	glm::ivec3	rayStep = glm::ivec3(glm::sign(rayDir));
-	glm::vec3	sideDist = (sign(rayDir) * (glm::vec3(mapPos) - rayPos) + (glm::sign(rayDir) * 0.5f) + 0.5f) * deltaDist;
-
-	std::cout << "ray started at: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
-
-	int	MAX_RAY_STEPS = 8;
-	for (int i = 0; i < MAX_RAY_STEPS; ++i)
-	{
-		if (sideDist.x < sideDist.y) {
-			if (sideDist.x < sideDist.z)
-			{
-				sideDist.x += deltaDist.x;
-				mapPos.x += rayStep.x;
-			}
-			else
-			{
-				sideDist.z += deltaDist.z;
-				mapPos.z += rayStep.z;
-			}
-		}
-		else
-		{
-			if (sideDist.y < sideDist.z)
-			{
-				sideDist.y += deltaDist.y;
-				mapPos.y += rayStep.y;
-			}
-			else
-			{
-				sideDist.z += deltaDist.z;
-				mapPos.z += rayStep.z;
-			}
-		}
-		Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
-		if (chunk && chunk->removeBlock(mapPos))
-			break;
-		std::cout << "	ray passed by: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
-	}
-	std::cout << "		ray finished at: " << mapPos.x << "; " << mapPos.y << "; " << mapPos.z << std::endl;
-}
-
 int	main(void)
 {
 	consoleLog("Starting...", NORMAL);
@@ -417,8 +408,8 @@ int	main(void)
 		consoleLog("Starting rendering...", NORMAL);
 
 		CAMERA->yaw = 95;
-		CAMERA->pitch = -20;
-		CAMERA->pos = {-50, 100, -50};
+		CAMERA->pitch = -63;
+		CAMERA->pos = {2000, 300, 2000};
 
 		while (WINDOW->up())
 		{
@@ -428,9 +419,6 @@ int	main(void)
 			update();
 
 			CHUNKS->getQuadTree()->pruneDeadLeaves(CHUNKS->getQuadTree());
-
-			if (breaking)
-				breakBlock();
 
 			render();
 

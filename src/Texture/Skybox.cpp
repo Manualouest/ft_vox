@@ -59,7 +59,9 @@ float skyboxVertices[] = {
 Skybox::~Skybox()
 {
     if (DEBUG)
-        consoleLog("Destroying skybox", NORMAL);
+    {
+	    consoleLog("Destroying skybox", NORMAL);
+	}
 	glDeleteTextures(1, &ID);
 	glDeleteBuffers(1, &VBO);
 	glDeleteVertexArrays(1, &VAO);
