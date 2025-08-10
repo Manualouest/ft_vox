@@ -72,6 +72,7 @@ extern ShaderManager *SHADER_MANAGER;
 void	RegionManager::Render(Shader &shader)
 {
     glEnable(GL_DEPTH_TEST);
+	shader.use();
 	CAMERA->setViewMatrix(shader);
 	for (auto *chunk : _renderChunks)
 		chunk->draw(shader);
@@ -79,9 +80,12 @@ void	RegionManager::Render(Shader &shader)
 
 void	RegionManager::sortChunks()
 {
+	for (std::vector<Chunk *>::iterator it = _renderChunks.begin(); it != _renderChunks.end(); ++it)
+		(*it)->initDist();
+
 	std::sort(_renderChunks.begin(), _renderChunks.end(),
 		[](const Chunk *cp1, const Chunk *cp2)
 		{
-			return (cp1->getDistance() > cp2->getDistance());
+			return (cp1->getDist() > cp2->getDist());
 		});
 }

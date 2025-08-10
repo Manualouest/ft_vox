@@ -16,8 +16,8 @@
 # include "libs.hpp"
 # include "ChunkGenerator.hpp"
 
-# define	GENERATION_THREAD_COUNT 16
-# define CHUNKS_PER_THREAD 2
+# define	GENERATION_THREAD_COUNT 12
+# define	CHUNKS_PER_THREAD 2
 
 class	ChunkGeneratorManager
 {

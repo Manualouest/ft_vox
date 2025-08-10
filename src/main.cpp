@@ -161,6 +161,11 @@ void	move_mouse_hook(GLFWwindow*, double xpos, double ypos)
 	SCENE_MANAGER->getCurrent()->moveMouseHook(xpos, ypos);
 }
 
+void	press_mouse_hook(GLFWwindow*, int button, int action, int mods)
+{
+	SCENE_MANAGER->getCurrent()->mouseBtnHookFunc(button, action, mods);
+}
+
 void	key_hook(GLFWwindow *window, int key, int, int action, int)
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && WINDOW->up() && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)

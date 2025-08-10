@@ -174,7 +174,8 @@ void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 	{
 		if (branch->isLeaf())
 			if (!branch->_leaf->isGenerating()
-				&& !branch->_leaf->rendered)
+				&& !branch->_leaf->rendered
+				&& !branch->_leaf->_edited)
 			{
 				if (branch->_leaf->getDistance() > RENDER_DISTANCE) // !FIX HERE, WRONG RENDER DISTANCE BEING USED OR SMTH (TOO MANY CHUNKS ARE STAYING)
 				{

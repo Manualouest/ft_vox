@@ -28,6 +28,7 @@ static void resize_hook(GLFWwindow* window, int width, int height)
 void	key_hook(GLFWwindow *window, int key, int scancode, int action, int mods);
 void	keyboard_input(GLFWwindow *window, unsigned int key);
 void	move_mouse_hook(GLFWwindow* window, double xpos, double ypos);
+void	press_mouse_hook(GLFWwindow* window, int button, int action, int mods);
 
 Window::Window() : _lastFrame(0)
 {
@@ -66,6 +67,7 @@ Window::Window() : _lastFrame(0)
 	glfwSetCharCallback(_windowData, keyboard_input);
 	glfwSetInputMode(this->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(this->getWindowData(), move_mouse_hook);
+	glfwSetMouseButtonCallback(this->getWindowData(), press_mouse_hook);
 
 	glClearColor(0.6, 0.8, 1.0, 1.0f);
 	glEnable(GL_DEPTH_TEST);

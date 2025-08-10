@@ -168,6 +168,52 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 		CAMERA->yaw = 360;
 }
 
+void	_mouseBtnHookFunc(Scene*, int button, int action, int)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		glm::vec3	rayDir = CAMERA->front;
+		glm::vec3	rayPos = CAMERA->pos;
+		glm::ivec3	mapPos = CAMERA->pos;
+		glm::vec3	deltaDist = glm::abs(glm::vec3(glm::length(rayDir)) / rayDir);
+		glm::ivec3	rayStep = glm::ivec3(glm::sign(rayDir));
+		glm::vec3	sideDist = (sign(rayDir) * (glm::vec3(mapPos) - rayPos) + (glm::sign(rayDir) * 0.5f) + 0.5f) * deltaDist;
+
+		int	MAX_RAY_STEPS = 8;
+		for (int i = 0; i < MAX_RAY_STEPS; ++i)
+		{
+			if (sideDist.x < sideDist.y) {
+				if (sideDist.x < sideDist.z)
+				{
+					sideDist.x += deltaDist.x;
+					mapPos.x += rayStep.x;
+				}
+				else
+				{
+					sideDist.z += deltaDist.z;
+					mapPos.z += rayStep.z;
+				}
+			}
+			else
+			{
+				if (sideDist.y < sideDist.z)
+				{
+					sideDist.y += deltaDist.y;
+					mapPos.y += rayStep.y;
+				}
+				else
+				{
+					sideDist.z += deltaDist.z;
+					mapPos.z += rayStep.z;
+				}
+			}
+			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+			if (chunk && chunk->removeBlock(mapPos))
+				break;
+		}
+	}
+}
+
 static void	_updateShaders(ShaderManager *shaders)
 {
 	Shader	*textShader = shaders->get("text");
@@ -410,6 +456,7 @@ void	GameScene::build(Scene *scene)
 	scene->setKeyHook(_keyHookFunc);
 	scene->setCharHook(_charHookFunc);
 	scene->setMoveMouseHook(_moveMouseHookFunc);
+	scene->setMouseBtnHookFunc(_mouseBtnHookFunc);
 }
 
 void	GameScene::destructor(Scene *)
