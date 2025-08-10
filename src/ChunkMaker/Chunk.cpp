@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/10 15:12:20 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/10 22:42:14 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ float perlin(float x, float y)
     return (value);
 }
 
-float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, float heightScale)
+float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness)
 {
 	float	res = 0;
 	for (int i = 0; i < noisiness; i++)
@@ -91,8 +91,6 @@ float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, floa
 	else if (res < -1.0f)
 		res = -1.0f;
 
-	res = ((res + 1.0f) * 0.5f) * heightScale;
-
 	return (res);
 }
 
@@ -107,8 +105,6 @@ float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, floa
 #define OCEAN_FREQ 0.3 / 32
 #define OCEAN_AMP 0.1
 #define OCEAN_NOISE 3
-
-GenInfo getGeneration(glm::vec2 pos);
 
 Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _edited(false), _generated(false), _generating(false), _uploaded(false)
 {
@@ -397,10 +393,10 @@ void	Chunk::genMesh()
 	// making the noise based adjacent slices
 	for (int z = 0; z < 32; ++z)
 	{
-		genEdges[0][z] = (sideChunks[0] ? 0 : getGeneration(glm::vec2(pos.x - 1, pos.z + z)).height);
-		genEdges[1][z] = (sideChunks[1] ? 0 : getGeneration(glm::vec2(pos.x + 32, pos.z + z)).height);
-		genEdges[2][z] = (sideChunks[2] ? 0 : getGeneration(glm::vec2(pos.x + (31 - z), pos.z + 32)).height);
-		genEdges[3][z] = (sideChunks[3] ? 0 : getGeneration(glm::vec2(pos.x + (31 - z), pos.z - 1)).height);
+		genEdges[0][z] = (sideChunks[0] ? 0 : getGenerationHeight(glm::vec2(pos.x - 1, pos.z + z)));
+		genEdges[1][z] = (sideChunks[1] ? 0 : getGenerationHeight(glm::vec2(pos.x + 32, pos.z + z)));
+		genEdges[2][z] = (sideChunks[2] ? 0 : getGenerationHeight(glm::vec2(pos.x + (31 - z), pos.z + 32)));
+		genEdges[3][z] = (sideChunks[3] ? 0 : getGenerationHeight(glm::vec2(pos.x + (31 - z), pos.z - 1)));
 	}
 
 	// Generating the mesh
@@ -528,29 +524,6 @@ void	Chunk::genMesh()
 	_indices.shrink_to_fit();
 }
 
-GenInfo Chunk::getGeneration(glm::vec2 pos)
-{
-	Biome	biome = Biome::PLAINS;
-
-	float biomeNoise = calcNoise(pos * 0.001f, 1.0f, 1.0f, 1, 1.0f);
-	float biomeSelector = biomeNoise;
-
-	float plains = calcNoise(pos, PLAINS_FREQ, PLAINS_AMP, PLAINS_NOISE, 90.0f);
-	float hills = calcNoise(pos, MOUNTAINS_FREQ, MOUNTAINS_AMP, MOUNTAINS_NOISE, 240.0f);
-	float ocean = calcNoise(pos, OCEAN_FREQ, OCEAN_AMP, OCEAN_NOISE, 50.0f);
-
-	float plainsWeight = glm::smoothstep(0.3f, 0.5f, biomeSelector);
-	float hillsWeight = glm::smoothstep(0.5f, 0.7f, biomeSelector);
-	float oceanWeight = 1.5 - (plainsWeight + hillsWeight) / 2;
-
-	int res = ocean * oceanWeight + plains * plainsWeight + hills * hillsWeight;
-
-	if (biomeSelector < 0.47) //Completly a magic number, Ill have to figure out biome selection later
-		biome = Biome::MESA;
-
-	return (GenInfo(glm::clamp(res, 0, 255), biome));
-}
-
 float	perlin(float x, float y, float z)
 {
 	float ab = perlin(x, y);
@@ -574,8 +547,9 @@ float	getCaveValue(glm::vec3 pos, float minHeight, float maxHeight)
 	float range = (maxY - minY) * 0.5f;
 
 	float dist = (pos.y - mid) / range;
+	float heightFactor = 1.0f - (pos.y / 512.0f);
 	//Pour pas depasser des limites
-	float amp = exp(-dist * dist);
+	float amp = exp(-dist * dist) * heightFactor;
 
 	float	noise = 0;
 	for (int i = 0; i < 2; i++)
@@ -586,6 +560,111 @@ float	getCaveValue(glm::vec3 pos, float minHeight, float maxHeight)
 		amp /= 2;
 	}
 	return (noise);
+}
+
+// See https://www.youtube.com/watch?v=CSa5O6knuwI&t=1029s
+
+struct	SplinePoint
+{
+	float	x;
+	float	y;
+};
+
+struct	Spline
+{
+	std::vector<SplinePoint>	points;
+};
+
+float	getValueInSpline(const Spline &spline, float value)
+{
+	if (value <= spline.points.front().x)
+		return (spline.points.front().y);
+	if (value >= spline.points.back().x)
+		return (spline.points.back().y);
+
+	for (size_t i = 0; i < spline.points.size() - 1; i++)
+	{
+		const SplinePoint& p1 = spline.points[i];
+		const SplinePoint& p2 = spline.points[i + 1];
+
+		if (value >= p1.x && value <= p2.x)
+		{
+			float t = (value - p1.x) / (p2.x - p1.x);
+			return (glm::mix(p1.y, p2.y, t));
+		}
+	}
+	return (0.0f);
+}
+
+/*
+	Continentalness means the height of the world
+*/
+Spline continentalnessToHeight =
+{
+	{
+		{-1.0f, 20},  // deep ocean
+		{-0.2f, 63},  // shallow ocean
+		{ -0.15f,  70},  // plains
+		{ 0.1f,  80},  // plains
+		{ 0.6f,  120},  // hills
+		{ 1.0f,  255.0f}  // mountains
+	}
+};
+
+/*
+	Erosion is how much you squish down the terrain
+*/
+Spline erosionToHeight =
+{
+	{
+		{-1.0f, 25},
+		{ 1.0f,  -20.0f}
+	}
+};
+
+Spline peaksValleysToHeight =
+{
+	{
+		{0, -20},
+		{0.08, 0},
+		{0.09, 0},
+		{1, 60}
+	}
+};
+
+float	Chunk::getErosion(glm::vec2 pos)
+{
+	return (calcNoise(pos, 0.001, 1, 3));
+}
+
+float	Chunk::getContinentalness(glm::vec2 pos)
+{
+	return (calcNoise(pos, 0.005, 1, 6));
+}
+
+float	Chunk::getPeaksValleys(glm::vec2 pos)
+{
+	return (std::abs(calcNoise(pos, 0.003, 1, 1)));
+}
+
+int	Chunk::getGenerationHeight(glm::vec2 pos)
+{
+	_currentContinentalness = getContinentalness(pos);
+	_currentErosion = getErosion(pos);
+	_currentPeaksValleys = getPeaksValleys(pos);
+
+	//Shapes general terrain height
+	float	res = getValueInSpline(continentalnessToHeight, _currentContinentalness);
+
+	//Shapes rivers / peaks
+	res += getValueInSpline(peaksValleysToHeight, _currentPeaksValleys);
+
+	//Flattens some areas
+	res -= getValueInSpline(erosionToHeight, _currentErosion);
+	if (res < 0)
+		res = 1;
+
+	return (res);
 }
 
 GenInfo	Chunk::getGeneration(glm::vec3 pos)
@@ -603,13 +682,18 @@ GenInfo	Chunk::getGeneration(glm::vec3 pos)
 	//Gets world "paint" (dirt, sand and all)
 	if (pos.y == _currentMaxHeight)
 	{
-		if (_currentBiome == Biome::PLAINS)
-			res.type = 4;
-		else if (_currentBiome == Biome::MESA)
+		if (pos.y <= WATERLINE)
 			res.type = 6;
+		else
+			res.type = 4;
 	}
 	else if (pos.y == _currentMaxHeight - 1)
-		res.type = 3;
+	{
+		if (pos.y <= WATERLINE)
+			res.type = 6;
+		else
+			res.type = 3;
+	}
 	else
 		res.type = 2;
 
@@ -638,9 +722,7 @@ void	Chunk::genChunk()
 		for (int x = 0; x < 32; ++x)
 		{
 			// height = initGeneration(glm::vec2{pos.x + (31 - x), pos.z + z}); // l'init de la gen
-			GenInfo genInfo = getGeneration(glm::vec2{pos.x + (31 - x), pos.z + z});
-			height = genInfo.height; // temporaire pour au moin voir un truc, a enlever
-			_currentBiome = genInfo.biome;
+			height = getGenerationHeight(glm::vec2{pos.x + (31 - x), pos.z + z});
 
 			// adding the newBlock to the chunkmask / no touch pls
 			if (height > _maxHeight)
@@ -652,7 +734,7 @@ void	Chunk::genChunk()
 			_currentMaxHeight = height;
 			for (int y = height; y >= 0; --y)
 			{
-				newBlock = getGeneration(glm::vec3((31 - x) + pos.x, y, z + pos.z));
+				newBlock = getGeneration(glm::vec3((31 - x) + pos.x, y, pos.z + z));
 
 				newBlock.height = y;
 				Blocks[y * 1024 + z * 32 + x] = newBlock;

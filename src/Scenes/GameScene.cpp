@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 18:20:00 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/10 22:46:40 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -314,6 +314,15 @@ static void	_buildInterface(Scene *scene)
 			}
 			label = "speed: " + std::to_string(speed);
 		}, true));
+
+	debug->addElement("text_continentalness", new Text(UIAnchor::UI_TOP_LEFT, "continentalness", glm::vec2(0, 96),
+		[](std::string &label){label = "continentalness: " + std::to_string(Chunk::getContinentalness(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
+
+	debug->addElement("text_erosion", new Text(UIAnchor::UI_TOP_LEFT, "erosion", glm::vec2(0, 112),
+		[](std::string &label){label = "erosion: " + std::to_string(Chunk::getErosion(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
+
+	debug->addElement("text_peaksvalleys", new Text(UIAnchor::UI_TOP_LEFT, "peaks & valleys", glm::vec2(0, 128),
+		[](std::string &label){label = "peaks & valleys: " + std::to_string(Chunk::getPeaksValleys(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
 
 	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));

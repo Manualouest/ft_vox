@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/10 15:03:28 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/10 22:38:19 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ struct Slices
 enum Biome
 {
 	PLAINS,
-	MESA,
+	DESERT,
 	SNOWY
 };
 
@@ -108,9 +108,18 @@ class Chunk
 
 		std::thread::id	_lastThreadID;
 
+		static float	getErosion(glm::vec2 pos);
+		static float	getContinentalness(glm::vec2 pos);
+		static float	getPeaksValleys(glm::vec2 pos);
+
+		float	_currentErosion;
+		float	_currentContinentalness;
+		float	_currentPeaksValleys;
 	private:
 		GenInfo	getGeneration(glm::vec3 pos);
+		int	getGenerationHeight(glm::vec2 pos);
 		GenInfo	getGeneration(glm::vec2 pos);
+
 		void	addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
 		void	placeBlock(glm::ivec3 &pos, const std::vector<char32_t> &usedData, char32_t &slice, char32_t &westFaces, char32_t &eastFaces, char32_t &northFaces, char32_t &southFaces);
 		void	genChunk();
