@@ -71,11 +71,12 @@ class VolumeAABB
 			return -r <= plane.getSignedDistanceToPlane(center);
 		}
 
-		bool isOnFrustum(const Frustum &camFrustum, const glm::vec3 &pos)
+		bool isOnFrustum(const Frustum &camFrustum, const glm::vec3 &pos, const uint &height)
 		{
 			//Get global scale thanks to our transform
 			const glm::vec3	globalCenter = pos + center;
 
+			extents.y = height;
 			VolumeAABB	globalAABB(globalCenter, extents);
 
 			return (globalAABB.isOnOrForwardPlane(camFrustum.leftFace) &&

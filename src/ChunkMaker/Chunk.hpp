@@ -90,6 +90,8 @@ class Chunk
 		std::vector<GenInfo>	Blocks;
 		std::atomic_bool		_edited;
 		float					dist;
+		uint8_t					_minHeight;
+		uint8_t					_maxHeight;
 
 		bool	isGenerated() {return (this->_generated);}
 		bool	isGenerating() {return (this->_generating);}
@@ -119,8 +121,6 @@ class Chunk
 		unsigned int			_EBO = 0;
 		unsigned int			_VAO = 0;
 		unsigned int			_VBO = 0;
-		uint8_t					_minHeight;
-		uint8_t					_maxHeight;
 		uint32_t				_indicesSize;
 		std::vector<uint32_t>	_indices;
 		std::vector<uint32_t>	_vertices;

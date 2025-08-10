@@ -37,8 +37,7 @@ Quadtree::~Quadtree()
 void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB)
 {
 	glm::vec2	npos = {0, 0};
-	AABB.extents = glm::vec3(_size.x / 2, 256, _size.y / 2);
-	AABB.center = glm::vec3(_size.x / 2, 0, _size.y / 2);
+	Chunk		*leaf = NULL;
 	if (isLeaf())
 	{
 		Chunk *chunk = getLeaf(glm::vec2(_pos.x, _pos.y));
@@ -59,7 +58,9 @@ void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &cam
 				npos = {_pos.x, _pos.y};
 			else if (i == QTBranch::BOTTOM_RIGHT)
 				npos = {_pos.x, _pos.y + _size.y / 2};
-			if (AABB.isOnFrustum(camFrustum, glm::vec3(npos.x, 0, npos.y)))
+
+			leaf = (_branches[i] ? _branches[i]->getLeaf(npos) : NULL);
+			if (AABB.isOnFrustum(camFrustum, glm::vec3(npos.x, 0, npos.y), (leaf ? std::max(leaf->_maxHeight, uint8_t(WATERLINE)): 0)))
 			{
 				if (!_branches[i])
 					_branches[i] = new Quadtree(npos, (QTBranch)i, _size / 2);

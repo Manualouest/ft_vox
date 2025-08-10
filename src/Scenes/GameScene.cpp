@@ -170,7 +170,7 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 
 void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 {
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	if (CHUNKS && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
 		glm::vec3	rayDir = CAMERA->front;
 		glm::vec3	rayPos = CAMERA->pos;
