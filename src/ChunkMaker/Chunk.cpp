@@ -557,56 +557,21 @@ void	Chunk::genChunk()
 	ChunkMask.resize(8192, 0); // 32 * 256
 	RotChunkMask.resize(8192, 0);
 	Blocks.resize(262144, newBlock); // 32 * 32 * 256
-
-	// gen highest of each points in chunk based on the noise
-	// for (int z = 0; z < 32; ++z)
-	// {
-	// 	for (int x = 0; x < 32; ++x)
-	// 	{
-	// 		newBlock = getGeneration(glm::vec2{pos.x + (31 - x), pos.z + z});
-
-	// 		// -------------------------------- ADDING THE TYPE BY HAND, BUT ONCE THE GEN DOES IT THIS NEED TO POP ------------------------------
-	// 		/*
-	// 			For now if height > 65 = grass - 2 dirt - stone, else:  2 sand - stone.
-	// 			blocks: 0 air, 1 water, 2 stone, 3 dirt, 4 grass, 5 grassSide, 6 sand
-	// 		*/
-	// 		if (newBlock.height > 65)
-	// 			newBlock.type = 4;
-	// 		else
-	// 			newBlock.type = 6;
-	// 		// ----------------------------------------------------------------------------------------------------------------------------------
-
-	// 		Blocks[newBlock.height * 1024 + z * 32 + x] = newBlock;
-
-	// 		// adding the newBlock to the chunkmask
-	// 		ChunkMask[newBlock.height * 32 + z] |= (char32_t)(((char32_t)1) << (31 - x));
-
-	// 		if (newBlock.height > _maxHeight)
-	// 			_maxHeight = newBlock.height;
-	// 		if (newBlock.height < _minHeight)
-	// 			_minHeight = newBlock.height;
-	// 		_chunkTop.push_back(newBlock.height); // this vector stores the y values of the top blocks it's used for placing the dirt under the grass and the stone under the dirt
-	// 	}
-	// }
-
-	// fill from the top to the bottom; no caves yet, need to be added with noise
-	// 
 	
 	for (int z = 0; z < 32; ++z)
 	{
 		for (int x = 0; x < 32; ++x)
 		{
-
 			// height = initGeneration(glm::vec2{pos.x + (31 - x), pos.z + z}); // l'init de la gen
-
 			height = getGeneration(glm::vec2{pos.x + (31 - x), pos.z + z}).height; // temporaire pour au moin voir un truc, a enlever
+
 
 			// adding the newBlock to the chunkmask / no touch pls 
 			if (height > _maxHeight)
 				_maxHeight = height;
 			if (height < _minHeight)
 				_minHeight = height;
-			_chunkTop.push_back(height); // this vector stores the y values of the top blocks it's used for placing the dirt under the grass and the stone under the dirt
+			_chunkTop.push_back(height); // this vector stores the y values of the top blocks
 		
 
 			for (int y = height; y >= 0; --y)
@@ -614,7 +579,7 @@ void	Chunk::genChunk()
 				// newBlock = getGeneration(x, y, z); // :tongue:
 
 				newBlock.type = 2; // temporary, to remove
-				newBlock.height = y;
+				newBlock.height = y; // temporary, to remove
 
 				Blocks[y * 1024 + z * 32 + x] = newBlock;
 
@@ -623,7 +588,6 @@ void	Chunk::genChunk()
 				ChunkMask[y * 32 + z] |= (char32_t)(((char32_t)1) << (31 - x)); // updating the chunkMask with the newly added block
 			}
 		}
-		// we fill the rotated ChunkMask using getRotSlice; this vector is used by neightboring chunks and to create the mesh
 	}
 	for (int y = _maxHeight; y >= 0; --y)
 		getRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
