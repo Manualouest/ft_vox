@@ -37,12 +37,19 @@ Quadtree::~Quadtree()
 void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB)
 {
 	glm::vec2	npos = {0, 0};
-	Chunk		*leaf = NULL;
+	
 	if (isLeaf())
 	{
 		Chunk *chunk = getLeaf(glm::vec2(_pos.x, _pos.y));
-		chunk->rendered = true;
-		chunks.push_back(chunk);
+		
+		AABB.extents = glm::vec3(16, (std::max(chunk->_minHeight, chunk->_maxHeight) + 16) / 2, 16);
+		AABB.center = glm::vec3(16, AABB.extents.y, 16);
+
+		if (AABB.isOnFrustum(camFrustum, glm::vec3(_pos.x, 0, _pos.y)))
+		{
+			chunk->rendered = true;
+			chunks.push_back(chunk);
+		}
 	}
 	else
 	{
@@ -59,8 +66,10 @@ void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &cam
 			else if (i == QTBranch::BOTTOM_RIGHT)
 				npos = {_pos.x, _pos.y + _size.y / 2};
 
-			leaf = (_branches[i] ? _branches[i]->getLeaf(npos) : NULL);
-			if (AABB.isOnFrustum(camFrustum, glm::vec3(npos.x, 0, npos.y), (leaf ? std::max(leaf->_maxHeight, uint8_t(WATERLINE)): 0)))
+			AABB.extents = glm::vec3(_size.x / 4, 128, _size.y / 4);
+			AABB.center = glm::vec3(_size.x / 4, 128, _size.y / 4);
+
+			if (AABB.isOnFrustum(camFrustum, glm::vec3(npos.x, 0, npos.y)))
 			{
 				if (!_branches[i])
 					_branches[i] = new Quadtree(npos, (QTBranch)i, _size / 2);
