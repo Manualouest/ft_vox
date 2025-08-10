@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/28 16:26:34 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/10 15:12:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ glm::vec2 randomGradient(int ix, int iy)
 
 	a ^= b << s | b >> (w - s);
     a *= 2048419325;
-    float random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
+	float random = (a / (float)UINT_MAX) * 2.0f * M_PI;
 
 	glm::vec2 v;
     v.x = sin(random);
@@ -108,22 +108,7 @@ float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness, floa
 #define OCEAN_AMP 0.1
 #define OCEAN_NOISE 3
 
-GenInfo getGeneration(glm::vec2 pos)
-{
-	float biomeNoise = calcNoise(pos * 0.001f, 1.0f, 1.0f, 1, 1.0f);
-	float biomeSelector = biomeNoise;
-
-	float plains = calcNoise(pos, PLAINS_FREQ, PLAINS_AMP, PLAINS_NOISE, 90.0f);
-	float hills = calcNoise(pos, MOUNTAINS_FREQ, MOUNTAINS_AMP, MOUNTAINS_NOISE, 240.0f);
-	float ocean = calcNoise(pos, OCEAN_FREQ, OCEAN_AMP, OCEAN_NOISE, 50.0f);
-
-	float plainsWeight = glm::smoothstep(0.3f, 0.5f, biomeSelector);
-	float hillsWeight = glm::smoothstep(0.5f, 0.7f, biomeSelector);
-	float oceanWeight = 1.5 - (plainsWeight + hillsWeight) / 2;
-
-	int res = ocean * oceanWeight + plains * plainsWeight + hills * hillsWeight;
-	return (GenInfo(glm::clamp(res, 0, 255), Biome::PLAINS));
-}
+GenInfo getGeneration(glm::vec2 pos);
 
 Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _edited(false), _generated(false), _generating(false), _uploaded(false)
 {
@@ -234,7 +219,7 @@ void	Chunk::makeBuffers()
     glBindVertexArray(_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(GLuint), _vertices.data(), GL_STATIC_DRAW);
-    
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(GLuint), (GLuint*)_indices.data(), GL_STATIC_DRAW);
 
@@ -404,18 +389,18 @@ void	Chunk::genMesh()
 	sideChunks[3] = CHUNKS->getQuadTree()->getLeaf(glm::vec2(pos.x, pos.z - 1));
 
 	// checking if they are edited
-	sideChunks[0] = (sideChunks[0] && sideChunks[0]->_edited ? sideChunks[0] : NULL); 
-	sideChunks[1] = (sideChunks[1] && sideChunks[1]->_edited ? sideChunks[1] : NULL); 
-	sideChunks[2] = (sideChunks[2] && sideChunks[2]->_edited ? sideChunks[2] : NULL); 
-	sideChunks[3] = (sideChunks[3] && sideChunks[3]->_edited ? sideChunks[3] : NULL); 
+	sideChunks[0] = (sideChunks[0] && sideChunks[0]->_edited ? sideChunks[0] : NULL);
+	sideChunks[1] = (sideChunks[1] && sideChunks[1]->_edited ? sideChunks[1] : NULL);
+	sideChunks[2] = (sideChunks[2] && sideChunks[2]->_edited ? sideChunks[2] : NULL);
+	sideChunks[3] = (sideChunks[3] && sideChunks[3]->_edited ? sideChunks[3] : NULL);
 
 	// making the noise based adjacent slices
 	for (int z = 0; z < 32; ++z)
 	{
-		genEdges[0][z] = (sideChunks[0] ? 0 :getGeneration(glm::vec2(pos.x - 1, pos.z + z)).height);   
-		genEdges[1][z] = (sideChunks[1] ? 0 :getGeneration(glm::vec2(pos.x + 32, pos.z + z)).height);   
-		genEdges[2][z] = (sideChunks[2] ? 0 :getGeneration(glm::vec2(pos.x + (31 - z), pos.z + 32)).height);   
-		genEdges[3][z] = (sideChunks[3] ? 0 :getGeneration(glm::vec2(pos.x + (31 - z), pos.z - 1)).height);   
+		genEdges[0][z] = (sideChunks[0] ? 0 : getGeneration(glm::vec2(pos.x - 1, pos.z + z)).height);
+		genEdges[1][z] = (sideChunks[1] ? 0 : getGeneration(glm::vec2(pos.x + 32, pos.z + z)).height);
+		genEdges[2][z] = (sideChunks[2] ? 0 : getGeneration(glm::vec2(pos.x + (31 - z), pos.z + 32)).height);
+		genEdges[3][z] = (sideChunks[3] ? 0 : getGeneration(glm::vec2(pos.x + (31 - z), pos.z - 1)).height);
 	}
 
 	// Generating the mesh
@@ -543,6 +528,96 @@ void	Chunk::genMesh()
 	_indices.shrink_to_fit();
 }
 
+GenInfo Chunk::getGeneration(glm::vec2 pos)
+{
+	Biome	biome = Biome::PLAINS;
+
+	float biomeNoise = calcNoise(pos * 0.001f, 1.0f, 1.0f, 1, 1.0f);
+	float biomeSelector = biomeNoise;
+
+	float plains = calcNoise(pos, PLAINS_FREQ, PLAINS_AMP, PLAINS_NOISE, 90.0f);
+	float hills = calcNoise(pos, MOUNTAINS_FREQ, MOUNTAINS_AMP, MOUNTAINS_NOISE, 240.0f);
+	float ocean = calcNoise(pos, OCEAN_FREQ, OCEAN_AMP, OCEAN_NOISE, 50.0f);
+
+	float plainsWeight = glm::smoothstep(0.3f, 0.5f, biomeSelector);
+	float hillsWeight = glm::smoothstep(0.5f, 0.7f, biomeSelector);
+	float oceanWeight = 1.5 - (plainsWeight + hillsWeight) / 2;
+
+	int res = ocean * oceanWeight + plains * plainsWeight + hills * hillsWeight;
+
+	if (biomeSelector < 0.47) //Completly a magic number, Ill have to figure out biome selection later
+		biome = Biome::MESA;
+
+	return (GenInfo(glm::clamp(res, 0, 255), biome));
+}
+
+float	perlin(float x, float y, float z)
+{
+	float ab = perlin(x, y);
+	float bc = perlin(y, z);
+	float ac = perlin(x, z);
+
+	float ba = perlin(y, x);
+	float cb = perlin(z, y);
+	float ca = perlin(z, x);
+
+	return (ab + bc + ac + ba + cb + ca) / 6.0;
+}
+
+float	getCaveValue(glm::vec3 pos, float minHeight, float maxHeight)
+{
+	float	freq = 0.03;
+
+	float minY = minHeight;
+	float maxY = maxHeight;
+	float mid  = (minY + maxY) * 0.5f;
+	float range = (maxY - minY) * 0.5f;
+
+	float dist = (pos.y - mid) / range;
+	//Pour pas depasser des limites
+	float amp = exp(-dist * dist);
+
+	float	noise = 0;
+	for (int i = 0; i < 2; i++)
+	{
+		noise += perlin(pos.x * freq, pos.y * freq, pos.z * freq) * amp;
+
+		freq *= 2;
+		amp /= 2;
+	}
+	return (noise);
+}
+
+GenInfo	Chunk::getGeneration(glm::vec3 pos)
+{
+	GenInfo	res;
+
+	//Gets world shape (caves and height is calculated outside)
+	float noise = getCaveValue(pos, 5, _maxHeight);
+	if (noise > 0.1)
+	{
+		res.type = 0;
+		return (res);
+	}
+
+	//Gets world "paint" (dirt, sand and all)
+	if (pos.y == _currentMaxHeight)
+	{
+		if (_currentBiome == Biome::PLAINS)
+			res.type = 4;
+		else if (_currentBiome == Biome::MESA)
+			res.type = 6;
+	}
+	else if (pos.y == _currentMaxHeight - 1)
+		res.type = 3;
+	else
+		res.type = 2;
+
+	//Will be decoration?? (trees, structures)
+
+	return (res);
+}
+
 /*
 	Creates the array of blocks and the ChunkMasks using the noise
 */
@@ -557,30 +632,29 @@ void	Chunk::genChunk()
 	ChunkMask.resize(8192, 0); // 32 * 256
 	RotChunkMask.resize(8192, 0);
 	Blocks.resize(262144, newBlock); // 32 * 32 * 256
-	
+
 	for (int z = 0; z < 32; ++z)
 	{
 		for (int x = 0; x < 32; ++x)
 		{
 			// height = initGeneration(glm::vec2{pos.x + (31 - x), pos.z + z}); // l'init de la gen
-			height = getGeneration(glm::vec2{pos.x + (31 - x), pos.z + z}).height; // temporaire pour au moin voir un truc, a enlever
+			GenInfo genInfo = getGeneration(glm::vec2{pos.x + (31 - x), pos.z + z});
+			height = genInfo.height; // temporaire pour au moin voir un truc, a enlever
+			_currentBiome = genInfo.biome;
 
-
-			// adding the newBlock to the chunkmask / no touch pls 
+			// adding the newBlock to the chunkmask / no touch pls
 			if (height > _maxHeight)
 				_maxHeight = height;
 			if (height < _minHeight)
 				_minHeight = height;
 			_chunkTop.push_back(height); // this vector stores the y values of the top blocks
-		
 
+			_currentMaxHeight = height;
 			for (int y = height; y >= 0; --y)
 			{
-				// newBlock = getGeneration(x, y, z); // :tongue:
+				newBlock = getGeneration(glm::vec3((31 - x) + pos.x, y, z + pos.z));
 
-				newBlock.type = 2; // temporary, to remove
-				newBlock.height = y; // temporary, to remove
-
+				newBlock.height = y;
 				Blocks[y * 1024 + z * 32 + x] = newBlock;
 
 				if (newBlock.type == 0) // if it's air we skip it
@@ -609,7 +683,6 @@ void	Chunk::genChunk()
 			}
 		}
 	}
-
 
 	ChunkMask.shrink_to_fit();
 	RotChunkMask.shrink_to_fit();
@@ -668,7 +741,7 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 	// }
 	// else
 		Blocks[targetPos.y * 1024 + targetPosMod.z * 32 + (31 - targetPosMod.x)].type = 0;
-	
+
 	--_chunkTop[targetPosMod.z * 32 + (31 - targetPosMod.x)];
 
 	reGenMesh();

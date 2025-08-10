@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/14 18:13:32 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/10 15:03:28 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,8 +90,10 @@ class Chunk
 		std::vector<GenInfo>	Blocks;
 		std::atomic_bool		_edited;
 		float					dist;
-		uint8_t					_minHeight;
-		uint8_t					_maxHeight;
+		uint8_t					_minHeight = 0;
+		uint8_t					_maxHeight = 0;
+		uint8_t					_currentMaxHeight = 0;
+		uint8_t					_currentBiome;
 
 		bool	isGenerated() {return (this->_generated);}
 		bool	isGenerating() {return (this->_generating);}
@@ -107,6 +109,8 @@ class Chunk
 		std::thread::id	_lastThreadID;
 
 	private:
+		GenInfo	getGeneration(glm::vec3 pos);
+		GenInfo	getGeneration(glm::vec2 pos);
 		void	addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
 		void	placeBlock(glm::ivec3 &pos, const std::vector<char32_t> &usedData, char32_t &slice, char32_t &westFaces, char32_t &eastFaces, char32_t &northFaces, char32_t &southFaces);
 		void	genChunk();
