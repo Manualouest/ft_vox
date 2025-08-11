@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/10 22:42:14 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/11 23:49:56 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -537,7 +537,36 @@ float	perlin(float x, float y, float z)
 	return (ab + bc + ac + ba + cb + ca) / 6.0;
 }
 
-float	getCaveValue(glm::vec3 pos, float minHeight, float maxHeight)
+//Tweaked cave function to generate thinner caves
+
+// float	getCaveValue(glm::vec3 pos, float minHeight, float maxHeight)
+// {
+// 	float	freq = 0.02;
+
+// 	float minY = minHeight;
+// 	float maxY = maxHeight;
+// 	float mid  = (minY + maxY) * 0.5f;
+// 	float range = (maxY - minY) * 0.5f;
+
+// 	float dist = (pos.y - mid) / range;
+// 	float heightFactor = 1.0f - (pos.y / 512.0f);
+// 	//Pour pas depasser des limites
+// 	float amp = exp(-dist * dist) * heightFactor;
+
+// 	float	noise = 0;
+// 	for (int i = 0; i < 2; i++)
+// 	{
+// 		noise += std::abs(perlin(pos.x * freq, pos.y * freq, pos.z * freq));
+
+// 		freq *= 2;
+// 		amp /= 2;
+// 	}
+// 	return (noise);
+// }
+
+#define CAVE_TRESHOLD 0.12
+
+float	getCaveValue(const glm::vec3 &pos, float minHeight, float maxHeight)
 {
 	float	freq = 0.03;
 
@@ -555,6 +584,8 @@ float	getCaveValue(glm::vec3 pos, float minHeight, float maxHeight)
 	for (int i = 0; i < 2; i++)
 	{
 		noise += perlin(pos.x * freq, pos.y * freq, pos.z * freq) * amp;
+		if (noise > CAVE_TRESHOLD)
+			return (noise);
 
 		freq *= 2;
 		amp /= 2;
@@ -602,11 +633,11 @@ float	getValueInSpline(const Spline &spline, float value)
 Spline continentalnessToHeight =
 {
 	{
-		{-1.0f, 20},  // deep ocean
-		{-0.2f, 63},  // shallow ocean
-		{ -0.15f,  70},  // plains
-		{ 0.1f,  80},  // plains
-		{ 0.6f,  120},  // hills
+		{ -1.0f, 20},  // deep ocean
+		{ -0.2f, 63},  // shallow ocean
+		{ -0.15f,  64},  // plains
+		{ 0.1f,  72},  // plains
+		{ 0.5f,  120},  // hills
 		{ 1.0f,  255.0f}  // mountains
 	}
 };
@@ -617,7 +648,9 @@ Spline continentalnessToHeight =
 Spline erosionToHeight =
 {
 	{
-		{-1.0f, 25},
+		{-1.0f, 30},
+		{0, 0},
+		{ 0.3,  -5.0f},
 		{ 1.0f,  -20.0f}
 	}
 };
@@ -625,29 +658,31 @@ Spline erosionToHeight =
 Spline peaksValleysToHeight =
 {
 	{
+		{-1, -40},
 		{0, -20},
 		{0.08, 0},
 		{0.09, 0},
-		{1, 60}
+		{0.5, 25},
+		{1, 100}
 	}
 };
 
-float	Chunk::getErosion(glm::vec2 pos)
+float	Chunk::getErosion(const glm::vec2 &pos)
 {
 	return (calcNoise(pos, 0.001, 1, 3));
 }
 
-float	Chunk::getContinentalness(glm::vec2 pos)
+float	Chunk::getContinentalness(const glm::vec2 &pos)
 {
 	return (calcNoise(pos, 0.005, 1, 6));
 }
 
-float	Chunk::getPeaksValleys(glm::vec2 pos)
+float	Chunk::getPeaksValleys(const glm::vec2 &pos)
 {
-	return (std::abs(calcNoise(pos, 0.003, 1, 1)));
+	return (std::abs(calcNoise(pos, 0.003, 1, 2)));
 }
 
-int	Chunk::getGenerationHeight(glm::vec2 pos)
+int	Chunk::getGenerationHeight(const glm::vec2 &pos)
 {
 	_currentContinentalness = getContinentalness(pos);
 	_currentErosion = getErosion(pos);
@@ -667,13 +702,16 @@ int	Chunk::getGenerationHeight(glm::vec2 pos)
 	return (res);
 }
 
-GenInfo	Chunk::getGeneration(glm::vec3 pos)
+GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
 {
+	if (_currentMaxHeight == 0)
+		getGenerationHeight(glm::vec2(pos.x, pos.z));
+
 	GenInfo	res;
 
 	//Gets world shape (caves and height is calculated outside)
 	float noise = getCaveValue(pos, 5, _maxHeight);
-	if (noise > 0.1)
+	if (noise > CAVE_TRESHOLD)
 	{
 		res.type = 0;
 		return (res);
@@ -722,7 +760,7 @@ void	Chunk::genChunk()
 		for (int x = 0; x < 32; ++x)
 		{
 			// height = initGeneration(glm::vec2{pos.x + (31 - x), pos.z + z}); // l'init de la gen
-			height = getGenerationHeight(glm::vec2{pos.x + (31 - x), pos.z + z});
+			height = getGenerationHeight(glm::vec2{(31 - x) + pos.x, pos.z + z});
 
 			// adding the newBlock to the chunkmask / no touch pls
 			if (height > _maxHeight)
