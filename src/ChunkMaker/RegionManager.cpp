@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/12 16:13:51 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 19:03:53 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,9 @@ void	RegionManager::UpdateChunks()
 	{
 		for (int z = startZ; z < endZ; z++)
 		{
+			if (x < 0 || z < 0)
+				continue ;
+
 			Chunk *tmp = _QT->growBranch(glm::vec2(x * 32, z * 32));
 			if (tmp)
 			{
