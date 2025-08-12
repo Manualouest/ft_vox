@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Window.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:11:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/14 10:41:51 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/25 19:51:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ static void resize_hook(GLFWwindow* window, int width, int height)
 void	key_hook(GLFWwindow *window, int key, int scancode, int action, int mods);
 void	keyboard_input(GLFWwindow *window, unsigned int key);
 void	move_mouse_hook(GLFWwindow* window, double xpos, double ypos);
-void	mouseBtnCallback(GLFWwindow* window, int button, int action, int mods);
+void	press_mouse_hook(GLFWwindow* window, int button, int action, int mods);
 
 Window::Window() : _lastFrame(0)
 {
@@ -41,12 +41,14 @@ Window::Window() : _lastFrame(0)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Creates and opens window
-	// GLFWmonitor	*monitor = glfwGetPrimaryMonitor();
-	// const GLFWvidmode	*monitorInfos = glfwGetVideoMode(monitor);
-	// SCREEN_HEIGHT = monitorInfos->height;
-	// SCREEN_WIDTH = monitorInfos->width;
-	// _windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, monitor, NULL);
-	_windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, NULL, NULL);
+	GLFWmonitor	*monitor = NULL;
+	#if FULL_SCREEN
+		monitor = glfwGetPrimaryMonitor();
+		const GLFWvidmode	*monitorInfos = glfwGetVideoMode(monitor);
+		SCREEN_HEIGHT = monitorInfos->height;
+		SCREEN_WIDTH = monitorInfos->width;
+	#endif
+	_windowData = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WIN_NAME, monitor, NULL);
 	if (!_windowData)
 	{
 		glfwTerminate();
@@ -61,11 +63,11 @@ Window::Window() : _lastFrame(0)
 	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	glfwSetFramebufferSizeCallback(_windowData, resize_hook);
-	glfwSetCharCallback(_windowData, keyboard_input);
 	glfwSetKeyCallback(_windowData, key_hook);
+	glfwSetCharCallback(_windowData, keyboard_input);
 	glfwSetInputMode(this->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(this->getWindowData(), move_mouse_hook);
-	glfwSetMouseButtonCallback(this->getWindowData(), mouseBtnCallback);
+	glfwSetMouseButtonCallback(this->getWindowData(), press_mouse_hook);
 
 	glClearColor(0.6, 0.8, 1.0, 1.0f);
 	glEnable(GL_DEPTH_TEST);
@@ -74,10 +76,9 @@ Window::Window() : _lastFrame(0)
 	glFrontFace(GL_CW);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+
 	this->center();
-	this->setIcon("textures/mbatty.bmp");
-	setDefaultMousePos();
+	this->setIcon(MBATTY_TEXTURE_PATH);
 	consoleLog("Creating window, done.", LogSeverity::SUCCESS);
 }
 

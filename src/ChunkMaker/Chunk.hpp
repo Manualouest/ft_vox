@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/15 07:04:59 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/10 22:38:19 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,43 +17,62 @@
 # include "Shader.hpp"
 # include "Camera.hpp"
 
-# define LINELEN 9
+
+
+
+# include <bitset>
+
+
+
+
 # define WATERLINE 63
-# define GROUND 1
-# define WATER 0
 
-extern Camera	*CAMERA;
+extern Camera			*CAMERA;
 
-
-
-struct	Block
+/*
+	slice structure, used for generating the mesh of a chunk, stores the slices of a y level in the chunk
+*/
+struct Slices
 {
-	Block(int blockID)
+	uint64_t				slice, westFaces, eastFaces, rotSlice, northSlices, southSlices = 0;
+	std::vector<uint64_t>	rotSlices;
+
+	Slices()
 	{
-		northFace = blockID;
-		southFace = blockID;
-		eastFace = blockID;
-		westFace = blockID;
-		topFace = blockID;
-		bottomFace = blockID;
+		rotSlices.reserve(32);
 	}
-	Block(int northID, int southID, int eastID, int westID, int topID, int bottomID)
+
+	~Slices()
 	{
-		northFace = northID;
-		southFace = southID;
-		eastFace = eastID;
-		westFace = westID;
-		topFace = topID;
-		bottomFace = bottomID;
+		rotSlices.clear();
+		rotSlices.shrink_to_fit();
 	}
-	int	northFace;
-	int	southFace;
-	int	eastFace;
-	int	westFace;
-	int	topFace;
-	int	bottomFace;
 };
 
+enum Biome
+{
+	PLAINS,
+	DESERT,
+	SNOWY
+};
+
+struct GenInfo
+{
+	GenInfo() : height(0), biome(0), type(0)
+	{}
+	GenInfo(uint8_t h, uint8_t b)
+	{
+		this->height = h;
+		this->biome = b;
+	}
+	GenInfo(uint8_t h, uint8_t b, uint8_t t)
+	{
+		this->height = h;
+		this->biome = b;
+		this->type = t;
+	}
+	uint8_t	height, biome, type;
+};
 
 class Chunk
 {
@@ -62,6 +81,7 @@ class Chunk
 		~Chunk();
 
 		void	generate();
+		void	reGenMesh();
 		void	upload();
 		void	clear();
 
@@ -70,51 +90,60 @@ class Chunk
 
 		glm::vec3				pos;
 		glm::mat4				model;
-		std::vector<char32_t>	ChunkMask;
-		std::vector<char32_t>	RotChunkMask;
+		std::atomic_bool		rendered;
+		std::vector<uint64_t>	ChunkMask;
+		std::vector<uint64_t>	RotChunkMask;
 		int						ChunkMaskSize = 8192;
 		std::vector<char32_t>	WaterMask;
-		int						WaterMaskSize;
-		std::vector<u_int8_t>	Blocks;
-		std::atomic_bool		rendered;
+		std::vector<GenInfo>	Blocks;
 		std::atomic_bool		_edited;
 		float					dist;
+		uint8_t					_minHeight = 0;
+		uint8_t					_maxHeight = 0;
+		uint8_t					_currentMaxHeight = 0;
+		uint8_t					_currentBiome;
 
 		bool	isGenerated() {return (this->_generated);}
 		bool	isGenerating() {return (this->_generating);}
 		bool	isUploaded() {return (this->_uploaded);}
 
+		void	initDist();
+		float	getDist() const;
 		void	setGenerating(bool state) {this->_generating.store(state);}
 		bool	isInRange();
 
 		bool	removeBlock(const glm::ivec3 &targetPos);
 
-		void	initDist();
-		float	getDist() const;
-
 		std::thread::id	_lastThreadID;
 
+		static float	getErosion(glm::vec2 pos);
+		static float	getContinentalness(glm::vec2 pos);
+		static float	getPeaksValleys(glm::vec2 pos);
+
+		float	_currentErosion;
+		float	_currentContinentalness;
+		float	_currentPeaksValleys;
 	private:
-		void	addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
-		void	checkSurround(const glm::ivec3 &pos, const Block &block, const char32_t &slice, const char32_t &rotSlice, const char32_t &up, const char32_t &down);
-		void	placeBlock(glm::ivec3 pos, const std::vector<char32_t> &usedData, char32_t slice, char32_t westFaces, char32_t eastFaces, char32_t northFaces, char32_t southFaces);
-		void	genChunk();
-		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<char32_t>	&usedMask);
-		void	genMesh();
-		void	makeBuffers();
-		void	reset();
+		GenInfo	getGeneration(glm::vec3 pos);
+		int	getGenerationHeight(glm::vec2 pos);
+		GenInfo	getGeneration(glm::vec2 pos);
+
+		void		addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
+		void		placeBlock(glm::ivec3 &pos, const std::vector<uint64_t> &usedData, uint64_t &slice, uint64_t &westFaces, uint64_t &eastFaces, uint64_t &northFaces, uint64_t &southFaces);
+		void		genChunk();
+		void		getRotSlice(std::vector<char32_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<char32_t>	&usedMask);
+		void		fatGetRotSlice(std::vector<uint64_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<uint64_t>	&usedMask);
+		void		genMesh();
+		void		makeBuffers();
+		uint64_t	getGenEdgeSlice(int edge[32], const int &height);
 
 		std::atomic_bool		_generated;
-		std::atomic_bool		_needGen;
 		std::atomic_bool		_generating;
 		std::atomic_bool		_uploaded;
 
 		unsigned int			_EBO = 0;
 		unsigned int			_VAO = 0;
 		unsigned int			_VBO = 0;
-		glm::mat4				_model;
-		uint8_t					_minHeight;
-		uint8_t					_maxHeight;
 		uint32_t				_indicesSize;
 		std::vector<uint32_t>	_indices;
 		std::vector<uint32_t>	_vertices;

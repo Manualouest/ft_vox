@@ -2,7 +2,7 @@ NAME := ft_vox
 
 OBJ_DIR := ./obj/
 INCLUDE_DIRS := ./includes/ ./GLFW/include/GLFW/ ./includes/glad/. ./includes/render ./src/ ./glm/glm/ ./glm/glm/gtc/
-CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/
+CLASSE_HEADERS := Camera/ ChunkMaker/ FrameBuffer/ Texture/ Shader/ Camera/ Window/ Managers/ UI/ UI/Elements UI/Interfaces Terminal/ Scenes/ World/
 
 GLFWARCHIVE = GLFW/build/src/libglfw3.a
 
@@ -28,8 +28,16 @@ CPP_FILES :=	main \
 				FrameBuffer/FrameBuffer \
 				ChunkMaker/Chunk \
 				ChunkMaker/RegionManager \
-				ChunkMaker/ChunkGenerator
-
+				ChunkMaker/ChunkGenerator \
+				ChunkMaker/ChunkGeneratorManager \
+				UI/UIElement \
+				Terminal/Terminal \
+				Terminal/Commands \
+				Managers/Quadtree \
+				Managers/ShaderManager \
+				Managers/TextureManager \
+				Scenes/TitleScreen \
+				Scenes/GameScene
 
 CPP_FILES := $(addsuffix .cpp, $(CPP_FILES))
 
@@ -38,17 +46,17 @@ SOURCES := $(addprefix $(SOURCE_DIR), $(CPP_FILES))
 OBJECTS := $(addprefix $(OBJ_DIR), $(CPP_FILES:.cpp=.o))
 DEPS := $(addprefix $(OBJ_DIR), $(CPP_FILES:.cpp=.d))
 
-CFLAGS = -MP -MMD -g -Wall -Wextra -Werror
+CFLAGS = -MP -MMD -g -Wall -Wextra -Werror -std=c++17
 
 GLAD_PATH = libs/glad
 
 all: glfw glad glm $(NAME)
 
 run: all
-	@./$(NAME) 1000000
+	@./$(NAME) 42
 
 vrun: all
-	@valgrind ./$(NAME)
+	@valgrind ./$(NAME) 42
 
 glfw:
 	@if ls | grep -q "GLFW"; then \
@@ -94,6 +102,7 @@ glm:
 	fi
 
 $(OBJECTS): $(OBJ_DIR)%.o : $(SOURCE_DIR)%.cpp
+	@echo "\033[0;32mCompiling $<\033[0m"
 	@c++ $(CFLAGS) $(CLASSE_HEADERS) $(INCLUDE_DIRS) -c $< -o $@
 
 $(OBJ_DIR):

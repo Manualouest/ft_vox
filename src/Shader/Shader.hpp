@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:16:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/09 17:41:50 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/14 18:47:05 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ class Shader
 		}
 		Shader(const char *vertexPath, const char *fragmentPath);
 		
-		void	use();
+		void	use() const;
 		void	setBool(const std::string &name, bool value) const;
 		void	setInt(const std::string &name, int value) const;
 		void	setFloat(const std::string &name, float value) const;

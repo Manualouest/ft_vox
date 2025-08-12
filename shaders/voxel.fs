@@ -7,6 +7,8 @@ uniform sampler2D dirtTexture;
 uniform sampler2D grassTexture;
 uniform sampler2D sandTexture;
 uniform sampler2D grassSideTexture;
+uniform sampler2D waterTexture;
+uniform sampler2D missingTexture;
 
 uniform sampler2D terrainDepthTex;
 uniform sampler2D waterDepthTex;
@@ -47,6 +49,8 @@ vec3	getBlockTexture(int ID)
 		return (texture(grassSideTexture, texCoord).rgb);
 	if (ID == 5)
 		return (texture(sandTexture, texCoord).rgb);
+	if (ID == 42)
+		return (texture(missingTexture, texCoord).rgb);
 	return (texture(grassTexture, texCoord).rgb);
 }
 
@@ -64,26 +68,14 @@ void main()
 
 	if (int(blockType) == 0) //WATER
 	{
-		if (getDepth)
-			discard ;
+		shininess = 256.0f;
+    	actualShiness = 1.0;
 		alpha = 0.8;
 		vec3 ndc = clipSpace.xyz / clipSpace.w;
 	    ndc.xy = ndc.xy / 2 + 0.5;
 	
-	    //FIGURE OUT WATER COLOR BASED ON AMOUNT TRAVERSED
-	
-	    //Takes terrain depth value from texture
-	    float terrainDepthValue = texture(terrainDepthTex, ndc.xy).r;
-	    float distToTerrain = LinearizeDepth(terrainDepthValue, 0.1, RENDER_DISTANCE);
-	
-	    //Takes water depth value from texture
-	    float waterDepthValue = texture(waterDepthTex, ndc.xy).r;
-	    float distToWater = LinearizeDepth(waterDepthValue, 0.1, RENDER_DISTANCE);
-	
-	    //Gets the amount of water traversed (between terrain and surface of water)
-	    float waterDepth = distToTerrain - distToWater;
-	
-	    color = mix(SHORE_COLOR, DEEP_COLOR, 1 - exp(-waterDepth * 20));
+	    color = SHORE_COLOR;
+		color *= texture(waterTexture, texCoord).rgb;
 	    color = clamp(color, 0, 1);
 	}
 

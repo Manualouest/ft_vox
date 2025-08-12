@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 12:17:41 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/09 18:08:08 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/25 22:25:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,55 +23,43 @@ struct	ShaderInfos
 	const char	*fragment;
 };
 
+/*
+	Shader manager to store all shaders globally in a scene.
+*/
 class	ShaderManager
 {
 	public:
-		ShaderManager()
-		{
-		}
-		~ShaderManager()
-		{
-			for (auto it = shaders.begin(); it != shaders.end(); it++)
-				delete it->second;
-		}
+		ShaderManager() {}
+		~ShaderManager();
 
-		bool	erase(const std::string &name)
-		{
-			std::map<std::string, Shader *>::iterator	finder;
-			finder = shaders.find(name);
-			if (finder == shaders.end())
-			{
-				consoleLog("WARNING Tried to unload a shader thats not loaded: " + name, LogSeverity::WARNING);
-				return (0);
-			}
-			shaders.erase(finder);
-			return (1);
-		}
-		Shader	*load(ShaderInfos infos)
-		{
-			if (shaders.find(infos.name) != shaders.end())
-			{
-				consoleLog("WARNING Tried to load a shader thats already loaded (will be using the existing shader): " + infos.name, LogSeverity::WARNING);
-				return (this->get(infos.name));
-			}
-			return (shaders.insert(std::make_pair(infos.name, new Shader(infos.vertex, infos.fragment))).first->second);
-		}
-		Shader	*get(const std::string &name)
-		{
-			std::map<std::string, Shader *>::iterator	finder = shaders.find(name);
-			if (finder == shaders.end())
-			{
-				consoleLog("ERROR Tried to access a shader thats not loaded, might cause a crash: " + name, LogSeverity::ERROR);
-				return (NULL);
-			}
-			return (finder->second);
-		}
-		Shader	*operator[](const std::string &name)
-		{
-			return (this->get(name));
-		}
+		/*
+			Erases a shader from the manager, freing all its data
+
+			@param name Key of the shader to remove
+		*/
+		bool	erase(const std::string &name);
+
+		/*
+			Loads a shader giving it a key and 2 shaders (vertex/fragment)
+
+			@param infos Struct containing name, vertex and fragment
+			@param infos.name Key to name the shader, will be used to retrieve it
+			@param infos.vertex Vertex shader to load
+			@param infos.fragment Fragment shader to load
+		*/
+		Shader	*load(ShaderInfos infos);
+
+		/*
+			Returns a shader based on the key, if no shader exists under that name returns NULL
+
+			@param name Key of the shader to get
+		*/
+		Shader	*get(const std::string &name);
+
+		//Wrapper around get method
+		Shader	*operator[](const std::string &name);
 	private:
-		std::map<std::string, Shader *>	shaders;
+		std::unordered_map<std::string, Shader *>	shaders;
 };
 
 extern	ShaderManager	*SHADER_MANAGER;

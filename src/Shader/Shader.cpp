@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:15:58 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/08 17:46:51 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/07/14 18:46:51 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,32 +129,37 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath)
 	this->vertPath = vertexPath;
 }
 
-void	Shader::use()
+void	Shader::use() const
 {
 	glUseProgram(this->ID);
 }
 
 void	Shader::setBool(const std::string &name, bool value) const
 {
+	this->use();
 	glUniform1i(glGetUniformLocation(this->ID, name.c_str()), (int)value);
 }
 
 void	Shader::setInt(const std::string &name, int value) const
 {
+	this->use();
 	glUniform1i(glGetUniformLocation(this->ID, name.c_str()), value);
 }
 
 void	Shader::setFloat(const std::string &name, float value) const
 {
+	this->use();
 	glUniform1f(glGetUniformLocation(this->ID, name.c_str()), value);
 }
 
 void	Shader::setMat4(const std::string &name, glm::mat4 value) const
 {
+	this->use();
 	glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void	Shader::setVec3(const std::string &name, glm::vec3 value) const
 {
+	this->use();
 	glUniform3fv(glGetUniformLocation(this->ID, name.c_str()), 1, glm::value_ptr(value));
 }

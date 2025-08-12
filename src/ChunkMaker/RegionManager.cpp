@@ -3,18 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   RegionManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/15 12:08:49 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/07/29 23:56:00 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RegionManager.hpp"
-#include "ChunkGenerator.hpp"
+#include "ChunkGeneratorManager.hpp"
 
-extern	float	SPEEDBOOST;
-extern Chunk	*CAMCHUNK;
+extern	float SPEEDBOOST;
 
 
 Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFar)
@@ -36,7 +35,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 RegionManager::RegionManager()
 {
 	RenderDist = 16;
-	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(16384.0f, 16384.0f));
+	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(WORLD_SIZE, WORLD_SIZE));
 }
 
 RegionManager::~RegionManager()
@@ -57,7 +56,7 @@ void	RegionManager::UpdateChunks()
 	_QT->getVisibleChunks(_renderChunks, camFrustum, boundingBox);
 
 
-	// sortChunks();	
+	sortChunks();
 	CHUNK_GENERATOR->deposit(_renderChunks);
 }
 
@@ -72,23 +71,11 @@ extern ShaderManager *SHADER_MANAGER;
 
 void	RegionManager::Render(Shader &shader)
 {
-	UpdateChunks();
-	sortChunks();
-	MAIN_FRAME_BUFFER->use();
-
-
     glEnable(GL_DEPTH_TEST);
 	shader.use();
 	CAMERA->setViewMatrix(shader);
-
-
 	for (auto *chunk : _renderChunks)
-	{
 		chunk->draw(shader);
-	}
-
-    glDisable(GL_DEPTH_TEST);
-
 }
 
 void	RegionManager::sortChunks()
