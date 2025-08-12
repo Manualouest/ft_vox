@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 22:45:46 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 23:14:45 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,8 @@ void	selectWorld(ButtonInfo infos)
 
 static void	_buildWorldSelection(Interface *interface);
 
+std::string	currentWorldID;
+
 void	startWorldButton(ButtonInfo infos)
 {
 	Toggle	*deleteToggle = static_cast<Toggle*>(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection")->getElement("toggle_delete"));
@@ -81,11 +83,9 @@ void	startWorldButton(ButtonInfo infos)
 		_buildWorldSelection(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection"));
 		return ;
 	}
-	World	*world = WORLD_MANAGER->get(infos.id);
-	if (!world)
-		world = WORLD_MANAGER->load(infos.id, rand());
-	seed = world->getSeed();
-	WORLD_MANAGER->use(infos.id);
+
+	currentWorldID = infos.id;
+
 	startGame();
 }
 
@@ -140,11 +140,17 @@ static void	_buildWorldSelection(Interface *interface)
 		});
 }
 
+#include "RegionManager.hpp"
+
 static void	_createNewWorld(std::string name, uint seed)
 {
 	if (name.size() <= 0)
 		return ;
+
 	WORLD_MANAGER->load(name, seed);
+	WORLD_MANAGER->get(name)->saveWorldInfo("pos_x", std::to_string(WORLD_SIZE / 2));
+	WORLD_MANAGER->get(name)->saveWorldInfo("pos_y", std::to_string(100));
+	WORLD_MANAGER->get(name)->saveWorldInfo("pos_z", std::to_string(WORLD_SIZE / 2));
 	_buildWorldSelection(SCENE_MANAGER->get("title_scene")->getInterfaceManager()->get("world_selection"));
 }
 

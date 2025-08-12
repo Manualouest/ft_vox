@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/12 19:03:53 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 23:50:47 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 
 RegionManager::RegionManager()
 {
-	RenderDist = 16;
+	RenderDist = 5;
 	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(WORLD_SIZE, WORLD_SIZE));
 }
 
@@ -59,11 +59,11 @@ void	RegionManager::UpdateChunks()
 	VolumeAABB	boundingBox(glm::vec3(16.0f, 0.0f, 16.0f), glm::vec3(16.0f, 256.0f, 16.0f));
 
 
-	int	startX = (CAMERA->pos.x / 32) - RenderDist / 2;
-	int	startZ = (CAMERA->pos.z / 32) - RenderDist / 2;
+	int	startX = (CAMERA->pos.x / 32) - RenderDist;
+	int	startZ = (CAMERA->pos.z / 32) - RenderDist;
 
-	int	endX = (CAMERA->pos.x / 32) + RenderDist / 2;
-	int	endZ = (CAMERA->pos.z / 32) + RenderDist / 2;
+	int	endX = (CAMERA->pos.x / 32) + RenderDist;
+	int	endZ = (CAMERA->pos.z / 32) + RenderDist;
 
 	for (int x = startX; x < endX; x++)
 	{
@@ -89,6 +89,13 @@ void	RegionManager::UpdateChunks()
 	sortChunks(_renderChunks);
 	sortChunks(_loadedChunks);
 	CHUNK_GENERATOR->deposit(_loadedChunks);
+}
+
+bool	RegionManager::isFullyGenerated()
+{
+	if (getGeneratingChunksCount())
+		return (false);
+	return (true);
 }
 
 #include "FrameBuffer.hpp"

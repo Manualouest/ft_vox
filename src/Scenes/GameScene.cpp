@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 16:08:52 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 23:52:23 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ extern bool						F3;
 extern Window					*WINDOW;
 
 static bool	leavingScene = false;
+static bool	enteringWorld = false;
 
 static bool crosshair = false;
 
@@ -115,6 +116,7 @@ static void	_frameKeyHook(Scene *)
 {
 	if (PAUSED || TERMINAL->isActive())
 		return ;
+
 	float cameraSpeed = 15 * WINDOW->getDeltaTime();
 	float	speedBoost = 1.0f;
 
@@ -141,7 +143,7 @@ static void	_frameKeyHook(Scene *)
 
 void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 {
-	if (PAUSED)
+	if (PAUSED || enteringWorld || leavingScene)
 		return ;
 
 	float xoffset = xpos - WINDOW->getLastMouseX();
@@ -170,6 +172,9 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 
 void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 {
+	if (PAUSED || enteringWorld || leavingScene)
+		return ;
+
 	if (CHUNKS && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
 		glm::vec3	rayDir = CAMERA->front;
@@ -288,6 +293,17 @@ static void	_buildInterface(Scene *scene)
 		[](std::string &label)
 		{
 			label = getFPSString(F3 && !PAUSED);
+		}, true));
+
+	Interface	*waiting = interfaces->load("waiting");
+	waiting->addElement("generated_chunks", new Text(UIAnchor::UI_CENTER, "generated chunks", glm::vec2(0, 0),
+		[](std::string &label)
+		{
+			static uint	generatedChunks = 0;
+			uint	loadedChunks = CHUNKS->getLoadedChunkCount();
+
+			generatedChunks = CHUNKS->getGeneratingChunksCount();
+			label = "generated " + std::to_string(loadedChunks - generatedChunks) + "/" + std::to_string(loadedChunks);
 		}, true));
 
 	Interface	*debug = interfaces->load("debug");
@@ -521,6 +537,15 @@ void	GameScene::render(Scene *scene)
 {
 	renderStartTime = glfwGetTime();
 
+	if (enteringWorld)
+	{
+		glDisable(GL_DEPTH_TEST);
+		FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID());
+		scene->getInterfaceManager()->get("waiting")->draw();
+		glEnable(GL_DEPTH_TEST);
+		return ;
+	}
+
 	if (leavingScene)
 	{
 		glDisable(GL_DEPTH_TEST);
@@ -561,10 +586,27 @@ void	GameScene::render(Scene *scene)
 		frameTimes.insert(frameTimes.begin(), {currentTime - frameStartTime, currentTime - renderStartTime, updateTime});
 }
 
+void	_checkWorldLoaded()
+{
+	if (CHUNKS->isFullyGenerated())
+	{
+		enteringWorld = false;
+		resumeGame();
+	}
+}
+
 void	GameScene::update(Scene *scene)
 {
 	frameStartTime = glfwGetTime();
 	double updateStartTime = glfwGetTime();
+
+	if (enteringWorld)
+	{
+		CHUNKS->UpdateChunks();
+		scene->getInterfaceManager()->update();
+		_checkWorldLoaded();
+		return ;
+	}
 
 	_frameKeyHook(scene);
 	scene->getCamera()->update();
@@ -589,11 +631,20 @@ void	GameScene::close(Scene *)
 		CHUNKS = NULL;
 	}
 	leavingScene = false;
+	enteringWorld = false;
 	consoleLog("Closed a world", LogSeverity::NORMAL);
 }
 
+extern std::string	currentWorldID;
+
 void	GameScene::open(Scene *)
 {
+	World	*world = WORLD_MANAGER->get(currentWorldID);
+	if (!world)
+		world = WORLD_MANAGER->load(currentWorldID, rand());
+	seed = world->getSeed();
+	WORLD_MANAGER->use(currentWorldID);
+
 	CAMERA->pos = WORLD_MANAGER->getCurrent()->getPlayerPos();
 	CAMERA->pitch = WORLD_MANAGER->getCurrent()->getFloatInfo("pitch");
 	CAMERA->yaw = WORLD_MANAGER->getCurrent()->getFloatInfo("yaw");
@@ -602,6 +653,7 @@ void	GameScene::open(Scene *)
 		CHUNK_GENERATOR = new ChunkGeneratorManager();
 	if (!CHUNKS)
 		CHUNKS = new RegionManager();
-	resumeGame();
+	enteringWorld = true;
+	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("waiting");
 	consoleLog("Opened a world", LogSeverity::NORMAL);
 }
