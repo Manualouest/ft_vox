@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/13 17:55:09 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 15:54:15 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:45:57 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,8 @@ void	ChunkGenerator::_process()
 
 	for (Chunk * chunk : _deposit)
 	{
-		chunk->generate();
+		if (chunk->loaded)
+			chunk->generate();
 		chunk->setGenerating(false);
 	}
 
