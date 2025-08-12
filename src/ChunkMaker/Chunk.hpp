@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/11 22:57:04 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 21:16:27 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,11 +41,13 @@ struct Slices
 	}
 };
 
-enum Biome
+enum BiomeType
 {
+	OCEAN,
+	RIVER,
 	PLAINS,
-	DESERT,
-	SNOWY
+	HILLS,
+	MOUNTAINS
 };
 
 struct GenInfo
@@ -111,10 +113,15 @@ class Chunk
 		static float	getErosion(const glm::vec2 &pos);
 		static float	getContinentalness(const glm::vec2 &pos);
 		static float	getPeaksValleys(const glm::vec2 &pos);
+		static float	getTemperature(const glm::vec2 &pos);
+		BiomeType	getBiomeType();
+		uint8_t	getBiomeBlock(float y, BiomeType type);
 
 		float	_currentErosion;
 		float	_currentContinentalness;
 		float	_currentPeaksValleys;
+		BiomeType	_currentBiomeType;
+		float	_currentTemperature;
 	private:
 		GenInfo	getGeneration(const glm::vec3 &pos);
 		int	getGenerationHeight(const glm::vec2 &pos);

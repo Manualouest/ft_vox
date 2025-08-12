@@ -34,8 +34,14 @@ float LinearizeDepth(float depth, float near, float far)
 uniform bool getDepth;
 
 const vec3  SHORE_COLOR = vec3(0.3, 0.8, 0.87);
-const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0); 
+const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0);
 const vec3  FOG_COLOR = vec3(0.6, 0.8, 1.0);
+
+uniform sampler2D sandstoneTexture;
+uniform sampler2D redSandstoneTexture;
+uniform sampler2D terracottaTexture;
+uniform sampler2D snowTexture;
+uniform sampler2D redSandTexture;
 
 vec3	getBlockTexture(int ID)
 {
@@ -49,6 +55,16 @@ vec3	getBlockTexture(int ID)
 		return (texture(grassSideTexture, texCoord).rgb);
 	if (ID == 5)
 		return (texture(sandTexture, texCoord).rgb);
+	if (ID == 7)
+		return (texture(sandstoneTexture, texCoord).rgb);
+	if (ID == 8)
+		return (texture(redSandstoneTexture, texCoord).rgb);
+	if (ID == 9)
+		return (texture(terracottaTexture, texCoord).rgb);
+	if (ID == 10)
+		return (texture(snowTexture, texCoord).rgb);
+	if (ID == 11)
+		return (texture(redSandTexture, texCoord).rgb);
 	if (ID == 42)
 		return (texture(missingTexture, texCoord).rgb);
 	return (texture(grassTexture, texCoord).rgb);
@@ -73,7 +89,7 @@ void main()
 		alpha = 0.8;
 		vec3 ndc = clipSpace.xyz / clipSpace.w;
 	    ndc.xy = ndc.xy / 2 + 0.5;
-	
+
 	    color = SHORE_COLOR;
 		color *= texture(waterTexture, texCoord).rgb;
 	    color = clamp(color, 0, 1);
@@ -89,14 +105,14 @@ void main()
     vec3 ambient = lightAmbient * color;
 
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(-lightDirection);  
+    vec3 lightDir = normalize(-lightDirection);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = lightDiffuse * diff * color;  
-    
+    vec3 diffuse = lightDiffuse * diff * color;
+
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    vec3 specular = lightSpecular * spec * actualShiness;  
-        
+    vec3 specular = lightSpecular * spec * actualShiness;
+
     vec3 result = ambient + diffuse + specular;
     //DIRECTIONAL LIGHT
 

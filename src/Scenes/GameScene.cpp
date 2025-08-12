@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/10 22:46:40 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 22:34:35 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -324,6 +324,9 @@ static void	_buildInterface(Scene *scene)
 	debug->addElement("text_peaksvalleys", new Text(UIAnchor::UI_TOP_LEFT, "peaks & valleys", glm::vec2(0, 128),
 		[](std::string &label){label = "peaks & valleys: " + std::to_string(Chunk::getPeaksValleys(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
 
+	debug->addElement("text_temperature", new Text(UIAnchor::UI_TOP_LEFT, "temperature", glm::vec2(0, 144),
+		[](std::string &label){label = "temperature: " + std::to_string(Chunk::getTemperature(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
+
 	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
 
@@ -541,6 +544,11 @@ void	GameScene::render(Scene *scene)
 	Texture::use("grassSideTexture", TEXTURE_MANAGER->get(GRASS_SIDE_TEXTURE_PATH)->getID(), 4, voxelShader);
 	Texture::use("sandTexture", TEXTURE_MANAGER->get(SAND_TEXTURE_PATH)->getID(), 5, voxelShader);
 	Texture::use("waterTexture", TEXTURE_MANAGER->get(WATER_TEXTURE_PATH)->getID(), 6, voxelShader);
+	Texture::use("sandstoneTexture", TEXTURE_MANAGER->get("assets/textures/blocks/sandstone.bmp")->getID(), 7, voxelShader);
+	Texture::use("redSandstoneTexture", TEXTURE_MANAGER->get("assets/textures/blocks/red_sandstone.bmp")->getID(), 8, voxelShader);
+	Texture::use("terracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/terracotta.bmp")->getID(), 9, voxelShader);
+	Texture::use("snowTexture", TEXTURE_MANAGER->get("assets/textures/blocks/snow.bmp")->getID(), 10, voxelShader);
+	Texture::use("redSandTexture", TEXTURE_MANAGER->get("assets/textures/blocks/red_sand.bmp")->getID(), 11, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 
 	FrameBuffer::reset();

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/11 23:49:56 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 22:49:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -634,7 +634,7 @@ Spline continentalnessToHeight =
 {
 	{
 		{ -1.0f, 20},  // deep ocean
-		{ -0.2f, 63},  // shallow ocean
+		{ -0.3f, 62},  // shallow ocean
 		{ -0.15f,  64},  // plains
 		{ 0.1f,  72},  // plains
 		{ 0.5f,  120},  // hills
@@ -648,28 +648,28 @@ Spline continentalnessToHeight =
 Spline erosionToHeight =
 {
 	{
-		{-1.0f, 30},
 		{0, 0},
-		{ 0.3,  -5.0f},
-		{ 1.0f,  -20.0f}
+		{0.5, 5},
+		{0.7, 10},
+		{1.0f, 40},
 	}
 };
 
 Spline peaksValleysToHeight =
 {
 	{
-		{-1, -40},
-		{0, -20},
+		{-1, -25},
+		{-0.8, -18},
+		{-0.1, -16},
+		{0, -15},
 		{0.08, 0},
-		{0.09, 0},
-		{0.5, 25},
-		{1, 100}
+		{1, 0}
 	}
 };
 
 float	Chunk::getErosion(const glm::vec2 &pos)
 {
-	return (calcNoise(pos, 0.001, 1, 3));
+	return (calcNoise(pos, 0.001, 1, 6));
 }
 
 float	Chunk::getContinentalness(const glm::vec2 &pos)
@@ -679,7 +679,7 @@ float	Chunk::getContinentalness(const glm::vec2 &pos)
 
 float	Chunk::getPeaksValleys(const glm::vec2 &pos)
 {
-	return (std::abs(calcNoise(pos, 0.003, 1, 2)));
+	return (std::abs(calcNoise(pos, 0.003, 1, 4)));
 }
 
 int	Chunk::getGenerationHeight(const glm::vec2 &pos)
@@ -702,6 +702,174 @@ int	Chunk::getGenerationHeight(const glm::vec2 &pos)
 	return (res);
 }
 
+BiomeType	Chunk::getBiomeType()
+{
+	BiomeType	res;
+
+	if (_currentPeaksValleys < 0.08 && _currentContinentalness < 0.15) // RIVER
+		res = BiomeType::RIVER;
+
+	else if (_currentContinentalness < 0.13 && _currentErosion < 0.5 && _currentPeaksValleys > 0.07) // PLAINS
+		res = BiomeType::PLAINS;
+
+	else if (_currentContinentalness > 0.2 && _currentErosion < 0) //MOUNTAINS
+		res = BiomeType::MOUNTAINS;
+
+	else //HILLS
+		res = BiomeType::HILLS;
+
+	return (res);
+}
+
+/*
+
+BlockTypes:
+
+0 = air
+1 = water
+2 = stone
+3 = dirt
+4 = grass
+6 = sand
+
+*/
+
+#define STONE_ID 2
+#define DIRT_ID 3
+#define GRASS_ID 4
+#define SAND_ID 6
+
+uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
+{
+	if (type == BiomeType::MOUNTAINS)
+	{
+		if (_currentTemperature > 0.2)
+		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (STONE_ID);
+			else if (y == _currentMaxHeight)
+				return (SAND_ID);
+			if (y == _currentMaxHeight - 1)
+				return (STONE_ID);
+			else
+				return (STONE_ID);
+		}
+		else if (_currentTemperature < -0.2)
+		{
+				return (DIRT_ID);
+		}
+		else
+		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (DIRT_ID);
+			else if (y == _currentMaxHeight)
+				return (STONE_ID);
+			if (y == _currentMaxHeight - 1)
+				return (STONE_ID);
+			else
+				return (STONE_ID);
+		}
+	}
+	if (type == BiomeType::HILLS)
+	{
+		if (_currentTemperature > 0.2)
+		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (STONE_ID);
+			else if (y == _currentMaxHeight)
+				return (SAND_ID);
+			if (y == _currentMaxHeight - 1)
+				return (DIRT_ID);
+			else
+				return (STONE_ID);
+		}
+		else if (_currentTemperature < -0.2)
+		{
+				return (DIRT_ID);
+		}
+		else
+		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (DIRT_ID);
+			else if (y == _currentMaxHeight)
+				return (GRASS_ID);
+			if (y == _currentMaxHeight - 1)
+				return (DIRT_ID);
+			else
+				return (STONE_ID);
+		}
+	}
+	if (type == BiomeType::PLAINS)
+	{
+		if (_currentTemperature > 0.2)
+		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (STONE_ID);
+			else if (y == _currentMaxHeight)
+				return (SAND_ID);
+			if (y >= _currentMaxHeight - 3)
+				return (SAND_ID);
+			else
+				return (STONE_ID);
+		}
+		else if (_currentTemperature < -0.2)
+		{
+				return (DIRT_ID);
+		}
+		else
+		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (SAND_ID);
+			else if (y == _currentMaxHeight)
+				return (GRASS_ID);
+			if (y >= _currentMaxHeight - 3)
+				return (DIRT_ID);
+			else
+				return (STONE_ID);
+		}
+	}
+	if (type == BiomeType::RIVER)
+	{
+		if (_currentTemperature > 0.2)
+		{
+			if (y == _currentMaxHeight && _currentMaxHeight + 16 > WATERLINE)
+				return (STONE_ID);
+			else if (y == _currentMaxHeight)
+				return (STONE_ID);
+			if (y >= _currentMaxHeight - 3 && _currentMaxHeight + 16 > WATERLINE)
+				return (SAND_ID);
+			if (y >= _currentMaxHeight - 8)
+				return (DIRT_ID);
+			else
+				return (STONE_ID);
+		}
+		else if (_currentTemperature < -0.2)
+		{
+			return (DIRT_ID);
+		}
+		else
+		{
+			if (y == _currentMaxHeight && _currentMaxHeight + 16 > WATERLINE)
+				return (SAND_ID);
+			else if (y == _currentMaxHeight)
+				return (DIRT_ID);
+			if (y >= _currentMaxHeight - 3 && _currentMaxHeight + 16 > WATERLINE)
+				return (SAND_ID);
+			if (y >= _currentMaxHeight - 8)
+				return (DIRT_ID);
+			else
+				return (STONE_ID);
+		}
+	}
+	(void)y;(void)type;
+	return (6);
+}
+
+float	Chunk::getTemperature(const glm::vec2 &pos)
+{
+	return (calcNoise(pos, 0.000375, 1, 6));
+}
+
 GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
 {
 	if (_currentMaxHeight == 0)
@@ -717,23 +885,10 @@ GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
 		return (res);
 	}
 
-	//Gets world "paint" (dirt, sand and all)
-	if (pos.y == _currentMaxHeight)
-	{
-		if (pos.y <= WATERLINE)
-			res.type = 6;
-		else
-			res.type = 4;
-	}
-	else if (pos.y == _currentMaxHeight - 1)
-	{
-		if (pos.y <= WATERLINE)
-			res.type = 6;
-		else
-			res.type = 3;
-	}
-	else
-		res.type = 2;
+	_currentBiomeType = getBiomeType();
+	_currentTemperature = getTemperature(glm::vec2(pos.x, pos.z));
+
+	res.type = getBiomeBlock(pos.y, _currentBiomeType);
 
 	//Will be decoration?? (trees, structures)
 
