@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/10 22:46:40 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:08:52 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -571,7 +571,6 @@ void	GameScene::update(Scene *scene)
 	scene->getInterfaceManager()->update();
 	_updateShaders(SHADER_MANAGER);
 	CHUNKS->UpdateChunks();
-	CHUNKS->getQuadTree()->pruneDeadLeaves(CHUNKS->getQuadTree());
 	updateTime = glfwGetTime() - updateStartTime;
 }
 

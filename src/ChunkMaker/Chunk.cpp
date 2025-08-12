@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/11 23:49:56 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:07:37 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,7 @@ float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness)
 #define OCEAN_AMP 0.1
 #define OCEAN_NOISE 3
 
-Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), _edited(false), _generated(false), _generating(false), _uploaded(false)
+Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), loaded(false), _edited(false), _generated(false), _generating(false), _uploaded(false)
 {
 	_minHeight = 255;
 	_maxHeight = 0;

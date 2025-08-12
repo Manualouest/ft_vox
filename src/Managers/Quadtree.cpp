@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/28 16:55:03 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:04:35 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,11 +37,11 @@ Quadtree::~Quadtree()
 void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB)
 {
 	glm::vec2	npos = {0, 0};
-	
+
 	if (isLeaf())
 	{
 		Chunk *chunk = getLeaf(glm::vec2(_pos.x, _pos.y));
-		
+
 		AABB.extents = glm::vec3(16, (std::max(chunk->_minHeight, chunk->_maxHeight) + 16) / 2, 16);
 		AABB.center = glm::vec3(16, AABB.extents.y, 16);
 
@@ -72,7 +72,11 @@ void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &cam
 			if (AABB.isOnFrustum(camFrustum, glm::vec3(npos.x, 0, npos.y)))
 			{
 				if (!_branches[i])
+				{
+					if ((_size / 2).x <= 32)
+						continue ;
 					_branches[i] = new Quadtree(npos, (QTBranch)i, _size / 2);
+				}
 				_branches[i]->getVisibleChunks(chunks, camFrustum, AABB);
 			}
 		}
@@ -185,13 +189,11 @@ void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 		if (branch->isLeaf())
 			if (!branch->_leaf->isGenerating()
 				&& !branch->_leaf->rendered
-				&& !branch->_leaf->_edited)
+				&& !branch->_leaf->_edited
+				&& !branch->_leaf->loaded)
 			{
-				if (branch->_leaf->getDistance() > RENDER_DISTANCE) // !FIX HERE, WRONG RENDER DISTANCE BEING USED OR SMTH (TOO MANY CHUNKS ARE STAYING)
-				{
-					delete branch;
-					_branches[quadrant] = NULL;
-				}
+				delete branch;
+				_branches[quadrant] = NULL;
 			}
 			else
 				return ;

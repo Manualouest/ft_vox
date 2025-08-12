@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/29 23:56:00 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:13:51 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,17 +47,45 @@ void	RegionManager::UpdateChunks()
 {
 	for (Chunk *chunk : _renderChunks)
 		chunk->rendered = false;
+	for (Chunk *chunk : _loadedChunks)
+	{
+		chunk->loaded = false;
+		chunk->rendered = false;
+	}
 	_renderChunks.clear();
+	_loadedChunks.clear();
 
 	Frustum	camFrustum = createFrustumFromCamera(SCREEN_WIDTH / SCREEN_HEIGHT, glm::radians(FOV), 0.0001f, RenderDist * 32);
 	VolumeAABB	boundingBox(glm::vec3(16.0f, 0.0f, 16.0f), glm::vec3(16.0f, 256.0f, 16.0f));
 
 
+	int	startX = (CAMERA->pos.x / 32) - RenderDist / 2;
+	int	startZ = (CAMERA->pos.z / 32) - RenderDist / 2;
+
+	int	endX = (CAMERA->pos.x / 32) + RenderDist / 2;
+	int	endZ = (CAMERA->pos.z / 32) + RenderDist / 2;
+
+	for (int x = startX; x < endX; x++)
+	{
+		for (int z = startZ; z < endZ; z++)
+		{
+			Chunk *tmp = _QT->growBranch(glm::vec2(x * 32, z * 32));
+			if (tmp)
+			{
+				tmp->loaded = true;
+				_loadedChunks.push_back(tmp);
+			}
+		}
+	}
+
+	_QT->pruneDeadLeaves(_QT);
+
 	_QT->getVisibleChunks(_renderChunks, camFrustum, boundingBox);
 
 
-	sortChunks();
-	CHUNK_GENERATOR->deposit(_renderChunks);
+	sortChunks(_renderChunks);
+	sortChunks(_loadedChunks);
+	CHUNK_GENERATOR->deposit(_loadedChunks);
 }
 
 #include "FrameBuffer.hpp"
@@ -78,12 +106,12 @@ void	RegionManager::Render(Shader &shader)
 		chunk->draw(shader);
 }
 
-void	RegionManager::sortChunks()
+void	RegionManager::sortChunks(std::vector<Chunk *> &chunks)
 {
-	for (std::vector<Chunk *>::iterator it = _renderChunks.begin(); it != _renderChunks.end(); ++it)
+	for (std::vector<Chunk *>::iterator it = chunks.begin(); it != chunks.end(); ++it)
 		(*it)->initDist();
 
-	std::sort(_renderChunks.begin(), _renderChunks.end(),
+	std::sort(chunks.begin(), chunks.end(),
 		[](const Chunk *cp1, const Chunk *cp2)
 		{
 			return (cp1->getDist() > cp2->getDist());

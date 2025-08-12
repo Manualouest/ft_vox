@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/11 22:57:04 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:04:04 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,6 +83,7 @@ class Chunk
 		glm::vec3				pos;
 		glm::mat4				model;
 		std::atomic_bool		rendered;
+		std::atomic_bool		loaded;
 		std::vector<char32_t>	ChunkMask;
 		std::vector<char32_t>	RotChunkMask;
 		int						ChunkMaskSize = 8192;

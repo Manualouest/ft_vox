@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:32:56 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/15 13:22:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:01:01 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class RegionManager
 		void	UpdateChunks();
 		void	Render(Shader &shader);
 
-		
+
 		Quadtree	*getQuadTree() {return (this->_QT);}
 		void	setRenderDist(uint renderDist) {this->RenderDist = renderDist;}
 		uint	getRenderDist() {return (this->RenderDist);}
@@ -35,9 +35,10 @@ class RegionManager
 	private:
 		uint	RenderDist;
 		bool	isInRange();
-		void	sortChunks();
-	
+		void	sortChunks(std::vector<Chunk *> &chunks);
+
 		std::vector<Chunk *>	_renderChunks;
+		std::vector<Chunk *>	_loadedChunks;
 		Quadtree				*_QT;
 };
 

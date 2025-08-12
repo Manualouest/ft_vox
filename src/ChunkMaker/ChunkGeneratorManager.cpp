@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 23:56:06 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 16:32:03 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,15 +16,20 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 {
 	if (!_depositMutex.try_lock())
 		return ;
-	// LOCK(_depositMutex);
 
-	_deposit.reserve(chunks.size());
+	std::vector<Chunk*>	cpy = chunks;
+	std::reverse(cpy.begin(), cpy.end());
 
-	for (Chunk * chunk : chunks)
+	_deposit.reserve(cpy.size());
+
+	for (Chunk * chunk : cpy)
 		if (!chunk->isGenerated() && !chunk->isGenerating())
 		{
 			chunk->setGenerating(true);
-			_deposit.push_back(chunk);
+			if (chunk->rendered)
+				_priority.push_back(chunk);
+			else
+				_deposit.push_back(chunk);
 		}
 
 	_deposit.shrink_to_fit();
@@ -38,6 +43,18 @@ void	ChunkGeneratorManager::_send()
 		return ;
 
 	LOCK(_depositMutex);
+
+	for (ChunkGenerator *generator : _generators)
+	{
+		uint	sizeToAdd = std::min(_priority.size(), (size_t)CHUNKS_PER_THREAD);
+		if (sizeToAdd <= CHUNKS_PER_THREAD && sizeToAdd > 0 && !generator->isWorking())
+		{
+			if (generator->deposit({_priority.begin(), _priority.begin() + sizeToAdd}))
+				_priority.erase(_priority.begin(), _priority.begin() + sizeToAdd);
+		}
+	}
+	if (_priority.empty())
+		_priority.shrink_to_fit();
 
 	for (ChunkGenerator *generator : _generators)
 	{
