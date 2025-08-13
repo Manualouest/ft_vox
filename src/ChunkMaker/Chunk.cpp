@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 10:57:03 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/13 19:33:53 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -731,6 +731,11 @@ BlockTypes:
 3 = dirt
 4 = grass
 6 = sand
+8 = sandstone
+9 = terracotta
+12 = red sandstone
+11 = snow
+12 = red sand
 
 */
 
@@ -746,17 +751,33 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 		if (_currentTemperature > 0.2)
 		{
 			if (y == _currentMaxHeight && y <= WATERLINE)
-				return (STONE_ID);
-			else if (y == _currentMaxHeight)
-				return (SAND_ID);
-			if (y == _currentMaxHeight - 1)
-				return (STONE_ID);
+				return (DIRT_ID);
+			else if (y >= _currentMaxHeight - 20)
+			{
+				float	terracottaNoise = calcNoise(glm::vec2(y, y), 0.15, 1, 1);
+				if (terracottaNoise > 0.1 && terracottaNoise < 0.2)
+					return (13);
+				if (terracottaNoise < 0.1 && terracottaNoise > 0)
+					return (14);
+				if (terracottaNoise < -0.2 && terracottaNoise > -0.3)
+					return (15);
+				if (terracottaNoise > 0.2 && terracottaNoise < 0.3)
+					return (16);
+				if (terracottaNoise > 0.4 || terracottaNoise < -0.4)
+					return (17);
+				return (9);
+			}
 			else
 				return (STONE_ID);
 		}
 		else if (_currentTemperature < -0.2)
 		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
 				return (DIRT_ID);
+			else if (y >= _currentMaxHeight - 3)
+				return (11);
+			else
+				return (STONE_ID);
 		}
 		else
 		{
@@ -775,17 +796,24 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 		if (_currentTemperature > 0.2)
 		{
 			if (y == _currentMaxHeight && y <= WATERLINE)
-				return (STONE_ID);
-			else if (y == _currentMaxHeight)
-				return (SAND_ID);
-			if (y == _currentMaxHeight - 1)
 				return (DIRT_ID);
+			else if (y == _currentMaxHeight)
+				return (12);
+			if (y == _currentMaxHeight - 1)
+				return (10);
 			else
 				return (STONE_ID);
 		}
 		else if (_currentTemperature < -0.2)
 		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
 				return (DIRT_ID);
+			else if (y == _currentMaxHeight)
+				return (11);
+			if (y == _currentMaxHeight - 1)
+				return (STONE_ID);
+			else
+				return (STONE_ID);
 		}
 		else
 		{
@@ -804,17 +832,24 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 		if (_currentTemperature > 0.2)
 		{
 			if (y == _currentMaxHeight && y <= WATERLINE)
-				return (STONE_ID);
+				return (SAND_ID);
 			else if (y == _currentMaxHeight)
 				return (SAND_ID);
 			if (y >= _currentMaxHeight - 3)
-				return (SAND_ID);
+				return (8);
 			else
 				return (STONE_ID);
 		}
 		else if (_currentTemperature < -0.2)
 		{
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (SAND_ID);
+			else if (y == _currentMaxHeight)
+				return (11);
+			if (y >= _currentMaxHeight - 3)
 				return (DIRT_ID);
+			else
+				return (STONE_ID);
 		}
 		else
 		{
@@ -833,19 +868,24 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 		if (_currentTemperature > 0.2)
 		{
 			if (y == _currentMaxHeight && _currentMaxHeight + 16 > WATERLINE)
-				return (STONE_ID);
+				return (SAND_ID);
 			else if (y == _currentMaxHeight)
-				return (STONE_ID);
+				return (SAND_ID);
 			if (y >= _currentMaxHeight - 3 && _currentMaxHeight + 16 > WATERLINE)
 				return (SAND_ID);
 			if (y >= _currentMaxHeight - 8)
-				return (DIRT_ID);
+				return (8);
 			else
 				return (STONE_ID);
 		}
 		else if (_currentTemperature < -0.2)
 		{
-			return (DIRT_ID);
+			if (y == _currentMaxHeight && y <= WATERLINE)
+				return (STONE_ID);
+			else if (y == _currentMaxHeight)
+				return (SAND_ID);
+			else
+				return (STONE_ID);
 		}
 		else
 		{

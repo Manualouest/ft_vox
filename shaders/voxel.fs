@@ -43,6 +43,12 @@ uniform sampler2D terracottaTexture;
 uniform sampler2D snowTexture;
 uniform sampler2D redSandTexture;
 
+uniform sampler2D redTerracottaTexture;
+uniform sampler2D brownTerracottaTexture;
+uniform sampler2D yellowTerracottaTexture;
+uniform sampler2D lightGrayTerracottaTexture;
+uniform sampler2D whiteTerracottaTexture;
+
 vec3	getBlockTexture(int ID)
 {
 	if (ID == 1)
@@ -58,13 +64,23 @@ vec3	getBlockTexture(int ID)
 	if (ID == 7)
 		return (texture(sandstoneTexture, texCoord).rgb);
 	if (ID == 8)
-		return (texture(redSandstoneTexture, texCoord).rgb);
-	if (ID == 9)
 		return (texture(terracottaTexture, texCoord).rgb);
+	if (ID == 9)
+		return (texture(redSandstoneTexture, texCoord).rgb);
 	if (ID == 10)
 		return (texture(snowTexture, texCoord).rgb);
 	if (ID == 11)
 		return (texture(redSandTexture, texCoord).rgb);
+	if (ID == 12)
+		return (texture(redTerracottaTexture, texCoord).rgb);
+	if (ID == 13)
+		return (texture(brownTerracottaTexture, texCoord).rgb);
+	if (ID == 14)
+		return (texture(yellowTerracottaTexture, texCoord).rgb);
+	if (ID == 15)
+		return (texture(lightGrayTerracottaTexture, texCoord).rgb);
+	if (ID == 16)
+		return (texture(whiteTerracottaTexture, texCoord).rgb);
 	if (ID == 42)
 		return (texture(missingTexture, texCoord).rgb);
 	return (texture(grassTexture, texCoord).rgb);

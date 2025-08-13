@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 22:34:35 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 19:13:02 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -549,6 +549,11 @@ void	GameScene::render(Scene *scene)
 	Texture::use("terracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/terracotta.bmp")->getID(), 9, voxelShader);
 	Texture::use("snowTexture", TEXTURE_MANAGER->get("assets/textures/blocks/snow.bmp")->getID(), 10, voxelShader);
 	Texture::use("redSandTexture", TEXTURE_MANAGER->get("assets/textures/blocks/red_sand.bmp")->getID(), 11, voxelShader);
+	Texture::use("redTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/red_terracotta.bmp")->getID(), 12, voxelShader);
+	Texture::use("brownTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/brown_terracotta.bmp")->getID(), 13, voxelShader);
+	Texture::use("yellowTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/yellow_terracotta.bmp")->getID(), 14, voxelShader);
+	Texture::use("lightGrayTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/light_gray_terracotta.bmp")->getID(), 15, voxelShader);
+	Texture::use("whiteTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/white_terracotta.bmp")->getID(), 16, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 
 	FrameBuffer::reset();
