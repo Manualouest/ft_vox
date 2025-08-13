@@ -3,8 +3,8 @@
 layout (location = 0) in uint data;
 vec3	aPos = vec3(float(data & 63u), float((data >> 6) & 511u), float((data >> 15) & 63u));
 vec2	aTex = vec2(float((data >> 21) & 1u), float((data >> 22) & 1u));
-float	aType = (data >> 23) & 7u;
-uint	aNormalId = (data >> 26) & 7u;
+float	aType = (data >> 23) & 63u;
+uint	aNormalId = (data >> 29) & 7u;
 
 uniform mat4 projection;
 uniform mat4 view;

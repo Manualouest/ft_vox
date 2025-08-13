@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/12 22:49:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 10:57:03 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -277,7 +277,7 @@ const int OFFSET1 = 6;  // x
 const int OFFSET2 = 15; // xy
 const int OFFSET3 = 21; // xyz
 const int OFFSET4 = 23; // xyz + texture coord
-const int OFFSET5 = 26; // xyz + texture coord + blocktype
+const int OFFSET5 = 29; // xyz + texture coord + blocktype
 
 /*
 	adds the vertices for a bocks's face to the "_vertices" vector and it's corresponding indices to the "_indices" vector
