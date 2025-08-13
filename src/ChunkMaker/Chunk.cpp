@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 19:33:53 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 22:41:14 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -918,7 +918,7 @@ GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
 	GenInfo	res;
 
 	//Gets world shape (caves and height is calculated outside)
-	float noise = getCaveValue(pos, 5, _maxHeight);
+	float noise = getCaveValue(pos, 5, (int)_currentMaxHeight + 16);
 	if (noise > CAVE_TRESHOLD)
 	{
 		res.type = 0;
