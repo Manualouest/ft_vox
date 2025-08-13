@@ -6,11 +6,12 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 16:32:03 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 13:32:29 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ChunkGeneratorManager.hpp"
+#include "RegionManager.hpp"
 
 void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 {
@@ -18,6 +19,7 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 		return ;
 
 	std::vector<Chunk*>	cpy = chunks;
+	RegionManager::sortChunks(cpy);
 	std::reverse(cpy.begin(), cpy.end());
 
 	_deposit.reserve(cpy.size());

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:06:39 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 16:26:20 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 13:28:46 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # include "libs.hpp"
 # include "ChunkGenerator.hpp"
 
-# define	GENERATION_THREAD_COUNT 12
-# define	CHUNKS_PER_THREAD 2
+# define	GENERATION_THREAD_COUNT 16
+# define	CHUNKS_PER_THREAD 4
 
 class	ChunkGeneratorManager
 {

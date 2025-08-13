@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/12 23:50:47 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 13:19:23 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 
 RegionManager::RegionManager()
 {
-	RenderDist = 5;
+	RenderDist = 16;
 	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(WORLD_SIZE, WORLD_SIZE));
 }
 
@@ -49,15 +49,17 @@ void	RegionManager::UpdateChunks()
 		chunk->rendered = false;
 	for (Chunk *chunk : _loadedChunks)
 	{
-		chunk->loaded = false;
+		chunk->loadedThisFrame = false;
 		chunk->rendered = false;
 	}
+
 	_renderChunks.clear();
-	_loadedChunks.clear();
+	// _loadedChunks.clear();
+
+	std::vector<Chunk*>	loadedChunks;
 
 	Frustum	camFrustum = createFrustumFromCamera(SCREEN_WIDTH / SCREEN_HEIGHT, glm::radians(FOV), 0.0001f, RenderDist * 32);
 	VolumeAABB	boundingBox(glm::vec3(16.0f, 0.0f, 16.0f), glm::vec3(16.0f, 256.0f, 16.0f));
-
 
 	int	startX = (CAMERA->pos.x / 32) - RenderDist;
 	int	startZ = (CAMERA->pos.z / 32) - RenderDist;
@@ -76,10 +78,19 @@ void	RegionManager::UpdateChunks()
 			if (tmp)
 			{
 				tmp->loaded = true;
-				_loadedChunks.push_back(tmp);
+				tmp->loadedThisFrame = true;
+				loadedChunks.push_back(tmp);
 			}
 		}
 	}
+
+	for (Chunk *chunk : _loadedChunks)
+	{
+		if (!chunk->loadedThisFrame)
+			chunk->loaded = false;
+	}
+
+	_loadedChunks = loadedChunks;
 
 	_QT->pruneDeadLeaves(_QT);
 
@@ -87,7 +98,6 @@ void	RegionManager::UpdateChunks()
 
 
 	sortChunks(_renderChunks);
-	sortChunks(_loadedChunks);
 	CHUNK_GENERATOR->deposit(_loadedChunks);
 }
 

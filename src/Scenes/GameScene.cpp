@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 23:52:23 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 14:05:27 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,6 +125,9 @@ static void	_frameKeyHook(Scene *)
 
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
 		speedBoost *= 15.0f;
+
+	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_2) == GLFW_PRESS)
+		speedBoost = 20.f / 15.f;
 
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_W) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos + CAMERA->front * (cameraSpeed * speedBoost);
@@ -296,15 +299,76 @@ static void	_buildInterface(Scene *scene)
 		}, true));
 
 	Interface	*waiting = interfaces->load("waiting");
-	waiting->addElement("generated_chunks", new Text(UIAnchor::UI_CENTER, "generated chunks", glm::vec2(0, 0),
+	waiting->addElement("generated_chunks", new Text(UIAnchor::UI_CENTER, "generated chunks", glm::vec2(0, -128),
 		[](std::string &label)
 		{
-			static uint	generatedChunks = 0;
+			uint	generatedChunks = CHUNKS->getGeneratingChunksCount();
 			uint	loadedChunks = CHUNKS->getLoadedChunkCount();
 
-			generatedChunks = CHUNKS->getGeneratingChunksCount();
 			label = "generated " + std::to_string(loadedChunks - generatedChunks) + "/" + std::to_string(loadedChunks);
-		}, true));
+		}, false));
+
+	waiting->setDrawFunc([]
+		(Interface*)
+		{
+			Shader	*shader = SHADER_MANAGER->get("colored_quad");
+
+			uint	generatedChunks = CHUNKS->getGeneratingChunksCount();
+			uint	loadedChunks = CHUNKS->getLoadedChunkCount();
+
+			float	barSizeX = 300;
+			float	barSizeY = 5;
+
+			float	barPosX = (SCREEN_WIDTH / 2) - barSizeX / 2;
+			float	barPosY = (SCREEN_HEIGHT / 2 - 112) - barSizeY / 2;
+
+			shader->setVec3("color", glm::vec3(0.5, 0.5, 0.5));
+			UIElement::draw(shader, glm::vec2(barPosX, barPosY), glm::vec2(barSizeX, barSizeY));
+
+			float	ratio = 0;
+			if (loadedChunks != 0)
+				ratio = (float)(loadedChunks - generatedChunks) / (float)loadedChunks;
+
+			shader->setVec3("color", glm::vec3(0, 1, 0));
+			UIElement::draw(shader, glm::vec2(barPosX, barPosY), glm::vec2(barSizeX * ratio, barSizeY));
+
+
+
+			uint renderDist = CHUNKS->getRenderDist() * 2;
+			const std::vector<Chunk*> &chunks = CHUNKS->getLoadedChunks();
+
+			float	chunkSizeX = 200.f / (float)renderDist;
+			float	chunkSizeY = 200.f / (float)renderDist;
+
+			float	chunkOriginX = SCREEN_WIDTH / 2.f - 100.f;
+			float	chunkOriginY = SCREEN_HEIGHT / 2.f - 100.f;
+
+			uint	x = 0;
+			uint	y = 0;
+
+			shader->setVec3("color", glm::vec3(0.5, 0.5, 0.5));
+			UIElement::draw(shader, glm::vec2(chunkOriginX, chunkOriginY), glm::vec2(200, 200));
+			for (Chunk * chunk: chunks)
+			{
+				if (chunk->isGenerated())
+				{
+					shader->setVec3("color", glm::vec3(0, 1, 0));
+					UIElement::draw(shader, glm::vec2(chunkOriginX + (chunkSizeX * (float)x), chunkOriginY + (chunkSizeY * (float)y)), glm::vec2(chunkSizeX, chunkSizeY));
+				}
+				else if (chunk->waiting)
+				{
+					shader->setVec3("color", glm::vec3(1, 1, 0));
+					UIElement::draw(shader, glm::vec2(chunkOriginX + (chunkSizeX * (float)x), chunkOriginY + (chunkSizeY * (float)y)), glm::vec2(chunkSizeX, chunkSizeY));
+				}
+				x++;
+				if (x >= renderDist)
+				{
+					x = 0;
+					y++;
+				}
+			}
+
+		});
 
 	Interface	*debug = interfaces->load("debug");
 
@@ -586,11 +650,14 @@ void	GameScene::render(Scene *scene)
 		frameTimes.insert(frameTimes.begin(), {currentTime - frameStartTime, currentTime - renderStartTime, updateTime});
 }
 
+uint	renderDist = 0;
+
 void	_checkWorldLoaded()
 {
 	if (CHUNKS->isFullyGenerated())
 	{
 		enteringWorld = false;
+		CHUNKS->setRenderDist(renderDist);
 		resumeGame();
 	}
 }
@@ -602,6 +669,7 @@ void	GameScene::update(Scene *scene)
 
 	if (enteringWorld)
 	{
+		scene->getCamera()->update();
 		CHUNKS->UpdateChunks();
 		scene->getInterfaceManager()->update();
 		_checkWorldLoaded();
@@ -654,6 +722,8 @@ void	GameScene::open(Scene *)
 	if (!CHUNKS)
 		CHUNKS = new RegionManager();
 	enteringWorld = true;
+	renderDist = CHUNKS->getRenderDist();
+	CHUNKS->setRenderDist(10);
 	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("waiting");
 	consoleLog("Opened a world", LogSeverity::NORMAL);
 }

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/13 17:55:09 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 16:45:57 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 14:04:58 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,11 @@ bool	ChunkGenerator::deposit(std::vector<Chunk *> chunks)
 	_deposit.reserve(chunks.size());
 
 	for (Chunk * chunk : chunks)
+	{
+		chunk->waiting = true;
 		_deposit.push_back(chunk);
+	}
 
-	_deposit.shrink_to_fit();
 	return (true);
 }
 
@@ -32,13 +34,11 @@ void	ChunkGenerator::_process()
 {
 	LOCK(_depositMutex);
 
-	if (_deposit.size() <= 0)
-		return ;
-
 	_working = true;
 
 	for (Chunk * chunk : _deposit)
 	{
+		chunk->waiting = false;
 		if (chunk->loaded)
 			chunk->generate();
 		chunk->setGenerating(false);
@@ -55,6 +55,7 @@ void	ChunkGenerator::_loop()
 		_process();
 		usleep(200);
 		_working = false;
+		usleep(200);
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:32:56 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/12 23:52:12 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 11:35:55 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,33 +35,26 @@ class RegionManager
 		bool	isFullyGenerated();
 		uint	getGeneratingChunksCount()
 		{
-			static double	lastCheck = 0;
-			static uint		lastCount = 0;
+			uint	res = 0;
 
-			if (glfwGetTime() - lastCheck > 0.2)
-			{
-				lastCheck = glfwGetTime();
-				_generatedChunks = 0;
+			for (Chunk *chunk : _loadedChunks)
+				if (chunk->isGenerating())
+					res++;
 
-				for (Chunk *chunk : _loadedChunks)
-					if (chunk->isGenerating())
-						_generatedChunks++;
-
-				lastCount = _generatedChunks;
-				return (_generatedChunks);
-			}
-			else
-				return (lastCount);
+			return (res);
 		}
 		uint	getLoadedChunkCount()
 		{
 			return (this->_loadedChunks.size());
 		}
+		const std::vector<Chunk *>	&getLoadedChunks()
+		{
+			return (this->_loadedChunks);
+		}
+		static void	sortChunks(std::vector<Chunk *> &chunks);
 	private:
-		uint	_generatedChunks = 0;
 		uint	RenderDist;
 		bool	isInRange();
-		void	sortChunks(std::vector<Chunk *> &chunks);
 
 		std::vector<Chunk *>	_renderChunks;
 		std::vector<Chunk *>	_loadedChunks;
