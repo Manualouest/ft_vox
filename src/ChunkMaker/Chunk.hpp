@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 13:13:11 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 18:29:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,15 @@ struct GenInfo
 	uint8_t	height, biome, type;
 };
 
+enum	ChunkState
+{
+	CS_EMPTY,
+	CS_GENERATING,
+	CS_GENERATED,
+	CS_UPLOADED,
+	CS_EDITED
+};
+
 class Chunk
 {
 	public:
@@ -84,7 +93,6 @@ class Chunk
 		glm::mat4				model;
 		std::atomic_bool		rendered;
 		std::atomic_bool		loaded;
-		std::atomic_bool		waiting;
 		bool					loadedThisFrame;
 		std::vector<char32_t>	ChunkMask;
 		std::vector<char32_t>	RotChunkMask;
@@ -98,13 +106,8 @@ class Chunk
 		uint8_t					_currentMaxHeight = 0;
 		uint8_t					_currentBiome;
 
-		bool	isGenerated() {return (this->_generated);}
-		bool	isGenerating() {return (this->_generating);}
-		bool	isUploaded() {return (this->_uploaded);}
-
 		void	initDist();
 		float	getDist() const;
-		void	setGenerating(bool state) {this->_generating.store(state);}
 		bool	isInRange();
 
 		bool	removeBlock(const glm::ivec3 &targetPos);
@@ -118,7 +121,19 @@ class Chunk
 		float	_currentErosion;
 		float	_currentContinentalness;
 		float	_currentPeaksValleys;
+		ChunkState	getState()
+		{
+			std::lock_guard<std::mutex> lock(_stateMutex);
+			return (this->_state);
+		}
+		void	setState(const ChunkState state)
+		{
+			std::lock_guard<std::mutex> lock(_stateMutex);
+			this->_state = state;
+		}
 	private:
+		std::mutex	_stateMutex;
+		ChunkState	_state = ChunkState::CS_EMPTY;
 		GenInfo	getGeneration(const glm::vec3 &pos);
 		int	getGenerationHeight(const glm::vec2 &pos);
 		GenInfo	getGeneration(const glm::vec2 &pos);
@@ -129,10 +144,6 @@ class Chunk
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<char32_t>	&usedMask);
 		void	genMesh();
 		void	makeBuffers();
-
-		std::atomic_bool		_generated;
-		std::atomic_bool		_generating;
-		std::atomic_bool		_uploaded;
 
 		unsigned int			_EBO = 0;
 		unsigned int			_VAO = 0;

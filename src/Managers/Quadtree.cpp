@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 16:04:35 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 18:20:23 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,7 +187,7 @@ void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 	if (branch != NULL)
 	{
 		if (branch->isLeaf())
-			if (!branch->_leaf->isGenerating()
+			if (branch->_leaf->getState() != ChunkState::CS_GENERATING
 				&& !branch->_leaf->rendered
 				&& !branch->_leaf->_edited
 				&& !branch->_leaf->loaded)

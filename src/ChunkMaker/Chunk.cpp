@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 14:00:35 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 18:29:51 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,7 @@ float	calcNoise(const glm::vec2 &pos, float freq, float amp, int noisiness)
 #define OCEAN_AMP 0.1
 #define OCEAN_NOISE 3
 
-Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), loaded(false), waiting(false), _edited(false), _generated(false), _generating(false), _uploaded(false)
+Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), loaded(false),  _edited(false)
 {
 	_minHeight = 255;
 	_maxHeight = 0;
@@ -119,13 +119,12 @@ Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), loaded(false), waiting(fa
 
 void	Chunk::generate()
 {
-	if (_generated)
+	if (Chunk::getState() >= ChunkState::CS_GENERATED)
 		return ;
 	_chunkTop.reserve(1024);
 	genChunk();
 	genMesh();
 	_indicesSize = _indices.size();
-	_generated.store(true);
 }
 
 void	Chunk::reGenMesh()
@@ -146,13 +145,13 @@ void	Chunk::clear()
 	_EBO = 0;
 	_VBO = 0;
 	_VAO = 0;
-	_uploaded.store(false);
+	setState(ChunkState::CS_GENERATED);
 }
 
 void	Chunk::upload()
 {
 	makeBuffers();
-	_uploaded.store(true);
+	this->setState(ChunkState::CS_UPLOADED);
 }
 
 Chunk::~Chunk()
@@ -815,9 +814,9 @@ extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 void	Chunk::draw(Shader &shader)
 {
-	if (_generating)
+	if (getState() <= CS_GENERATING)
 		return ;
-	if (!_uploaded && _generated)
+	if (getState() == CS_GENERATED)
 		upload();
 
 	shader.setMat4("model", model);
@@ -886,7 +885,7 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 	if (targetPos.x != sideReload.x)
 	{
 		Chunk *chunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(sideReload.x, targetPos.z));
-		if (chunk && chunk->_generated)
+		if (chunk && chunk->getState() >= ChunkState::CS_GENERATED)
 		{
 			chunk->reGenMesh();
 			chunk->clear();
@@ -895,7 +894,7 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 	if (targetPos.z != sideReload.y)
 	{
 		Chunk *chunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(targetPos.x, sideReload.y));
-		if (chunk && chunk->_generated)
+		if (chunk && chunk->getState() >= ChunkState::CS_GENERATED)
 		{
 			chunk->reGenMesh();
 			chunk->clear();

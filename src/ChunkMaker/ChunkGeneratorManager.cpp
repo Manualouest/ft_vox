@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/13 13:32:29 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 18:19:24 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,13 +25,10 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 	_deposit.reserve(cpy.size());
 
 	for (Chunk * chunk : cpy)
-		if (!chunk->isGenerated() && !chunk->isGenerating())
+		if (chunk->getState() < ChunkState::CS_GENERATING)
 		{
-			chunk->setGenerating(true);
-			if (chunk->rendered)
-				_priority.push_back(chunk);
-			else
-				_deposit.push_back(chunk);
+			chunk->setState(ChunkState::CS_GENERATING);
+			_deposit.push_back(chunk);
 		}
 
 	_deposit.shrink_to_fit();
@@ -45,18 +42,6 @@ void	ChunkGeneratorManager::_send()
 		return ;
 
 	LOCK(_depositMutex);
-
-	for (ChunkGenerator *generator : _generators)
-	{
-		uint	sizeToAdd = std::min(_priority.size(), (size_t)CHUNKS_PER_THREAD);
-		if (sizeToAdd <= CHUNKS_PER_THREAD && sizeToAdd > 0 && !generator->isWorking())
-		{
-			if (generator->deposit({_priority.begin(), _priority.begin() + sizeToAdd}))
-				_priority.erase(_priority.begin(), _priority.begin() + sizeToAdd);
-		}
-	}
-	if (_priority.empty())
-		_priority.shrink_to_fit();
 
 	for (ChunkGenerator *generator : _generators)
 	{

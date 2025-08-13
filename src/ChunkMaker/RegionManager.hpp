@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:32:56 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 11:35:55 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 18:21:39 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ class RegionManager
 			uint	res = 0;
 
 			for (Chunk *chunk : _loadedChunks)
-				if (chunk->isGenerating())
+				if (chunk->getState() <= ChunkState::CS_GENERATING)
 					res++;
 
 			return (res);

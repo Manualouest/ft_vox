@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:06:39 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/13 13:28:46 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 18:38:29 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ class	ChunkGeneratorManager
 		void	_loop();
 
 		std::vector<Chunk *>			_deposit;
-		std::vector<Chunk *>			_priority;
 		std::mutex						_depositMutex;
 		std::vector<ChunkGenerator *>	_generators;
 		std::atomic_bool				_running;

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/13 17:55:09 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/13 14:18:25 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/13 18:30:03 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,10 +22,7 @@ bool	ChunkGenerator::deposit(std::vector<Chunk *> chunks)
 	_deposit.reserve(chunks.size());
 
 	for (Chunk * chunk : chunks)
-	{
-		chunk->waiting = true;
 		_deposit.push_back(chunk);
-	}
 
 	return (true);
 }
@@ -37,10 +34,9 @@ void	ChunkGenerator::_process()
 	for (Chunk * chunk : _deposit)
 	{
 		_working = true;
-		chunk->waiting = false;
 		if (chunk->loaded)
 			chunk->generate();
-		chunk->setGenerating(false);
+		chunk->setState(ChunkState::CS_GENERATED);
 	}
 
 	_deposit.clear();
