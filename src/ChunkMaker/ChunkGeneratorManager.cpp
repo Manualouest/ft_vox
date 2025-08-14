@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 23:56:06 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/14 13:05:00 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,12 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 		return ;
 	// LOCK(_depositMutex);
 
+	std::vector<Chunk*>	cpy = chunks;
+	std::reverse(cpy.begin(), cpy.end());
+
 	_deposit.reserve(chunks.size());
 
-	for (Chunk * chunk : chunks)
+	for (Chunk * chunk : cpy)
 		if (!chunk->isGenerated() && !chunk->isGenerating())
 		{
 			chunk->setGenerating(true);

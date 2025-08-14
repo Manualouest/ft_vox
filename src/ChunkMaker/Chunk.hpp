@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/12 21:16:27 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/14 16:01:42 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,7 +122,11 @@ class Chunk
 		float	_currentPeaksValleys;
 		BiomeType	_currentBiomeType;
 		float	_currentTemperature;
+		void	setBlock(int block, int x, int y, int z);
 	private:
+		void	growTemperateTree(int x, int y, int z);
+		void	growColdTree(int x, int y, int z);
+		void	growCactus(int x, int y, int z);
 		GenInfo	getGeneration(const glm::vec3 &pos);
 		int	getGenerationHeight(const glm::vec2 &pos);
 		GenInfo	getGeneration(const glm::vec2 &pos);

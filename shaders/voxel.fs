@@ -48,6 +48,11 @@ uniform sampler2D brownTerracottaTexture;
 uniform sampler2D yellowTerracottaTexture;
 uniform sampler2D lightGrayTerracottaTexture;
 uniform sampler2D whiteTerracottaTexture;
+uniform sampler2D oakLeavesTexture;
+uniform sampler2D oakLogTexture;
+uniform sampler2D cactusTexture;
+uniform sampler2D spruceLeavesTexture;
+uniform sampler2D spruceLogTexture;
 
 vec3	getBlockTexture(int ID)
 {
@@ -81,6 +86,16 @@ vec3	getBlockTexture(int ID)
 		return (texture(lightGrayTerracottaTexture, texCoord).rgb);
 	if (ID == 16)
 		return (texture(whiteTerracottaTexture, texCoord).rgb);
+	if (ID == 17)
+		return (texture(oakLeavesTexture, texCoord).rgb);
+	if (ID == 18)
+		return (texture(oakLogTexture, texCoord).rgb);
+	if (ID == 19)
+		return (texture(cactusTexture, texCoord).rgb);
+	if (ID == 20)
+		return (texture(spruceLeavesTexture, texCoord).rgb);
+	if (ID == 21)
+		return (texture(spruceLogTexture, texCoord).rgb);
 	if (ID == 42)
 		return (texture(missingTexture, texCoord).rgb);
 	return (texture(grassTexture, texCoord).rgb);
@@ -97,6 +112,8 @@ void main()
 	dist = clamp(pow(dist, 1.5), 0.0, 1.0);
 
 	color = getBlockTexture(int(blockType));
+	if (color.r == 1 && color.g == 0 && color.b == 1)
+		discard ;
 
 	if (int(blockType) == 0) //WATER
 	{

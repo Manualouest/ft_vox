@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/13 19:13:02 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/14 15:59:57 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -554,6 +554,11 @@ void	GameScene::render(Scene *scene)
 	Texture::use("yellowTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/yellow_terracotta.bmp")->getID(), 14, voxelShader);
 	Texture::use("lightGrayTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/light_gray_terracotta.bmp")->getID(), 15, voxelShader);
 	Texture::use("whiteTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/white_terracotta.bmp")->getID(), 16, voxelShader);
+	Texture::use("oakLeavesTexture", TEXTURE_MANAGER->get("assets/textures/blocks/oak_leaves.bmp")->getID(), 17, voxelShader);
+	Texture::use("oakLogTexture", TEXTURE_MANAGER->get("assets/textures/blocks/oak_log.bmp")->getID(), 18, voxelShader);
+	Texture::use("cactusTexture", TEXTURE_MANAGER->get("assets/textures/blocks/cactus.bmp")->getID(), 19, voxelShader);
+	Texture::use("spruceLeavesTexture", TEXTURE_MANAGER->get("assets/textures/blocks/spruce_leaves.bmp")->getID(), 20, voxelShader);
+	Texture::use("spruceLogTexture", TEXTURE_MANAGER->get("assets/textures/blocks/spruce_log.bmp")->getID(), 21, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 
 	FrameBuffer::reset();

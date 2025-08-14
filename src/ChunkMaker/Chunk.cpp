@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 22:41:14 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/14 16:03:20 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -916,6 +916,10 @@ GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
 		getGenerationHeight(glm::vec2(pos.x, pos.z));
 
 	GenInfo	res;
+	res.type = 0;
+
+	if (pos.y > _currentMaxHeight)
+		return res;
 
 	//Gets world shape (caves and height is calculated outside)
 	float noise = getCaveValue(pos, 5, (int)_currentMaxHeight + 16);
@@ -930,9 +934,95 @@ GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
 
 	res.type = getBiomeBlock(pos.y, _currentBiomeType);
 
-	//Will be decoration?? (trees, structures)
-
 	return (res);
+}
+
+void	Chunk::setBlock(int type, int x, int y, int z)
+{
+	GenInfo	block = GenInfo();
+	block.type = type;
+	block.height = y;
+	Blocks[y * 1024 + z * 32 + x] = block;
+	if (type != 0)
+		ChunkMask[y * 32 + z] |= (char32_t)(((char32_t)1) << (31 - x));
+
+	if (y > _maxHeight)
+		_maxHeight = y;
+	if (y < _minHeight)
+		_minHeight = y;
+}
+
+void	Chunk::growTemperateTree(int wx, int wy, int wz)
+{
+	(void)wx;(void)wy;(void)wz;
+	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 5;
+	if (treeTop > wy + 8)
+		treeTop = wy + 8;
+
+	int blockInChunkPosX = 0;
+	int blockInChunkPosZ = 0;
+
+	for (int sizeX = wx - 2; sizeX <= wx + 2; sizeX++)
+		for (int sizeZ = wz - 2; sizeZ <= wz + 2; sizeZ++)
+			for (int sizeY = treeTop - 2; sizeY <= treeTop + 2; sizeY++)
+			{
+				blockInChunkPosX = 31 - (sizeX - pos.x);
+				blockInChunkPosZ = sizeZ - pos.z;
+				if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+					setBlock(18, blockInChunkPosX, sizeY, blockInChunkPosZ);
+			}
+
+	blockInChunkPosX = 31 - (wx - pos.x);
+	blockInChunkPosZ = wz - pos.z;
+
+	for (int height = wy; height < treeTop; height++) //Place trunk
+		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+			setBlock(19, blockInChunkPosX, height, blockInChunkPosZ);
+
+}
+
+void	Chunk::growColdTree(int wx, int wy, int wz)
+{
+	(void)wx;(void)wy;(void)wz;
+	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 5;
+	if (treeTop > wy + 8)
+		treeTop = wy + 8;
+
+	int blockInChunkPosX = 0;
+	int blockInChunkPosZ = 0;
+
+	for (int sizeX = wx - 1; sizeX <= wx + 1; sizeX++)
+		for (int sizeZ = wz - 1; sizeZ <= wz + 1; sizeZ++)
+			for (int sizeY = treeTop - 2; sizeY <= treeTop + 4; sizeY++)
+			{
+				blockInChunkPosX = 31 - (sizeX - pos.x);
+				blockInChunkPosZ = sizeZ - pos.z;
+				if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+					setBlock(21, blockInChunkPosX, sizeY, blockInChunkPosZ);
+			}
+
+	blockInChunkPosX = 31 - (wx - pos.x);
+	blockInChunkPosZ = wz - pos.z;
+
+	for (int height = wy; height < treeTop; height++) //Place trunk
+		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+			setBlock(22, blockInChunkPosX, height, blockInChunkPosZ);
+
+}
+
+void	Chunk::growCactus(int wx, int wy, int wz)
+{
+	(void)wx;(void)wy;(void)wz;
+	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 1;
+	if (treeTop > wy + 6)
+		treeTop = wy + 6;
+
+	int blockInChunkPosX = 31 - (wx - pos.x);
+	int blockInChunkPosZ = wz - pos.z;
+
+	for (int height = wy; height < treeTop; height++) //Place trunk
+		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+			setBlock(20, blockInChunkPosX, height, blockInChunkPosZ);
 }
 
 /*
@@ -950,14 +1040,12 @@ void	Chunk::genChunk()
 	RotChunkMask.resize(8192, 0);
 	Blocks.resize(262144, newBlock); // 32 * 32 * 256
 
-	for (int z = 0; z < 32; ++z)
+	for (int z = 0; z < 32; ++z) //Loops over every block to generate the world shape, skipping air blocks
 	{
 		for (int x = 0; x < 32; ++x)
 		{
-			// height = initGeneration(glm::vec2{pos.x + (31 - x), pos.z + z}); // l'init de la gen
 			height = getGenerationHeight(glm::vec2{(31 - x) + pos.x, pos.z + z});
 
-			// adding the newBlock to the chunkmask / no touch pls
 			if (height > _maxHeight)
 				_maxHeight = height;
 			if (height < _minHeight)
@@ -965,19 +1053,39 @@ void	Chunk::genChunk()
 			_chunkTop.push_back(height); // this vector stores the y values of the top blocks
 
 			_currentMaxHeight = height;
-			for (int y = height; y >= 0; --y)
+			for (int y = height; y >= 0; --y) //Generates terrain shape
 			{
 				newBlock = getGeneration(glm::vec3((31 - x) + pos.x, y, pos.z + z));
 
-				newBlock.height = y;
-				Blocks[y * 1024 + z * 32 + x] = newBlock;
-
-				if (newBlock.type == 0) // if it's air we skip it
-					continue;
-				ChunkMask[y * 32 + z] |= (char32_t)(((char32_t)1) << (31 - x)); // updating the chunkMask with the newly added block
+				setBlock(newBlock.type, x, y, z);
 			}
 		}
 	}
+
+	for (int z = -16; z < 32 + 16; ++z) //Generates features on the terrain (trees and all)
+	{
+		for (int x = -16; x < 32 + 16; ++x)
+		{
+			if ((31 - x) + pos.x < 0 || pos.z + z < 0)
+				continue ;
+
+			height = getGenerationHeight(glm::vec2{(31 - x) + pos.x, pos.z + z});
+			_currentBiomeType = getBiomeType();
+			_currentTemperature = getTemperature(glm::vec2((31 - x) + pos.x, pos.z + z));
+
+			float	noise = calcNoise(glm::vec2((31 - x) + pos.x, pos.z + z), 0.99, 1, 1);
+			if (height > WATERLINE && noise > 0.5 && noise < 0.55)
+			{
+				if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < 0.2 && _currentTemperature > -0.2)
+					growTemperateTree((31 - x) + pos.x, height + 1, pos.z + z);
+				else if (_currentBiomeType == BiomeType::PLAINS && _currentTemperature > 0.2)
+					growCactus((31 - x) + pos.x, height + 1, pos.z + z);
+				else if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < -0.2)
+					growColdTree((31 - x) + pos.x, height + 1, pos.z + z);
+			}
+		}
+	}
+
 	for (int y = _maxHeight; y >= 0; --y)
 		getRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
 
