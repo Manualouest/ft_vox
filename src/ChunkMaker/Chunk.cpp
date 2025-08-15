@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/14 16:03:20 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/15 17:10:38 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -954,6 +954,12 @@ void	Chunk::setBlock(int type, int x, int y, int z)
 
 void	Chunk::growTemperateTree(int wx, int wy, int wz)
 {
+	int maxHeight = wy - 1;
+
+	_currentMaxHeight = maxHeight;
+	if (getGeneration(glm::vec3(wx, maxHeight, wz)).type ==  0)
+		return ;
+
 	(void)wx;(void)wy;(void)wz;
 	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 5;
 	if (treeTop > wy + 8)
@@ -983,6 +989,12 @@ void	Chunk::growTemperateTree(int wx, int wy, int wz)
 
 void	Chunk::growColdTree(int wx, int wy, int wz)
 {
+	int maxHeight = wy - 1;
+
+	_currentMaxHeight = maxHeight;
+	if (getGeneration(glm::vec3(wx, maxHeight, wz)).type ==  0)
+		return ;
+
 	(void)wx;(void)wy;(void)wz;
 	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 5;
 	if (treeTop > wy + 8)
@@ -1012,7 +1024,12 @@ void	Chunk::growColdTree(int wx, int wy, int wz)
 
 void	Chunk::growCactus(int wx, int wy, int wz)
 {
-	(void)wx;(void)wy;(void)wz;
+	int maxHeight = wy - 1;
+
+	_currentMaxHeight = maxHeight;
+	if (getGeneration(glm::vec3(wx, maxHeight, wz)).type ==  0)
+		return ;
+
 	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 1;
 	if (treeTop > wy + 6)
 		treeTop = wy + 6;

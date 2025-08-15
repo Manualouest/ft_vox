@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 12:42:04 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 14:04:39 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/15 16:26:14 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,11 @@ class	UIElement
 			If the quad is already loaded, just returns
 		*/
 		static void	initButtonQuad();
+		static uint	getQuadVAO()
+		{
+			initButtonQuad();
+			return (UIquadVAO);
+		}
 		void	anchorPos();
 		void	setID(const std::string &id)
 		{
