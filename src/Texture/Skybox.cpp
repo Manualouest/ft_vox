@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 15:22:58 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/15 16:58:36 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/15 18:57:37 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,10 +117,11 @@ void	Skybox::draw(Camera &camera)
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
 
+    glDisable(GL_CULL_FACE);
+
     Shader  *sunShader = SHADER_MANAGER->get("sun");
 
     glm::mat4   sunModel = glm::mat4(1);
-
     sunModel = glm::translate(sunModel, glm::vec3(-0.5, 0, 8));
 
     sunShader->use();
@@ -128,11 +129,21 @@ void	Skybox::draw(Camera &camera)
     sunShader->setMat4("model", sunModel);
     sunShader->setMat4("view", view);
 
-	Texture::use("sunTexture", TEXTURE_MANAGER->get("assets/textures/skybox/sun.bmp")->getID(), 1, sunShader);
-
+	Texture::use("tex", TEXTURE_MANAGER->get("assets/textures/skybox/sun.bmp")->getID(), 1, sunShader);
     glBindVertexArray(UIElement::getQuadVAO());
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+    // sunModel = glm::mat4(1);
+    // sunModel = glm::translate(sunModel, glm::vec3(-0.5, 0, -8));
+    // sunShader->use();
+    // sunShader->setMat4("model", sunModel);
+
+    // Texture::use("tex", TEXTURE_MANAGER->get("assets/textures/skybox/moon.bmp")->getID(), 1, sunShader);
+    // glBindVertexArray(UIElement::getQuadVAO());
+	// glDrawArrays(GL_TRIANGLES, 0, 6);
+	// glBindVertexArray(0);
+
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 }
