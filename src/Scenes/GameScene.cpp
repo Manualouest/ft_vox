@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/14 15:59:57 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/15 19:19:13 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ Variables used by this scene only
 ChunkGeneratorManager			*CHUNK_GENERATOR;
 RegionManager					*CHUNKS = NULL;
 Terminal						*TERMINAL;
+static bool						F1 = false;
 
 /*
 Global variables for the whole program
@@ -95,6 +96,8 @@ static void	_keyHookFunc(Scene *, int key, int action)
 		F3 = !F3;
 		frameTimes.clear();
 	}
+	else if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
+		F1 = !F1;
 	else
 		TERMINAL->specialInput(key, action);
 }
@@ -248,6 +251,7 @@ std::string	getFPSString(bool debug)
 	static double		lastUpdate = 0;
 	static double		lastMinMaxUpdate = 0;
 	static std::string	fpsString = "0 fps";
+	static std::string	fpsStringDebug = "0 fps | 0 min | 0 max";
 
 	static int	minFPS = INT_MAX;
 	static int	maxFPS = 0;
@@ -270,11 +274,14 @@ std::string	getFPSString(bool debug)
 		fpsString = std::to_string(currentFPS) + " fps";
 		if (debug)
 		{
-			fpsString += " |" + std::to_string(minFPS) + " min";
-			fpsString += " |" + std::to_string(maxFPS) + " max";
+			fpsStringDebug = fpsString;
+			fpsStringDebug += " |" + std::to_string(minFPS) + " min";
+			fpsStringDebug += " |" + std::to_string(maxFPS) + " max";
 		}
 		lastUpdate = currentTime;
 	}
+	if (debug)
+		return (fpsStringDebug);
 	return (fpsString);
 }
 
@@ -287,10 +294,16 @@ static void	_buildInterface(Scene *scene)
 	fps->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
 		[](std::string &label)
 		{
-			label = getFPSString(F3 && !PAUSED);
-		}, true));
+			label = getFPSString(false);
+		}, false));
 
 	Interface	*debug = interfaces->load("debug");
+
+	debug->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
+	[](std::string &label)
+	{
+		label = getFPSString(F3 && !PAUSED);
+	}, true));
 
 	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "pos", glm::vec2(0, 16),
 		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + " | " + std::to_string((int)CAMERA->pos.y) + " | " + std::to_string((int)CAMERA->pos.z);}, true));
@@ -488,18 +501,20 @@ void	GameScene::destructor(Scene *)
 
 static void	drawUI(Scene *scene)
 {
+	if (!PAUSED && F1)
+		return ;
+
 	glDisable(GL_DEPTH_TEST);
 
 	Interface	*debug = scene->getInterfaceManager()->get("debug");
 	Interface	*fps = scene->getInterfaceManager()->get("fps");
 
+	debug->update();
 	fps->update();
-	fps->draw();
+	if (!F3 || PAUSED)
+		fps->draw();
 	if (!PAUSED && F3)
-	{
-		debug->update();
 		debug->draw();
-	}
 
 	scene->getInterfaceManager()->draw();
 	TERMINAL->draw();
