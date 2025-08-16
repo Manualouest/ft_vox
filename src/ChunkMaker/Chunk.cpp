@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/16 14:51:14 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 14:55:37 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,7 +151,7 @@ void	Chunk::clear()
 	_EBO = 0;
 	_VBO = 0;
 	_VAO = 0;
-	setState(ChunkState::CS_GENERATED);
+	setState(ChunkState::CS_MESHED);
 }
 
 void	Chunk::upload()
