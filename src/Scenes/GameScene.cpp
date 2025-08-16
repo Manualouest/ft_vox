@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/13 18:29:35 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 14:43:58 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -350,9 +350,14 @@ static void	_buildInterface(Scene *scene)
 			UIElement::draw(shader, glm::vec2(chunkOriginX, chunkOriginY), glm::vec2(200, 200));
 			for (Chunk * chunk: chunks)
 			{
-				if (chunk->getState() == ChunkState::CS_GENERATED)
+				if (chunk->getState() == ChunkState::CS_MESHED)
 				{
 					shader->setVec3("color", glm::vec3(0, 1, 0));
+					UIElement::draw(shader, glm::vec2(chunkOriginX + (chunkSizeX * (float)x), chunkOriginY + (chunkSizeY * (float)y)), glm::vec2(chunkSizeX, chunkSizeY));
+				}
+				else if (chunk->getState() == ChunkState::CS_GENERATED)
+				{
+					shader->setVec3("color", glm::vec3(1, 1, 0));
 					UIElement::draw(shader, glm::vec2(chunkOriginX + (chunkSizeX * (float)x), chunkOriginY + (chunkSizeY * (float)y)), glm::vec2(chunkSizeX, chunkSizeY));
 				}
 				x++;

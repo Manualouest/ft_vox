@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/13 18:19:24 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 14:49:54 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,9 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 	_deposit.reserve(cpy.size());
 
 	for (Chunk * chunk : cpy)
-		if (chunk->getState() < ChunkState::CS_GENERATING)
+		if (!chunk->getGenerating() && (chunk->getState() == CS_EMPTY || chunk->getRemesh()))
 		{
-			chunk->setState(ChunkState::CS_GENERATING);
+			chunk->setGenerating(true);
 			_deposit.push_back(chunk);
 		}
 

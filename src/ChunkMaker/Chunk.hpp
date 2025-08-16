@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 18:29:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 14:49:36 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,8 +69,8 @@ struct GenInfo
 enum	ChunkState
 {
 	CS_EMPTY,
-	CS_GENERATING,
 	CS_GENERATED,
+	CS_MESHED,
 	CS_UPLOADED,
 	CS_EDITED
 };
@@ -82,6 +82,7 @@ class Chunk
 		~Chunk();
 
 		void	generate();
+		void	mesh();
 		void	reGenMesh();
 		void	upload();
 		void	clear();
@@ -131,9 +132,33 @@ class Chunk
 			std::lock_guard<std::mutex> lock(_stateMutex);
 			this->_state = state;
 		}
+		void	setGenerating(bool state)
+		{
+			std::lock_guard<std::mutex> lock(_generatingMutex);
+			_generating = state;
+		}
+		bool	getGenerating()
+		{
+			std::lock_guard<std::mutex> lock(_generatingMutex);
+			return (_generating);
+		}
+		void	setRemesh(bool state)
+		{
+			std::lock_guard<std::mutex> lock(_remeshMutex);
+			_remesh = state;
+		}
+		bool	getRemesh()
+		{
+			std::lock_guard<std::mutex> lock(_remeshMutex);
+			return (_remesh);
+		}
 	private:
 		std::mutex	_stateMutex;
 		ChunkState	_state = ChunkState::CS_EMPTY;
+		std::mutex	_generatingMutex;
+		bool		_generating = false;
+		std::mutex	_remeshMutex;
+		bool		_remesh = false;
 		GenInfo	getGeneration(const glm::vec3 &pos);
 		int	getGenerationHeight(const glm::vec2 &pos);
 		GenInfo	getGeneration(const glm::vec2 &pos);

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/13 17:55:09 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/13 18:30:03 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 14:52:22 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,9 +34,24 @@ void	ChunkGenerator::_process()
 	for (Chunk * chunk : _deposit)
 	{
 		_working = true;
+		if (!chunk->loaded)
+		{
+			chunk->setGenerating(false);
+			continue ;
+		}
+
 		if (chunk->loaded)
+		{
 			chunk->generate();
-		chunk->setState(ChunkState::CS_GENERATED);
+			chunk->setState(ChunkState::CS_GENERATED);
+		}
+		if (chunk->getState() == ChunkState::CS_GENERATED)
+		{
+			chunk->mesh();
+			chunk->setState(ChunkState::CS_MESHED);
+		}
+
+		chunk->setGenerating(false);
 	}
 
 	_deposit.clear();

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 18:29:51 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 14:51:14 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,7 +123,13 @@ void	Chunk::generate()
 		return ;
 	_chunkTop.reserve(1024);
 	genChunk();
-	genMesh();
+}
+
+void	Chunk::mesh()
+{
+	if (Chunk::getState() >= ChunkState::CS_MESHED && !getRemesh())
+		return ;
+	reGenMesh();
 	_indicesSize = _indices.size();
 }
 
@@ -814,9 +820,9 @@ extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
 void	Chunk::draw(Shader &shader)
 {
-	if (getState() <= CS_GENERATING)
+	if (getGenerating() || getState() <= CS_GENERATED)
 		return ;
-	if (getState() == CS_GENERATED)
+	if (getState() == CS_MESHED)
 		upload();
 
 	shader.setMat4("model", model);
