@@ -1,7 +1,7 @@
 display_name qsd
-pitch -19.400002
-pos_x 1757.389160
-pos_y 95.151070
-pos_z 806.870117
+pitch -4.900007
+pos_x 5553.322266
+pos_y 81.661156
+pos_z 13171.659180
 seed 0
-yaw 256.400574
+yaw 241.699219

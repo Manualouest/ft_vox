@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Quadtree.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/28 16:55:03 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 11:57:10 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,8 +171,8 @@ void	Quadtree::pruneDeadLeaves(Quadtree *root) //shouldBranchDie
 	{
 		if (this == root)
 			return ;
-		root->_branches[this->_quadrantInRoot] = NULL;
-		delete this;
+		// root->_branches[this->_quadrantInRoot] = NULL;
+		// delete this;
 	}
 }
 
@@ -185,12 +185,13 @@ void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 		if (branch->isLeaf())
 			if (!branch->_leaf->isGenerating()
 				&& !branch->_leaf->rendered
-				&& !branch->_leaf->_edited)
+				&& !branch->_leaf->_edited
+				&& !branch->_leaf->_used)
 			{
 				if (branch->_leaf->getDistance() > RENDER_DISTANCE) // !FIX HERE, WRONG RENDER DISTANCE BEING USED OR SMTH (TOO MANY CHUNKS ARE STAYING)
 				{
-					delete branch;
-					_branches[quadrant] = NULL;
+					// delete branch;
+					// _branches[quadrant] = NULL;
 				}
 			}
 			else

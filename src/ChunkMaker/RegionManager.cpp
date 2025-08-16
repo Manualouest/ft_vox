@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RegionManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/07/29 23:56:00 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 11:23:54 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 
 RegionManager::RegionManager()
 {
-	RenderDist = 16;
+	RenderDist = 3;
 	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(WORLD_SIZE, WORLD_SIZE));
 }
 
@@ -55,8 +55,8 @@ void	RegionManager::UpdateChunks()
 
 	_QT->getVisibleChunks(_renderChunks, camFrustum, boundingBox);
 
+	invSortChunks();
 
-	sortChunks();
 	CHUNK_GENERATOR->deposit(_renderChunks);
 }
 
@@ -71,6 +71,7 @@ extern ShaderManager *SHADER_MANAGER;
 
 void	RegionManager::Render(Shader &shader)
 {
+	sortChunks();
     glEnable(GL_DEPTH_TEST);
 	shader.use();
 	CAMERA->setViewMatrix(shader);
@@ -87,5 +88,17 @@ void	RegionManager::sortChunks()
 		[](const Chunk *cp1, const Chunk *cp2)
 		{
 			return (cp1->getDist() > cp2->getDist());
+		});
+}
+
+void	RegionManager::invSortChunks()
+{
+	for (std::vector<Chunk *>::iterator it = _renderChunks.begin(); it != _renderChunks.end(); ++it)
+		(*it)->initDist();
+
+	std::sort(_renderChunks.begin(), _renderChunks.end(),
+		[](const Chunk *cp1, const Chunk *cp2)
+		{
+			return (cp1->getDist() < cp2->getDist());
 		});
 }

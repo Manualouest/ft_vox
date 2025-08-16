@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/10 22:38:19 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 02:01:51 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,18 +34,15 @@ extern Camera			*CAMERA;
 */
 struct Slices
 {
-	uint64_t				slice, westFaces, eastFaces, rotSlice, northSlices, southSlices = 0;
-	std::vector<uint64_t>	rotSlices;
+	uint64_t				slice, westFaces, eastFaces, rotSlice, northFaces, southFaces = 0;
 
-	Slices()
+	void	shift()
 	{
-		rotSlices.reserve(32);
-	}
-
-	~Slices()
-	{
-		rotSlices.clear();
-		rotSlices.shrink_to_fit();
+		slice >>= 2;
+		westFaces >>= 2;
+		eastFaces >>= 2;
+		northFaces >>= 2;
+		southFaces >>= 2;
 	}
 };
 
@@ -96,6 +93,9 @@ class Chunk
 		int						ChunkMaskSize = 8192;
 		std::vector<char32_t>	WaterMask;
 		std::vector<GenInfo>	Blocks;
+		std::atomic_bool		_used;
+		std::atomic_bool		_created;
+		std::atomic_bool		_needRemesh;
 		std::atomic_bool		_edited;
 		float					dist;
 		uint8_t					_minHeight = 0;
@@ -106,11 +106,14 @@ class Chunk
 		bool	isGenerated() {return (this->_generated);}
 		bool	isGenerating() {return (this->_generating);}
 		bool	isUploaded() {return (this->_uploaded);}
+		bool	setUsed() {_used.store(true); nbUsing++; return(true);}
+		bool	setUnused() {nbUsing--; if(nbUsing == 0){_used.store(false);}; return(true);}
 
 		void	initDist();
 		float	getDist() const;
 		void	setGenerating(bool state) {this->_generating.store(state);}
 		bool	isInRange();
+		void	genMesh();
 
 		bool	removeBlock(const glm::ivec3 &targetPos);
 
@@ -129,11 +132,10 @@ class Chunk
 		GenInfo	getGeneration(glm::vec2 pos);
 
 		void		addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
-		void		placeBlock(glm::ivec3 &pos, const std::vector<uint64_t> &usedData, uint64_t &slice, uint64_t &westFaces, uint64_t &eastFaces, uint64_t &northFaces, uint64_t &southFaces);
+		void		placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice);
 		void		genChunk();
 		void		getRotSlice(std::vector<char32_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<char32_t>	&usedMask);
 		void		fatGetRotSlice(std::vector<uint64_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<uint64_t>	&usedMask);
-		void		genMesh();
 		void		makeBuffers();
 		uint64_t	getGenEdgeSlice(int edge[32], const int &height);
 
@@ -144,6 +146,7 @@ class Chunk
 		unsigned int			_EBO = 0;
 		unsigned int			_VAO = 0;
 		unsigned int			_VBO = 0;
+		unsigned int			nbUsing = 0;
 		uint32_t				_indicesSize;
 		std::vector<uint32_t>	_indices;
 		std::vector<uint32_t>	_vertices;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   GameScene.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/10 22:46:40 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 02:04:14 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,7 +170,7 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 
 void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 {
-	if (CHUNKS && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	if (!PAUSED && CHUNKS && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
 		glm::vec3	rayDir = CAMERA->front;
 		glm::vec3	rayPos = CAMERA->pos;
@@ -208,7 +208,7 @@ void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 				}
 			}
 			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
-			if (chunk && chunk->removeBlock(mapPos))
+			if (chunk && chunk->_created.load() && chunk->removeBlock(mapPos))
 				break;
 		}
 	}

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ChunkGeneratorManager.cpp                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 23:56:06 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 09:15:26 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 	_deposit.reserve(chunks.size());
 
 	for (Chunk * chunk : chunks)
-		if (!chunk->isGenerated() && !chunk->isGenerating())
+		if ((!chunk->isGenerated() || chunk->_needRemesh) && !chunk->isGenerating())
 		{
 			chunk->setGenerating(true);
 			_deposit.push_back(chunk);

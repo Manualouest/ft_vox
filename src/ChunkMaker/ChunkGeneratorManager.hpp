@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ChunkGeneratorManager.hpp                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:06:39 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 23:56:18 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 10:53:51 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 # include "libs.hpp"
 # include "ChunkGenerator.hpp"
 
-# define	GENERATION_THREAD_COUNT 12
+# define	GENERATION_THREAD_COUNT 1
 # define	CHUNKS_PER_THREAD 2
 
 class	ChunkGeneratorManager

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ChunkGenerator.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/13 17:55:09 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:10:37 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/16 14:05:00 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,8 +39,13 @@ void	ChunkGenerator::_process()
 
 	for (Chunk * chunk : _deposit)
 	{
-		if (chunk->rendered)
+		if (chunk->rendered && !chunk->_created)
 			chunk->generate();
+		else if (chunk && chunk->isGenerated() && chunk->_needRemesh)
+		{
+			chunk->clear();
+			chunk->reGenMesh();
+		}
 		chunk->setGenerating(false);
 	}
 	
