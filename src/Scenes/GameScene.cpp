@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/15 19:19:13 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/17 19:47:59 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -340,6 +340,9 @@ static void	_buildInterface(Scene *scene)
 	debug->addElement("text_temperature", new Text(UIAnchor::UI_TOP_LEFT, "temperature", glm::vec2(0, 144),
 		[](std::string &label){label = "temperature: " + std::to_string(Chunk::getTemperature(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
 
+	debug->addElement("text_humidity", new Text(UIAnchor::UI_TOP_LEFT, "humidity", glm::vec2(0, 160),
+		[](std::string &label){label = "humidity: " + std::to_string(Chunk::getHumidity(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
+
 	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
 
@@ -552,28 +555,7 @@ void	GameScene::render(Scene *scene)
 	MAIN_FRAME_BUFFER->use();
 	SKYBOX->draw(*CAMERA);
 	Shader	*voxelShader = SHADER_MANAGER->get("voxel");
-	Texture::use("stoneTexture", TEXTURE_MANAGER->get(MISSING_TEXTURE_PATH)->getID(), 0, voxelShader);
-	Texture::use("stoneTexture", TEXTURE_MANAGER->get(STONE_TEXTURE_PATH)->getID(), 1, voxelShader);
-	Texture::use("dirtTexture", TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID(), 2, voxelShader);
-	Texture::use("grassTexture", TEXTURE_MANAGER->get(GRASS_TOP_TEXTURE_PATH)->getID(), 3, voxelShader);
-	Texture::use("grassSideTexture", TEXTURE_MANAGER->get(GRASS_SIDE_TEXTURE_PATH)->getID(), 4, voxelShader);
-	Texture::use("sandTexture", TEXTURE_MANAGER->get(SAND_TEXTURE_PATH)->getID(), 5, voxelShader);
-	Texture::use("waterTexture", TEXTURE_MANAGER->get(WATER_TEXTURE_PATH)->getID(), 6, voxelShader);
-	Texture::use("sandstoneTexture", TEXTURE_MANAGER->get("assets/textures/blocks/sandstone.bmp")->getID(), 7, voxelShader);
-	Texture::use("redSandstoneTexture", TEXTURE_MANAGER->get("assets/textures/blocks/red_sandstone.bmp")->getID(), 8, voxelShader);
-	Texture::use("terracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/terracotta.bmp")->getID(), 9, voxelShader);
-	Texture::use("snowTexture", TEXTURE_MANAGER->get("assets/textures/blocks/snow.bmp")->getID(), 10, voxelShader);
-	Texture::use("redSandTexture", TEXTURE_MANAGER->get("assets/textures/blocks/red_sand.bmp")->getID(), 11, voxelShader);
-	Texture::use("redTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/red_terracotta.bmp")->getID(), 12, voxelShader);
-	Texture::use("brownTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/brown_terracotta.bmp")->getID(), 13, voxelShader);
-	Texture::use("yellowTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/yellow_terracotta.bmp")->getID(), 14, voxelShader);
-	Texture::use("lightGrayTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/light_gray_terracotta.bmp")->getID(), 15, voxelShader);
-	Texture::use("whiteTerracottaTexture", TEXTURE_MANAGER->get("assets/textures/blocks/white_terracotta.bmp")->getID(), 16, voxelShader);
-	Texture::use("oakLeavesTexture", TEXTURE_MANAGER->get("assets/textures/blocks/oak_leaves.bmp")->getID(), 17, voxelShader);
-	Texture::use("oakLogTexture", TEXTURE_MANAGER->get("assets/textures/blocks/oak_log.bmp")->getID(), 18, voxelShader);
-	Texture::use("cactusTexture", TEXTURE_MANAGER->get("assets/textures/blocks/cactus.bmp")->getID(), 19, voxelShader);
-	Texture::use("spruceLeavesTexture", TEXTURE_MANAGER->get("assets/textures/blocks/spruce_leaves.bmp")->getID(), 20, voxelShader);
-	Texture::use("spruceLogTexture", TEXTURE_MANAGER->get("assets/textures/blocks/spruce_log.bmp")->getID(), 21, voxelShader);
+	Texture::use("textureAtlas", TEXTURE_MANAGER->get("assets/textures/blocks/atlas.bmp")->getID(), 0, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 
 	FrameBuffer::reset();

@@ -2,14 +2,6 @@
 
 out vec4 FragColor;
 
-uniform sampler2D stoneTexture;
-uniform sampler2D dirtTexture;
-uniform sampler2D grassTexture;
-uniform sampler2D sandTexture;
-uniform sampler2D grassSideTexture;
-uniform sampler2D waterTexture;
-uniform sampler2D missingTexture;
-
 uniform sampler2D terrainDepthTex;
 uniform sampler2D waterDepthTex;
 
@@ -37,68 +29,22 @@ const vec3  SHORE_COLOR = vec3(0.3, 0.8, 0.87);
 const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0);
 const vec3  FOG_COLOR = vec3(0.6, 0.8, 1.0);
 
-uniform sampler2D sandstoneTexture;
-uniform sampler2D redSandstoneTexture;
-uniform sampler2D terracottaTexture;
-uniform sampler2D snowTexture;
-uniform sampler2D redSandTexture;
-
-uniform sampler2D redTerracottaTexture;
-uniform sampler2D brownTerracottaTexture;
-uniform sampler2D yellowTerracottaTexture;
-uniform sampler2D lightGrayTerracottaTexture;
-uniform sampler2D whiteTerracottaTexture;
-uniform sampler2D oakLeavesTexture;
-uniform sampler2D oakLogTexture;
-uniform sampler2D cactusTexture;
-uniform sampler2D spruceLeavesTexture;
-uniform sampler2D spruceLogTexture;
+uniform	sampler2D textureAtlas;
 
 vec3	getBlockTexture(int ID)
 {
-	if (ID == 1)
-		return (texture(stoneTexture, texCoord).rgb);
-	if (ID == 2)
-		return (texture(dirtTexture, texCoord).rgb);
-	if (ID == 3)
-		return (texture(grassTexture, texCoord).rgb);
-	if (ID == 4)
-		return (texture(grassSideTexture, texCoord).rgb);
-	if (ID == 5)
-		return (texture(sandTexture, texCoord).rgb);
-	if (ID == 7)
-		return (texture(sandstoneTexture, texCoord).rgb);
-	if (ID == 8)
-		return (texture(terracottaTexture, texCoord).rgb);
-	if (ID == 9)
-		return (texture(redSandstoneTexture, texCoord).rgb);
-	if (ID == 10)
-		return (texture(snowTexture, texCoord).rgb);
-	if (ID == 11)
-		return (texture(redSandTexture, texCoord).rgb);
-	if (ID == 12)
-		return (texture(redTerracottaTexture, texCoord).rgb);
-	if (ID == 13)
-		return (texture(brownTerracottaTexture, texCoord).rgb);
-	if (ID == 14)
-		return (texture(yellowTerracottaTexture, texCoord).rgb);
-	if (ID == 15)
-		return (texture(lightGrayTerracottaTexture, texCoord).rgb);
-	if (ID == 16)
-		return (texture(whiteTerracottaTexture, texCoord).rgb);
-	if (ID == 17)
-		return (texture(oakLeavesTexture, texCoord).rgb);
-	if (ID == 18)
-		return (texture(oakLogTexture, texCoord).rgb);
-	if (ID == 19)
-		return (texture(cactusTexture, texCoord).rgb);
-	if (ID == 20)
-		return (texture(spruceLeavesTexture, texCoord).rgb);
-	if (ID == 21)
-		return (texture(spruceLogTexture, texCoord).rgb);
-	if (ID == 42)
-		return (texture(missingTexture, texCoord).rgb);
-	return (texture(grassTexture, texCoord).rgb);
+	//To optimize on chunk data we dont give the block's UV's instead we give it the world pos of the vertice (see voxel.vs) so I have to convert it to actual UV
+	vec2	baseUV = texCoord;
+	baseUV = fract(baseUV);
+
+	int row = 15 - (ID / 16);;
+    int col = ID % 16;
+
+    vec2 cellSize = vec2(16.0 / 256.0);
+    vec2 atlasOffset = vec2(col, row) * cellSize;
+    vec2 atlasUV = atlasOffset + baseUV * cellSize;
+
+	return (texture(textureAtlas, atlasUV).rgb);
 }
 
 void main()
@@ -124,7 +70,7 @@ void main()
 	    ndc.xy = ndc.xy / 2 + 0.5;
 
 	    color = SHORE_COLOR;
-		color *= texture(waterTexture, texCoord).rgb;
+		color *= getBlockTexture(0);
 	    color = clamp(color, 0, 1);
 	}
 
