@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/15 17:10:38 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/17 19:46:55 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -736,6 +736,27 @@ BlockTypes:
 12 = red sandstone
 11 = snow
 12 = red sand
+13 = red terracotta
+14 = brown terracotta
+15 = yellow terracotta
+16 = light grey terracotta
+17 = white terracotta
+18 = oak leaves
+19 = oak log
+20 = cactus
+21 = spruce leaves
+22 = spruce log
+23 = jungle leaves
+24 = jungle log
+25 = mangrove leaves
+26 = mangrove log
+27 = snowy grass side
+28 = packed ice
+29 = diamond ore
+30 = diamond block
+31 = glass
+32 = oak planks
+33 = stone bricks
 
 */
 
@@ -743,6 +764,32 @@ BlockTypes:
 #define DIRT_ID 3
 #define GRASS_ID 4
 #define SAND_ID 6
+#define SANDSTONE_ID 8
+#define TERRACOTA_ID 9
+#define RED_SANDSTONE_ID 10
+#define SNOW_ID 11
+#define RED_SAND_ID 12
+#define RED_TERRACOTTA_ID 13
+#define BROWN_TERRACOTTA_ID 14
+#define YELLOW_TERRACOTTA_ID 15
+#define LIGHT_GRAY_TERRACOTTA_ID 16
+#define WHITE_TERRACOTTA_ID 17
+#define OAK_LEAVES_ID 18
+#define OAK_LOG_ID 19
+#define CACTUS_ID 20
+#define SPRUCE_LEAVES_ID 21
+#define SPRUCE_LOG_ID 22
+#define JUNGLE_LEAVES_ID 23
+#define JUNGLE_LOG_ID 24
+#define MANGROVE_LEAVES_ID 25
+#define MANGROVE_LOG_ID 26
+#define SNOWY_GRASS_ID 27
+#define ICE_ID 28
+#define DIAMOND_ORE_ID 29
+#define DIAMOND_BLOCK_ID 30
+#define GLASS_ID 31
+#define OAK_PLANK_ID 32
+#define STONE_BRICK_ID 33
 
 uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 {
@@ -756,16 +803,16 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 			{
 				float	terracottaNoise = calcNoise(glm::vec2(y, y), 0.15, 1, 1);
 				if (terracottaNoise > 0.1 && terracottaNoise < 0.2)
-					return (13);
+					return (RED_TERRACOTTA_ID);
 				if (terracottaNoise < 0.1 && terracottaNoise > 0)
-					return (14);
+					return (BROWN_TERRACOTTA_ID);
 				if (terracottaNoise < -0.2 && terracottaNoise > -0.3)
-					return (15);
+					return (YELLOW_TERRACOTTA_ID);
 				if (terracottaNoise > 0.2 && terracottaNoise < 0.3)
-					return (16);
+					return (LIGHT_GRAY_TERRACOTTA_ID);
 				if (terracottaNoise > 0.4 || terracottaNoise < -0.4)
-					return (17);
-				return (9);
+					return (WHITE_TERRACOTTA_ID);
+				return (TERRACOTA_ID);
 			}
 			else
 				return (STONE_ID);
@@ -775,7 +822,7 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 			if (y == _currentMaxHeight && y <= WATERLINE)
 				return (DIRT_ID);
 			else if (y >= _currentMaxHeight - 3)
-				return (11);
+				return (SNOW_ID);
 			else
 				return (STONE_ID);
 		}
@@ -798,9 +845,9 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 			if (y == _currentMaxHeight && y <= WATERLINE)
 				return (DIRT_ID);
 			else if (y == _currentMaxHeight)
-				return (12);
+				return (RED_SAND_ID);
 			if (y == _currentMaxHeight - 1)
-				return (10);
+				return (RED_SANDSTONE_ID);
 			else
 				return (STONE_ID);
 		}
@@ -809,7 +856,7 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 			if (y == _currentMaxHeight && y <= WATERLINE)
 				return (DIRT_ID);
 			else if (y == _currentMaxHeight)
-				return (11);
+				return (SNOW_ID);
 			if (y == _currentMaxHeight - 1)
 				return (STONE_ID);
 			else
@@ -836,7 +883,7 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 			else if (y == _currentMaxHeight)
 				return (SAND_ID);
 			if (y >= _currentMaxHeight - 3)
-				return (8);
+				return (SANDSTONE_ID);
 			else
 				return (STONE_ID);
 		}
@@ -845,7 +892,7 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 			if (y == _currentMaxHeight && y <= WATERLINE)
 				return (SAND_ID);
 			else if (y == _currentMaxHeight)
-				return (11);
+				return (SNOW_ID);
 			if (y >= _currentMaxHeight - 3)
 				return (DIRT_ID);
 			else
@@ -874,7 +921,7 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 			if (y >= _currentMaxHeight - 3 && _currentMaxHeight + 16 > WATERLINE)
 				return (SAND_ID);
 			if (y >= _currentMaxHeight - 8)
-				return (8);
+				return (SANDSTONE_ID);
 			else
 				return (STONE_ID);
 		}
@@ -901,13 +948,17 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 				return (STONE_ID);
 		}
 	}
-	(void)y;(void)type;
-	return (6);
+	return (DIAMOND_BLOCK_ID);
 }
 
 float	Chunk::getTemperature(const glm::vec2 &pos)
 {
-	return (calcNoise(pos, 0.000375, 1, 6));
+	return (calcNoise(pos, 0.000375, 1, 12));
+}
+
+float	Chunk::getHumidity(const glm::vec2 &pos)
+{
+	return (calcNoise(pos, 0.0015, 1, 12));
 }
 
 GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
@@ -931,6 +982,7 @@ GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
 
 	_currentBiomeType = getBiomeType();
 	_currentTemperature = getTemperature(glm::vec2(pos.x, pos.z));
+	_currentHumidity = getHumidity(glm::vec2(pos.x, pos.z));
 
 	res.type = getBiomeBlock(pos.y, _currentBiomeType);
 
@@ -975,7 +1027,7 @@ void	Chunk::growTemperateTree(int wx, int wy, int wz)
 				blockInChunkPosX = 31 - (sizeX - pos.x);
 				blockInChunkPosZ = sizeZ - pos.z;
 				if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
-					setBlock(18, blockInChunkPosX, sizeY, blockInChunkPosZ);
+					setBlock(OAK_LEAVES_ID, blockInChunkPosX, sizeY, blockInChunkPosZ);
 			}
 
 	blockInChunkPosX = 31 - (wx - pos.x);
@@ -983,8 +1035,73 @@ void	Chunk::growTemperateTree(int wx, int wy, int wz)
 
 	for (int height = wy; height < treeTop; height++) //Place trunk
 		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
-			setBlock(19, blockInChunkPosX, height, blockInChunkPosZ);
+			setBlock(OAK_LOG_ID, blockInChunkPosX, height, blockInChunkPosZ);
+}
 
+void	Chunk::growSwampTree(int wx, int wy, int wz)
+{
+	int maxHeight = wy - 1;
+
+	_currentMaxHeight = maxHeight;
+	if (getGeneration(glm::vec3(wx, maxHeight, wz)).type ==  0)
+		return ;
+
+	(void)wx;(void)wy;(void)wz;
+	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 5;
+	if (treeTop > wy + 8)
+		treeTop = wy + 8;
+
+	int blockInChunkPosX = 0;
+	int blockInChunkPosZ = 0;
+
+	for (int sizeX = wx - 3; sizeX <= wx + 3; sizeX++)
+		for (int sizeZ = wz - 3; sizeZ <= wz + 3; sizeZ++)
+			for (int sizeY = treeTop - 2; sizeY <= treeTop + 2; sizeY++)
+			{
+				blockInChunkPosX = 31 - (sizeX - pos.x);
+				blockInChunkPosZ = sizeZ - pos.z;
+				if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+					setBlock(MANGROVE_LEAVES_ID, blockInChunkPosX, sizeY, blockInChunkPosZ);
+			}
+
+	blockInChunkPosX = 31 - (wx - pos.x);
+	blockInChunkPosZ = wz - pos.z;
+
+	for (int height = wy; height < treeTop; height++) //Place trunk
+		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+			setBlock(MANGROVE_LOG_ID, blockInChunkPosX, height, blockInChunkPosZ);
+}
+
+void	Chunk::growJungleTree(int wx, int wy, int wz)
+{
+	int maxHeight = wy - 1;
+
+	_currentMaxHeight = maxHeight;
+	if (getGeneration(glm::vec3(wx, maxHeight, wz)).type ==  0)
+		return ;
+
+	(void)wx;(void)wy;(void)wz;
+	int	treeTop = wy + 10 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 10;
+
+	int blockInChunkPosX = 0;
+	int blockInChunkPosZ = 0;
+
+	for (int sizeX = wx - 3; sizeX <= wx + 3; sizeX++)
+		for (int sizeZ = wz - 3; sizeZ <= wz + 3; sizeZ++)
+			for (int sizeY = treeTop - 2; sizeY <= treeTop + 2; sizeY++)
+			{
+				blockInChunkPosX = 31 - (sizeX - pos.x);
+				blockInChunkPosZ = sizeZ - pos.z;
+				if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+					setBlock(JUNGLE_LEAVES_ID, blockInChunkPosX, sizeY, blockInChunkPosZ);
+			}
+
+	blockInChunkPosX = 31 - (wx - pos.x);
+	blockInChunkPosZ = wz - pos.z;
+
+	for (int height = wy; height < treeTop; height++) //Place trunk
+		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+			setBlock(JUNGLE_LOG_ID, blockInChunkPosX, height, blockInChunkPosZ);
 }
 
 void	Chunk::growColdTree(int wx, int wy, int wz)
@@ -1010,7 +1127,7 @@ void	Chunk::growColdTree(int wx, int wy, int wz)
 				blockInChunkPosX = 31 - (sizeX - pos.x);
 				blockInChunkPosZ = sizeZ - pos.z;
 				if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
-					setBlock(21, blockInChunkPosX, sizeY, blockInChunkPosZ);
+					setBlock(SPRUCE_LEAVES_ID, blockInChunkPosX, sizeY, blockInChunkPosZ);
 			}
 
 	blockInChunkPosX = 31 - (wx - pos.x);
@@ -1018,7 +1135,40 @@ void	Chunk::growColdTree(int wx, int wy, int wz)
 
 	for (int height = wy; height < treeTop; height++) //Place trunk
 		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
-			setBlock(22, blockInChunkPosX, height, blockInChunkPosZ);
+			setBlock(SPRUCE_LOG_ID, blockInChunkPosX, height, blockInChunkPosZ);
+
+}
+
+void	Chunk::growIceSpike(int wx, int wy, int wz)
+{
+	int maxHeight = wy - 1;
+
+	_currentMaxHeight = maxHeight;
+	if (getGeneration(glm::vec3(wx, maxHeight, wz)).type ==  0)
+		return ;
+
+	(void)wx;(void)wy;(void)wz;
+	int	treeTop = wy + 16 * std::abs(calcNoise(glm::vec2(wx, wz), 0.999, 1, 2)) + 5;
+
+	int blockInChunkPosX = 0;
+	int blockInChunkPosZ = 0;
+
+	for (int sizeY = maxHeight; sizeY <= treeTop - 3; sizeY++)
+		for (int sizeX = wx - 1; sizeX <= wx + 1; sizeX++)
+			for (int sizeZ = wz - 1; sizeZ <= wz + 1; sizeZ++)
+			{
+				blockInChunkPosX = 31 - (sizeX - pos.x);
+				blockInChunkPosZ = sizeZ - pos.z;
+				if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+					setBlock(ICE_ID, blockInChunkPosX, sizeY, blockInChunkPosZ);
+			}
+
+	blockInChunkPosX = 31 - (wx - pos.x);
+	blockInChunkPosZ = wz - pos.z;
+
+	for (int height = wy; height < treeTop; height++) //Place trunk
+		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
+			setBlock(ICE_ID, blockInChunkPosX, height, blockInChunkPosZ);
 
 }
 
@@ -1039,7 +1189,7 @@ void	Chunk::growCactus(int wx, int wy, int wz)
 
 	for (int height = wy; height < treeTop; height++) //Place trunk
 		if (!(blockInChunkPosX < 0 || blockInChunkPosX >= 32 || blockInChunkPosZ < 0 || blockInChunkPosZ >= 32))
-			setBlock(20, blockInChunkPosX, height, blockInChunkPosZ);
+			setBlock(CACTUS_ID, blockInChunkPosX, height, blockInChunkPosZ);
 }
 
 /*
@@ -1089,16 +1239,21 @@ void	Chunk::genChunk()
 			height = getGenerationHeight(glm::vec2{(31 - x) + pos.x, pos.z + z});
 			_currentBiomeType = getBiomeType();
 			_currentTemperature = getTemperature(glm::vec2((31 - x) + pos.x, pos.z + z));
+			_currentHumidity = getHumidity(glm::vec2((31 - x) + pos.x, pos.z + z));
 
 			float	noise = calcNoise(glm::vec2((31 - x) + pos.x, pos.z + z), 0.99, 1, 1);
 			if (height > WATERLINE && noise > 0.5 && noise < 0.55)
 			{
-				if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < 0.2 && _currentTemperature > -0.2)
+				if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < 0.2 && _currentTemperature > -0.2 && _currentHumidity < 0)
 					growTemperateTree((31 - x) + pos.x, height + 1, pos.z + z);
+				else if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < 0.2 && _currentTemperature > -0.2 && _currentHumidity > 0)
+					growSwampTree((31 - x) + pos.x, height + 1, pos.z + z);
 				else if (_currentBiomeType == BiomeType::PLAINS && _currentTemperature > 0.2)
 					growCactus((31 - x) + pos.x, height + 1, pos.z + z);
-				else if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < -0.2)
+				else if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < -0.2 && _currentHumidity < 0)
 					growColdTree((31 - x) + pos.x, height + 1, pos.z + z);
+				else if ((_currentBiomeType == BiomeType::HILLS || _currentBiomeType == BiomeType::PLAINS) && _currentTemperature < -0.2 && _currentHumidity > 0)
+					growIceSpike((31 - x) + pos.x, height + 1, pos.z + z);
 			}
 		}
 	}
