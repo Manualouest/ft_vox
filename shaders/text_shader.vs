@@ -16,10 +16,10 @@ void main() {
     gl_Position = projection * model * vec4(aPos, 0.0, 1.0);
     clip = gl_Position;
 
-    int row = charIndex / 16;
+    int row = 15 - (charIndex / 16);
     int col = charIndex % 16;
 
     vec2 cellSize = vec2(1.0 / 16.0);
     vec2 atlasOffset = vec2(col, row) * cellSize;
-    texPos = atlasOffset + aUV * cellSize;
+    texPos = atlasOffset + vec2(aUV.x, abs(aUV.y - 1)) * cellSize;
 }
