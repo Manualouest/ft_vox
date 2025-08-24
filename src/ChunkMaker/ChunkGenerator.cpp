@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ChunkGenerator.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/13 17:55:09 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/16 14:52:22 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/24 18:38:45 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,25 +33,35 @@ void	ChunkGenerator::_process()
 
 	for (Chunk * chunk : _deposit)
 	{
+		// consoleLog("0", NORMAL);
 		_working = true;
 		if (!chunk->loaded)
 		{
 			chunk->setGenerating(false);
 			continue ;
 		}
-
-		if (chunk->loaded)
+		// consoleLog("1", NORMAL);
+		if (chunk->loaded && !chunk->getRemesh())
 		{
+			// consoleLog("1.1", NORMAL);
 			chunk->generate();
+			// consoleLog("1.2", NORMAL);
 			chunk->setState(ChunkState::CS_GENERATED);
 		}
-		if (chunk->getState() == ChunkState::CS_GENERATED)
+		// consoleLog("2", NORMAL);
+		if (chunk->getState() == ChunkState::CS_GENERATED || chunk->getRemesh())
 		{
+			// consoleLog("2.1", NORMAL);
 			chunk->mesh();
-			chunk->setState(ChunkState::CS_MESHED);
+			// consoleLog("2.2", NORMAL);
+			if (!chunk->getRemesh())
+				chunk->setState(ChunkState::CS_MESHED);
+			// consoleLog("2.3", NORMAL);
 		}
+		// consoleLog("3", NORMAL);
 
 		chunk->setGenerating(false);
+		// consoleLog("4", NORMAL);
 	}
 
 	_deposit.clear();

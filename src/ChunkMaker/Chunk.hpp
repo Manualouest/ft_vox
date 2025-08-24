@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/16 14:49:36 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/24 19:11:20 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,18 +26,15 @@ extern Camera			*CAMERA;
 */
 struct Slices
 {
-	char32_t				slice, westFaces, eastFaces, rotSlice, northSlices, southSlices = 0;
-	std::vector<char32_t>	rotSlices;
+	uint64_t				slice, westFaces, eastFaces, rotSlice, northFaces, southFaces = 0;
 
-	Slices()
+	void	shift()
 	{
-		rotSlices.reserve(32);
-	}
-
-	~Slices()
-	{
-		rotSlices.clear();
-		rotSlices.shrink_to_fit();
+		slice >>= 2;
+		westFaces >>= 2;
+		eastFaces >>= 2;
+		northFaces >>= 2;
+		southFaces >>= 2;
 	}
 };
 
@@ -83,7 +80,7 @@ class Chunk
 
 		void	generate();
 		void	mesh();
-		void	reGenMesh();
+		void	reGenMesh(const bool &isNotThread);
 		void	upload();
 		void	clear();
 
@@ -95,8 +92,8 @@ class Chunk
 		std::atomic_bool		rendered;
 		std::atomic_bool		loaded;
 		bool					loadedThisFrame;
-		std::vector<char32_t>	ChunkMask;
-		std::vector<char32_t>	RotChunkMask;
+		std::vector<uint64_t>	ChunkMask;
+		std::vector<uint64_t>	RotChunkMask;
 		int						ChunkMaskSize = 8192;
 		std::vector<char32_t>	WaterMask;
 		std::vector<GenInfo>	Blocks;
@@ -106,6 +103,8 @@ class Chunk
 		uint8_t					_maxHeight = 0;
 		uint8_t					_currentMaxHeight = 0;
 		uint8_t					_currentBiome;
+		std::atomic_bool		_used;
+		std::atomic_bool		_isBorder;
 
 		void	initDist();
 		float	getDist() const;
@@ -159,20 +158,26 @@ class Chunk
 		bool		_generating = false;
 		std::mutex	_remeshMutex;
 		bool		_remesh = false;
+
 		GenInfo	getGeneration(const glm::vec3 &pos);
-		int	getGenerationHeight(const glm::vec2 &pos);
+		int		getGenerationHeight(const glm::vec2 &pos);
 		GenInfo	getGeneration(const glm::vec2 &pos);
+		bool	setUsed() {_used.store(true); nbUsing++; if (nbUsing > 4) std::cout << "SIGMATRON " << nbUsing << std::endl; return(true);}
+		bool	setUnused() {nbUsing--; if(nbUsing == 0){_used.store(false);}; return(true);}
+
 
 		void	addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
-		void	placeBlock(glm::ivec3 &pos, const std::vector<char32_t> &usedData, char32_t &slice, char32_t &westFaces, char32_t &eastFaces, char32_t &northFaces, char32_t &southFaces);
+		void	placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice);
 		void	genChunk();
 		void	getRotSlice(std::vector<char32_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<char32_t>	&usedMask);
+		void	fatGetRotSlice(std::vector<uint64_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<uint64_t>	&usedMask);
 		void	genMesh();
 		void	makeBuffers();
 
 		unsigned int			_EBO = 0;
 		unsigned int			_VAO = 0;
 		unsigned int			_VBO = 0;
+		std::atomic_uint			nbUsing = 0;
 		uint32_t				_indicesSize;
 		std::vector<uint32_t>	_indices;
 		std::vector<uint32_t>	_vertices;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   GameScene.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/16 14:43:58 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/24 19:03:51 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -303,7 +303,7 @@ static void	_buildInterface(Scene *scene)
 		[](std::string &label)
 		{
 			uint	generatedChunks = CHUNKS->getGeneratingChunksCount();
-			uint	loadedChunks = CHUNKS->getLoadedChunkCount();
+			uint	loadedChunks = CHUNKS->getLoadedChunkCount() - CHUNKS->getBorderChunksChunksCount();
 
 			label = "generated " + std::to_string(loadedChunks - generatedChunks) + "/" + std::to_string(loadedChunks);
 		}, false));
@@ -350,12 +350,12 @@ static void	_buildInterface(Scene *scene)
 			UIElement::draw(shader, glm::vec2(chunkOriginX, chunkOriginY), glm::vec2(200, 200));
 			for (Chunk * chunk: chunks)
 			{
-				if (chunk->getState() == ChunkState::CS_MESHED)
+				if (chunk->getState() >= ChunkState::CS_GENERATED)
 				{
 					shader->setVec3("color", glm::vec3(0, 1, 0));
 					UIElement::draw(shader, glm::vec2(chunkOriginX + (chunkSizeX * (float)x), chunkOriginY + (chunkSizeY * (float)y)), glm::vec2(chunkSizeX, chunkSizeY));
 				}
-				else if (chunk->getState() == ChunkState::CS_GENERATED)
+				if (chunk->getRemesh())
 				{
 					shader->setVec3("color", glm::vec3(1, 1, 0));
 					UIElement::draw(shader, glm::vec2(chunkOriginX + (chunkSizeX * (float)x), chunkOriginY + (chunkSizeY * (float)y)), glm::vec2(chunkSizeX, chunkSizeY));
@@ -606,6 +606,8 @@ void	GameScene::render(Scene *scene)
 		glDisable(GL_DEPTH_TEST);
 		FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID());
 		scene->getInterfaceManager()->get("waiting")->draw();
+		scene->getInterfaceManager()->get("debug")->update();
+		scene->getInterfaceManager()->get("debug")->draw();
 		glEnable(GL_DEPTH_TEST);
 		return ;
 	}

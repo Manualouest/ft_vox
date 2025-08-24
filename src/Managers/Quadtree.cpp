@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Quadtree.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/16 14:39:30 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/18 15:17:19 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,6 +183,7 @@ void	Quadtree::pruneDeadLeaves(Quadtree *root) //shouldBranchDie
 void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 {
 	(void)root;
+	// (void)quadrant;
 	Quadtree	*branch = _branches[quadrant];
 	if (branch != NULL)
 	{
@@ -190,7 +191,8 @@ void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 			if (!branch->_leaf->getGenerating()
 				&& !branch->_leaf->rendered
 				&& !branch->_leaf->_edited
-				&& !branch->_leaf->loaded)
+				&& !branch->_leaf->loaded
+				&& !branch->_leaf->_used.load())
 			{
 				delete branch;
 				_branches[quadrant] = NULL;

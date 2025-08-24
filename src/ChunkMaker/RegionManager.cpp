@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RegionManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:44:51 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/13 18:31:58 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/24 19:11:07 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ Frustum createFrustumFromCamera(float aspect, float fovY, float zNear, float zFa
 
 RegionManager::RegionManager()
 {
-	RenderDist = 10;
+	RenderDist = 16;
 	_QT = new Quadtree(glm::vec2(0, 0), QTBranch::BOTTOM_LEFT, glm::vec2(WORLD_SIZE, WORLD_SIZE));
 }
 
@@ -79,6 +79,8 @@ void	RegionManager::UpdateChunks()
 			{
 				tmp->loaded = true;
 				tmp->loadedThisFrame = true;
+				if (x == startX || x == endX - 1 || z == startZ || z == endZ - 1)
+					tmp->_isBorder = true;
 				loadedChunks.push_back(tmp);
 			}
 		}
