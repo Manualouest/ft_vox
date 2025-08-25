@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/11 20:01:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/16 10:09:22 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 10:42:52 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,16 +30,19 @@ class	ChunkGenerator
 		void	stop();
 		void	start();
 		bool	deposit(std::vector<Chunk *> chunks);
-		
-		bool	isWorking() {return (this->_working);}
+
+		bool	isWorking() {LOCK(_workingMutex); return (this->_working);}
+		void	setWorking(bool state) {LOCK(_workingMutex); this->_working = state;}
+		bool	isRunning(void){return (this->_running);}
 	private:
 		void	_loop();
 		void	_process();
-		
+
 		std::vector<Chunk *>	_deposit;
 		std::mutex				_depositMutex;
 		std::atomic_bool		_running;
-		std::atomic_bool		_working;
+		std::mutex				_workingMutex;
+		bool					_working = false;
 		std::thread				_thread;
 };
 

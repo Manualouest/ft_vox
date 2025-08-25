@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/24 19:11:20 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 10:06:39 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,9 +162,19 @@ class Chunk
 		GenInfo	getGeneration(const glm::vec3 &pos);
 		int		getGenerationHeight(const glm::vec2 &pos);
 		GenInfo	getGeneration(const glm::vec2 &pos);
-		bool	setUsed() {_used.store(true); nbUsing++; if (nbUsing > 4) std::cout << "SIGMATRON " << nbUsing << std::endl; return(true);}
-		bool	setUnused() {nbUsing--; if(nbUsing == 0){_used.store(false);}; return(true);}
-
+		bool	setUsed()
+		{
+			_used.store(true);
+			nbUsing++;
+			return(true);
+		}
+		bool	setUnused()
+		{
+			nbUsing--;
+			if(nbUsing == 0)
+				_used.store(false);
+			return (true);
+		}
 
 		void	addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
 		void	placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   GameScene.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/24 19:03:51 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 10:46:45 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -314,7 +314,7 @@ static void	_buildInterface(Scene *scene)
 			Shader	*shader = SHADER_MANAGER->get("colored_quad");
 
 			uint	generatedChunks = CHUNKS->getGeneratingChunksCount();
-			uint	loadedChunks = CHUNKS->getLoadedChunkCount();
+			uint	loadedChunks = CHUNKS->getLoadedChunkCount() - CHUNKS->getBorderChunksChunksCount();
 
 			float	barSizeX = 300;
 			float	barSizeY = 5;

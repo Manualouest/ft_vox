@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ChunkGeneratorManager.cpp                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/24 19:07:08 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 10:45:19 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,10 @@
 
 void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 {
-	if (!_depositMutex.try_lock())
+	if (isWorking())
 		return ;
+
+	LOCK(_depositMutex);
 
 	std::vector<Chunk*>	cpy = chunks;
 	RegionManager::sortChunks(cpy);
@@ -25,23 +27,24 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 	_deposit.reserve(cpy.size());
 
 	for (Chunk * chunk : cpy)
-		if (!chunk->getGenerating() && (chunk->getState() == CS_EMPTY || chunk->getRemesh()))
+	{
+		if (!chunk->getGenerating() && (chunk->getState() < CS_MESHED || chunk->getRemesh()))
 		{
 			chunk->setGenerating(true);
 			_deposit.push_back(chunk);
 		}
+	}
 
 	_deposit.shrink_to_fit();
-
-	_depositMutex.unlock();
 }
 
 void	ChunkGeneratorManager::_send()
 {
+	setWorking(true);
+	LOCK(_depositMutex);
+
 	if (workingThreads() >= GENERATION_THREAD_COUNT)
 		return ;
-
-	LOCK(_depositMutex);
 
 	for (ChunkGenerator *generator : _generators)
 	{
@@ -52,15 +55,19 @@ void	ChunkGeneratorManager::_send()
 				_deposit.erase(_deposit.begin(), _deposit.begin() + sizeToAdd);
 		}
 	}
-	if (_deposit.empty())
-		_deposit.shrink_to_fit();
+
+	for (Chunk *chunk : _deposit)
+		chunk->setGenerating(false);
+	_deposit.clear();
 }
 
 void	ChunkGeneratorManager::_loop()
 {
+	_running = true;
 	while (_running)
 	{
 		_send();
+		setWorking(false);
 		usleep(200);
 	}
 }
@@ -93,10 +100,11 @@ void	ChunkGeneratorManager::start()
 		return ;
 
 	consoleLog("Starting chunk generator manager thread", LogSeverity::NORMAL);
-	_thread = std::thread(&ChunkGeneratorManager::_loop, this);
-	_running = true;
 	for (ChunkGenerator *generator : _generators)
 		generator->start();
+	while (!_allStarted())
+		usleep(200);
+	_thread = std::thread(&ChunkGeneratorManager::_loop, this);
 }
 
 void	ChunkGeneratorManager::stop()

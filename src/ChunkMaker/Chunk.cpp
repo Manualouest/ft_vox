@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/24 19:02:01 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 09:56:08 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,48 +127,37 @@ void	Chunk::generate()
 
 void	Chunk::mesh()
 {
-	// consoleLog("2.1.1", NORMAL);
 	if (Chunk::getState() >= ChunkState::CS_MESHED && !getRemesh())
 		return ;
-	// consoleLog("2.1.2", NORMAL);
 	reGenMesh(false);
-	// consoleLog("2.1.3", NORMAL);
 	_indicesSize = _indices.size();
 }
 
 void	Chunk::reGenMesh(const bool &isNotThread)
 {
-	// consoleLog("2.1.2.1", NORMAL);
 	if (getState() != CS_EMPTY && isNotThread)
 		clear();
-	// consoleLog("2.1.2.2", NORMAL);
 	_indicesSize = 0;
-	// consoleLog("2.1.2.3", NORMAL);
 	genMesh();
-	// consoleLog("2.1.2.4", NORMAL);
 	_indicesSize = _indices.size();
 }
 
 void	Chunk::clear()
 {
-	// consoleLog("2.1.2.1.1", NORMAL);
 	std::stringstream t;
 	t << _EBO;
-	consoleLog("	EBO " + t.str(), NORMAL);
+	
 	if (_EBO)
 		glDeleteBuffers(1, &_EBO);
 	_EBO = 0;
-	// consoleLog("2.1.2.1.2", NORMAL);
+	
 	if (_VBO)
 		glDeleteBuffers(1, &_VBO);
 	_VBO = 0;
-	// consoleLog("2.1.2.1.3", NORMAL);
+
 	if (_VAO)
 		glDeleteVertexArrays(1, &_VAO);
-	// consoleLog("2.1.2.1.4", NORMAL);
 	_VAO = 0;
-	// consoleLog("2.1.2.1.5", NORMAL);
-	setState(ChunkState::CS_MESHED);
 }
 
 void	Chunk::upload()
