@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/25 11:49:15 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 12:20:51 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -629,8 +629,6 @@ void	GameScene::render(Scene *scene)
 		glDisable(GL_DEPTH_TEST);
 		FrameBuffer::drawFrame(SHADER_MANAGER->get("title_bg"), TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID());
 		scene->getInterfaceManager()->get("waiting")->draw();
-		scene->getInterfaceManager()->get("debug")->update();
-		scene->getInterfaceManager()->get("debug")->draw();
 		glEnable(GL_DEPTH_TEST);
 		return ;
 	}
@@ -742,7 +740,7 @@ void	GameScene::open(Scene *)
 		CHUNKS = new RegionManager();
 	enteringWorld = true;
 	renderDist = CHUNKS->getRenderDist();
-	CHUNKS->setRenderDist(8);
+	CHUNKS->setRenderDist(2);
 	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("waiting");
 	consoleLog("Opened a world", LogSeverity::NORMAL);
 }
