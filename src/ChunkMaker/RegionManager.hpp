@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RegionManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:32:56 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/24 19:03:18 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 11:22:08 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,16 @@ class RegionManager
 
 			for (Chunk *chunk : _loadedChunks)
 				if (chunk->getGenerating() && !chunk->_isBorder)
+					res++;
+
+			return (res);
+		}
+		uint	getGeneratedChunksCount()
+		{
+			uint	res = 0;
+
+			for (Chunk *chunk : _loadedChunks)
+				if (chunk->getState() >= ChunkState::CS_MESHED)
 					res++;
 
 			return (res);

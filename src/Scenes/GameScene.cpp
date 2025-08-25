@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/25 10:46:45 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 11:49:15 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -309,8 +309,10 @@ static void	_buildInterface(Scene *scene)
 	waiting->addElement("generated_chunks", new Text(UIAnchor::UI_CENTER, "generated chunks", glm::vec2(0, -128),
 		[](std::string &label)
 		{
-			uint	generatedChunks = CHUNKS->getGeneratingChunksCount();
+			uint	generatedChunks = CHUNKS->getGeneratedChunksCount();
 			uint	loadedChunks = CHUNKS->getLoadedChunkCount() - CHUNKS->getBorderChunksChunksCount();
+
+			generatedChunks = loadedChunks - generatedChunks;
 
 			label = "generated " + std::to_string(loadedChunks - generatedChunks) + "/" + std::to_string(loadedChunks);
 		}, false));
@@ -320,7 +322,7 @@ static void	_buildInterface(Scene *scene)
 		{
 			Shader	*shader = SHADER_MANAGER->get("colored_quad");
 
-			uint	generatedChunks = CHUNKS->getGeneratingChunksCount();
+			uint	generatedChunks = CHUNKS->getGeneratedChunksCount();
 			uint	loadedChunks = CHUNKS->getLoadedChunkCount() - CHUNKS->getBorderChunksChunksCount();
 
 			float	barSizeX = 300;
@@ -334,7 +336,7 @@ static void	_buildInterface(Scene *scene)
 
 			float	ratio = 0;
 			if (loadedChunks != 0)
-				ratio = (float)(loadedChunks - generatedChunks) / (float)loadedChunks;
+				ratio = 1 - ((float)(loadedChunks - generatedChunks) / (float)loadedChunks);
 
 			shader->setVec3("color", glm::vec3(0, 1, 0));
 			UIElement::draw(shader, glm::vec2(barPosX, barPosY), glm::vec2(barSizeX * ratio, barSizeY));
@@ -740,7 +742,7 @@ void	GameScene::open(Scene *)
 		CHUNKS = new RegionManager();
 	enteringWorld = true;
 	renderDist = CHUNKS->getRenderDist();
-	CHUNKS->setRenderDist(10);
+	CHUNKS->setRenderDist(8);
 	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("waiting");
 	consoleLog("Opened a world", LogSeverity::NORMAL);
 }

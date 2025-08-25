@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/17 19:46:55 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 11:17:06 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -251,7 +251,7 @@ void	Chunk::makeBuffers()
 /*
 	fills a 32 x 32 portion of a vector with the rotated values of another
 */
-void	Chunk::getRotSlice(std::vector<char32_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<char32_t>	&usedMask)
+void	Chunk::getRotSlice(std::vector<uint64_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<uint64_t>	&usedMask)
 {
 	char32_t slice;
 	for (int i = 0; i < 32; ++i)
@@ -945,12 +945,12 @@ uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 
 float	Chunk::getTemperature(const glm::vec2 &pos)
 {
-	return (calcNoise(pos, 0.000375, 1, 12));
+	return (calcNoise(pos, 0.000375, 1, 4));
 }
 
 float	Chunk::getHumidity(const glm::vec2 &pos)
 {
-	return (calcNoise(pos, 0.0015, 1, 12));
+	return (calcNoise(pos, 0.0015, 1, 4));
 }
 
 GenInfo	Chunk::getGeneration(const glm::vec3 &pos)
@@ -988,7 +988,7 @@ void	Chunk::setBlock(int type, int x, int y, int z)
 	block.height = y;
 	Blocks[y * 1024 + z * 32 + x] = block;
 	if (type != 0)
-		ChunkMask[y * 32 + z] |= (char32_t)(((char32_t)1) << (31 - x));
+		ChunkMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
 
 	if (y > _maxHeight)
 		_maxHeight = y;
@@ -1214,8 +1214,7 @@ void	Chunk::genChunk()
 			_currentMaxHeight = height;
 			for (int y = height; y >= 0; --y) //Generates terrain shape
 			{
-				// newBlock = getGeneration(glm::vec3((31 - x) + pos.x, y, pos.z + z));
-				newBlock.type = 2;
+				newBlock = getGeneration(glm::vec3((31 - x) + pos.x, y, pos.z + z));
 
 				setBlock(newBlock.type, x, y, z);
 			}
@@ -1252,7 +1251,7 @@ void	Chunk::genChunk()
 	}
 
 	for (int y = _maxHeight; y >= 0; --y)
-		getRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
+		fatGetRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
 
 	// Add water
 	WaterMask.resize(32 * (WATERLINE + 1), 0);
