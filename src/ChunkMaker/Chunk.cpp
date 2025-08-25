@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/25 12:28:47 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 13:36:32 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,8 +187,10 @@ Chunk::~Chunk()
 	ChunkMask.shrink_to_fit();
 	RotChunkMask.clear();
 	RotChunkMask.shrink_to_fit();
-	WaterMask.clear();
-	WaterMask.shrink_to_fit();
+	ChunkTrsMask.clear();
+	ChunkTrsMask.shrink_to_fit();
+	RotChunkTrsMask.clear();
+	RotChunkTrsMask.shrink_to_fit();
 	Blocks.clear();
 	Blocks.shrink_to_fit();
 	_vertices.clear();
@@ -372,11 +374,11 @@ This is the list of the Normals used in the shader:
 /*
 	Puts the blocks in the mesh using the culled slices, the given CHunkMask and the array of Blocks as reference.
 */
-void	Chunk::placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice)
+void	Chunk::placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice, const bool &isWater)
 {
 	// to add a face we add the offsets of each of it's vertexes to it's position the chunk and then give it's normal based on the face.
 	// things change for the north and south slices as the positions are rotated
-	if (slice.northFaces & 3 || slice.southFaces & 3) // skipping full air
+	if ((isWater || (!isWater && (slice.rotSlice & 3) != 1)) && (slice.northFaces & 3 || slice.southFaces & 3)) // skipping full air
 	{
 		uint8_t	block = Blocks[(chunkPos.y << 10) + ((31 - chunkPos.x) << 5) + (chunkPos.z)].type - 1;
 		glm::ivec3	rotChunkPos = glm::ivec3((31 - chunkPos.z), chunkPos.y, (31 - chunkPos.x));
@@ -386,7 +388,7 @@ void	Chunk::placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedDa
 			addVertices(block + (block == 3), V4 + rotChunkPos, V3 + rotChunkPos, V8 + rotChunkPos, V7 + rotChunkPos, 4);
 	}
 
-	if (slice.westFaces & 3 || slice.eastFaces & 3 || slice.slice & 3) // same as the other one
+	if ((isWater || (!isWater && (slice.slice & 3) != 1)) && (slice.westFaces & 3 || slice.eastFaces & 3 || slice.slice & 3)) // same as the other one
 	{
 		uint8_t	block = Blocks[(chunkPos.y << 10) + (chunkPos.z << 5) + 31 - chunkPos.x].type - 1;
 		if (slice.westFaces & 3)
@@ -413,13 +415,13 @@ void	Chunk::placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedDa
 void	Chunk::genMesh()
 {
 	// consoleLog("2.1.2.3.1", NORMAL);
-	Slices	ground, water;
+	Slices	ground, trs;
 
 	_vertices.reserve(1572864); // 1572864 is 16*16*256*(6*4) because you can have max 16*16 VISIBLE blocks on a chunk's slice with ech having 6*4 vertices
 	_indices.reserve(2359296); // 2359296 is (1572864/4) * 6 because for each 4 vertices 6 indices are added
 
 	glm::ivec3	chunkPos(0, 0, 0);
-	uint64_t	edges[4] = {0, 0, 0, 0}; // these are the slices of adjacent chunks (4-7 is for water only) 0 = west, 1 = east, 2 = north, 3 = south
+	uint64_t	edges[4][std::max((int)_maxHeight, WATERLINE) + 1]; // these are the slices of adjacent chunks (4-7 is for water only) 0 = west, 1 = east, 2 = north, 3 = south
 	Chunk		*sideChunks[4] = {NULL, NULL, NULL, NULL}; // the adjacent chunks 0 = west, 1 = east, 2 = north, 3 = south
 
 	// consoleLog("2.1.2.3.2", NORMAL);
@@ -450,49 +452,71 @@ void	Chunk::genMesh()
 		return ;
 	}
 
+	for (int y = 0; y <= std::max(_maxHeight, (uint8_t)WATERLINE); ++y)
+	{
+		// getting the proper adjacent slice for the y level
+		if (sideChunks[0])
+			edges[0][y] = sideChunks[0]->RotChunkMask[y * 32];
+
+		if (sideChunks[1])
+			edges[1][y] = sideChunks[1]->RotChunkMask[y * 32 + 31];
+
+		if (sideChunks[2])
+			edges[2][y] = sideChunks[2]->ChunkMask[y * 32];
+
+		if (sideChunks[3])
+			edges[3][y] = sideChunks[3]->ChunkMask[y * 32 + 31];
+	}
+
 	// consoleLog("2.1.2.3.4", NORMAL);
 	// Generating the mesh
 	for (chunkPos.y = 0; chunkPos.y <= std::max(_maxHeight, (uint8_t)WATERLINE); ++chunkPos.y)
 	{
-		// getting the proper adjacent slice for the y level
-		if (sideChunks[0])
-			edges[0] = sideChunks[0]->RotChunkMask[chunkPos.y * 32];
-		// else
-		// 	edges[0] = 0;
-			// edges[0] = getGenEdgeSlice(genEdges[0], chunkPos.y);
-
-		if (sideChunks[1])
-			edges[1] = sideChunks[1]->RotChunkMask[chunkPos.y * 32 + 31];
-		// else
-		// 	edges[1] = 0;
-			// edges[1] = getGenEdgeSlice(genEdges[1], chunkPos.y);
-
-		if (sideChunks[2])
-			edges[2] = sideChunks[2]->ChunkMask[chunkPos.y * 32];
-		// else
-		// 	edges[2] = 0;
-			// edges[2] = getGenEdgeSlice(genEdges[2], chunkPos.y);
-
-		if (sideChunks[3])
-			edges[3] = sideChunks[3]->ChunkMask[chunkPos.y * 32 + 31];
-		// else
-		// 	edges[3] = 0;
-			// edges[3] = getGenEdgeSlice(genEdges[3], chunkPos.y);
 
 		for (chunkPos.z = 0; chunkPos.z < 32; ++chunkPos.z)
 		{
 			// culling the slices for the ground (setting which faces will be generated) using the adjacent chunk slices
 			ground.slice = ChunkMask[chunkPos.y * 32 + chunkPos.z];
 			ground.rotSlice = RotChunkMask[chunkPos.y * 32 + chunkPos.z];
-			ground.westFaces = fatCulling(ground.slice, true, ((edges[0] >> ((31 - chunkPos.z) * 2)) & 3));
-			ground.eastFaces = fatCulling(ground.slice, false, ((edges[1] >> ((31 - chunkPos.z) * 2)) & 3));
-			ground.northFaces = fatCulling(ground.rotSlice, true, ((edges[2] >> ((31 - chunkPos.z) * 2)) & 3));
-			ground.southFaces = fatCulling(ground.rotSlice, false, ((edges[3] >> ((31 - chunkPos.z) * 2)) & 3));
+			ground.westFaces = fatCulling(ground.slice, true, ((edges[0][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+			ground.eastFaces = fatCulling(ground.slice, false, ((edges[1][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+			ground.northFaces = fatCulling(ground.rotSlice, true, ((edges[2][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+			ground.southFaces = fatCulling(ground.rotSlice, false, ((edges[3][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+
+			trs.slice = ChunkTrsMask[chunkPos.y * 32 + chunkPos.z];
+			trs.rotSlice = RotChunkTrsMask[chunkPos.y * 32 + chunkPos.z];
+			trs.westFaces = trs.slice;
+			trs.eastFaces = trs.slice;
+			trs.northFaces = trs.rotSlice;
+			trs.southFaces = trs.rotSlice;
 
 			// creating the blocks for the slice
 			for (chunkPos.x = 0; chunkPos.x < 32; ++chunkPos.x)
 			{
-				placeBlock(chunkPos, ChunkMask, ground);
+				placeBlock(chunkPos, ChunkMask, ground, false);
+				placeBlock(chunkPos, ChunkMask, trs, false);
+				ground.shift();
+				trs.shift();
+			}
+		}
+	}
+	for (chunkPos.y = 0; chunkPos.y <= std::max(_maxHeight, (uint8_t)WATERLINE); ++chunkPos.y)
+	{
+
+		for (chunkPos.z = 0; chunkPos.z < 32; ++chunkPos.z)
+		{
+			// culling the slices for the ground (setting which faces will be generated) using the adjacent chunk slices
+			ground.slice = ChunkMask[chunkPos.y * 32 + chunkPos.z];
+			ground.rotSlice = RotChunkMask[chunkPos.y * 32 + chunkPos.z];
+			ground.westFaces = fatCulling(ground.slice, true, ((edges[0][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+			ground.eastFaces = fatCulling(ground.slice, false, ((edges[1][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+			ground.northFaces = fatCulling(ground.rotSlice, true, ((edges[2][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+			ground.southFaces = fatCulling(ground.rotSlice, false, ((edges[3][chunkPos.y] >> ((31 - chunkPos.z) * 2)) & 3));
+
+			// creating the blocks for the slice
+			for (chunkPos.x = 0; chunkPos.x < 32; ++chunkPos.x)
+			{
+				placeBlock(chunkPos, ChunkMask, ground, true);
 				ground.shift();
 			}
 		}
@@ -987,8 +1011,13 @@ void	Chunk::setBlock(int type, int x, int y, int z)
 	block.type = type;
 	block.height = y;
 	Blocks[y * 1024 + z * 32 + x] = block;
-	if (type != 0)
+	if (type == 0)
+		return ;
+	if (type == GLASS_ID || type == OAK_LEAVES_ID || type == MANGROVE_LEAVES_ID || type == JUNGLE_LEAVES_ID || type == SPRUCE_LEAVES_ID)
+		ChunkTrsMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
+	else
 		ChunkMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
+
 
 	if (y > _maxHeight)
 		_maxHeight = y;
@@ -1197,6 +1226,8 @@ void	Chunk::genChunk()
 	// we make the vectors the correct size for a potential fully filled chunk and set everything to 0
 	ChunkMask.resize(8192, 0); // 32 * 256
 	RotChunkMask.resize(8192, 0);
+	ChunkTrsMask.resize(8192, 0);
+	RotChunkTrsMask.resize(8192, 0);
 	Blocks.resize(262144, newBlock); // 32 * 32 * 256
 
 	for (int z = 0; z < 32; ++z) //Loops over every block to generate the world shape, skipping air blocks
@@ -1250,11 +1281,7 @@ void	Chunk::genChunk()
 		}
 	}
 
-	for (int y = _maxHeight; y >= 0; --y)
-		fatGetRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
-
 	// Add water
-	WaterMask.resize(32 * (WATERLINE + 1), 0);
 	for (int z = 0; z < 32; ++z)
 	{
 		for (int x = 0; x < 32; ++x)
@@ -1269,13 +1296,17 @@ void	Chunk::genChunk()
 		}
 	}
 
-	for (int y = _maxHeight; y >= 0; --y)
+	for (int y = std::max((int)_maxHeight, WATERLINE); y >= 0; --y)
+	{
 		fatGetRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
+		fatGetRotSlice(RotChunkTrsMask, y * 32, y * 32, ChunkTrsMask);
+	}
 
 	ChunkMask.shrink_to_fit();
 	RotChunkMask.shrink_to_fit();
+	ChunkTrsMask.shrink_to_fit();
+	RotChunkTrsMask.shrink_to_fit();
 	Blocks.shrink_to_fit();
-	WaterMask.shrink_to_fit();
 }
 
 #include "ChunkGeneratorManager.hpp"
@@ -1302,7 +1333,8 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 	glm::ivec3 targetPosMod = targetPos % 32;
 	int			pos = targetPos.y * 32 + targetPosMod.z;
 	uint64_t	slice = (pos >= ChunkMaskSize ? 0 : ChunkMask[pos]);
-	if (!((slice >> (targetPosMod.x * 2)) & 3))
+	uint64_t	sliceTrs = (pos >= ChunkMaskSize ? 0 : ChunkTrsMask[pos]);
+	if (!((slice >> (targetPosMod.x * 2)) & 3) && !((sliceTrs >> (targetPosMod.x * 2)) & 3))
 		return (false);
 
 	// this will make this chunk unable to be deleted by the QuadTree
@@ -1312,28 +1344,23 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 	uint64_t rawSlice = slice;
 	slice = ((rawSlice << ((31 - targetPosMod.x) * 2)) >> ((31 - targetPosMod.x) * 2)) ^ ((rawSlice >> (targetPosMod.x * 2)) << (targetPosMod.x * 2));
 
+	uint64_t rawSliceTrs = sliceTrs;
+	sliceTrs = ((rawSliceTrs << ((31 - targetPosMod.x) * 2)) >> ((31 - targetPosMod.x) * 2)) ^ ((rawSliceTrs >> (targetPosMod.x * 2)) << (targetPosMod.x * 2));
+
+
 	// updating the different vectors of the chunk
 	ChunkMask[pos] = slice;
 	fatGetRotSlice(RotChunkMask, targetPos.y * 32, targetPos.y * 32, ChunkMask);
 
-	// water filling - prototype, doesn't flood or connect through chunks: need more work
-	// if (targetPos.y <= WATERLINE
-	// 	&& ((targetPos.y < WATERLINE && (WaterMask[pos + 32] >> targetPosMod.x) & 1)
-	// 		|| (WaterMask[pos + 1] >> targetPosMod.x) & 1
-	// 		|| (WaterMask[pos - 1] >> targetPosMod.x) & 1
-	// 		|| (WaterMask[pos] >> (targetPosMod.x + 1)) & 1
-	// 		|| (WaterMask[pos] >> (targetPosMod.x - 1)) & 1))
-	// {
-	// 	Blocks[targetPos.y * 1024 + targetPosMod.z * 32 + (31 - targetPosMod.x)].type = 1;
-	// 	WaterMask[pos] |= 1 << targetPosMod.x;
-	// }
-	// else
-		Blocks[targetPos.y * 1024 + targetPosMod.z * 32 + (31 - targetPosMod.x)].type = 0;
+	ChunkTrsMask[pos] = sliceTrs;
+	fatGetRotSlice(RotChunkTrsMask, targetPos.y * 32, targetPos.y * 32, ChunkTrsMask);
+
+	Blocks[targetPos.y * 1024 + targetPosMod.z * 32 + (31 - targetPosMod.x)].type = 0;
 
 	--_chunkTop[targetPosMod.z * 32 + (31 - targetPosMod.x)];
 
 	reGenMesh(true);
-	clear();
+	upload();
 
 	// we detect if we are on a border
 	glm::vec2	sideReload = {targetPos.x, targetPos.z};
@@ -1357,7 +1384,7 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 		if (chunk && chunk->getState() != CS_EMPTY)
 		{
 			chunk->reGenMesh(true);
-			chunk->clear();
+			chunk->upload();
 		}
 	}
 	if (targetPos.z != sideReload.y)
@@ -1366,7 +1393,7 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 		if (chunk && chunk->getState() != CS_EMPTY)
 		{
 			chunk->reGenMesh(true);
-			chunk->clear();
+			chunk->upload();
 		}
 	}
 
