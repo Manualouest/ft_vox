@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:06:39 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/29 23:56:18 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 10:44:19 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # include "libs.hpp"
 # include "ChunkGenerator.hpp"
 
-# define	GENERATION_THREAD_COUNT 12
-# define	CHUNKS_PER_THREAD 2
+# define	GENERATION_THREAD_COUNT 32
+# define	CHUNKS_PER_THREAD 4
 
 class	ChunkGeneratorManager
 {
@@ -30,12 +30,23 @@ class	ChunkGeneratorManager
 		void	deposit(std::vector<Chunk *> &chunks);
 
 		uint	workingThreads();
+		bool	isWorking() {LOCK(_workingMutex); return (this->_working);}
+		void	setWorking(bool state) {LOCK(_workingMutex); this->_working = state;}
 	private:
+		bool	_allStarted()
+		{
+			for (ChunkGenerator *generator : _generators)
+				if (!generator->isRunning())
+					return (false);
+			return (true);
+		}
 		void	_send();
 		void	_loop();
 
 		std::vector<Chunk *>			_deposit;
 		std::mutex						_depositMutex;
+		std::mutex						_workingMutex;
+		bool							_working;
 		std::vector<ChunkGenerator *>	_generators;
 		std::atomic_bool				_running;
 		std::thread						_thread;

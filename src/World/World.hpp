@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 12:41:57 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/21 12:23:40 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/12 23:11:59 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ class	World
 			saveWorldInfo("seed", std::to_string(seed));
 			saveWorldInfo("display_name", _id);
 			this->_path = "./saves/" + id;
-			save();
+			initFiles();
 		}
 		World(const std::string &id, const std::string &path)
 		{
@@ -66,6 +66,19 @@ class	World
 		void	saveWorldInfo(const std::string &key, const std::string &value)
 		{
 			_worldInfos[key] = value;
+		}
+		void	initFiles()
+		{
+			_createWorldFolders();
+
+			std::ofstream	file;
+
+			file.open(_path + "/world_info.txt");
+			for (auto &pair : _worldInfos)
+			{
+				std::string	line = pair.first + " " + pair.second + "\n";
+				file.write(line.c_str(), line.size());
+			}
 		}
 		void	save()
 		{
