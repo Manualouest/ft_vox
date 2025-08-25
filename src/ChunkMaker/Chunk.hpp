@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/25 10:06:39 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/17 19:43:53 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,13 @@ struct Slices
 	}
 };
 
-enum Biome
+enum BiomeType
 {
+	OCEAN,
+	RIVER,
 	PLAINS,
-	DESERT,
-	SNOWY
+	HILLS,
+	MOUNTAINS
 };
 
 struct GenInfo
@@ -117,6 +119,10 @@ class Chunk
 		static float	getErosion(const glm::vec2 &pos);
 		static float	getContinentalness(const glm::vec2 &pos);
 		static float	getPeaksValleys(const glm::vec2 &pos);
+		static float	getTemperature(const glm::vec2 &pos);
+		static float	getHumidity(const glm::vec2 &pos);
+		BiomeType	getBiomeType();
+		uint8_t	getBiomeBlock(float y, BiomeType type);
 
 		float	_currentErosion;
 		float	_currentContinentalness;
@@ -159,6 +165,17 @@ class Chunk
 		std::mutex	_remeshMutex;
 		bool		_remesh = false;
 
+		BiomeType	_currentBiomeType;
+		float	_currentTemperature;
+		float	_currentHumidity;
+		void	setBlock(int block, int x, int y, int z);
+	private:
+		void	growTemperateTree(int x, int y, int z);
+		void	growSwampTree(int x, int y, int z);
+		void	growJungleTree(int x, int y, int z);
+		void	growColdTree(int x, int y, int z);
+		void	growIceSpike(int x, int y, int z);
+		void	growCactus(int x, int y, int z);
 		GenInfo	getGeneration(const glm::vec3 &pos);
 		int		getGenerationHeight(const glm::vec2 &pos);
 		GenInfo	getGeneration(const glm::vec2 &pos);

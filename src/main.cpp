@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/18 15:02:26 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/15 16:28:46 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,7 @@ void	build(ShaderManager *shader)
 	Shader *titleBackground = shader->load({"title_bg", BACKGROUND_VERT_SHADER_PATH, BACKGROUND_FRAG_SHADER_PATH});
 	shader->load({"colored_quad", "shaders/coloredquad.vs", "shaders/coloredquad.fs"});
 	shader->load({"crosshair", "shaders/crosshair.vs", "shaders/crosshair.fs"});
+	shader->load({"sun", "shaders/sun.vs", "shaders/sun.fs"});
 
 	guiShader->setInt("tex0", 0);
 

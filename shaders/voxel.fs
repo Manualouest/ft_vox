@@ -2,14 +2,6 @@
 
 out vec4 FragColor;
 
-uniform sampler2D stoneTexture;
-uniform sampler2D dirtTexture;
-uniform sampler2D grassTexture;
-uniform sampler2D sandTexture;
-uniform sampler2D grassSideTexture;
-uniform sampler2D waterTexture;
-uniform sampler2D missingTexture;
-
 uniform sampler2D terrainDepthTex;
 uniform sampler2D waterDepthTex;
 
@@ -34,24 +26,25 @@ float LinearizeDepth(float depth, float near, float far)
 uniform bool getDepth;
 
 const vec3  SHORE_COLOR = vec3(0.3, 0.8, 0.87);
-const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0); 
+const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0);
 const vec3  FOG_COLOR = vec3(0.6, 0.8, 1.0);
+
+uniform	sampler2D textureAtlas;
 
 vec3	getBlockTexture(int ID)
 {
-	if (ID == 1)
-		return (texture(stoneTexture, texCoord).rgb);
-	if (ID == 2)
-		return (texture(dirtTexture, texCoord).rgb);
-	if (ID == 3)
-		return (texture(grassTexture, texCoord).rgb);
-	if (ID == 4)
-		return (texture(grassSideTexture, texCoord).rgb);
-	if (ID == 5)
-		return (texture(sandTexture, texCoord).rgb);
-	if (ID == 42)
-		return (texture(missingTexture, texCoord).rgb);
-	return (texture(grassTexture, texCoord).rgb);
+	//To optimize on chunk data we dont give the block's UV's instead we give it the world pos of the vertice (see voxel.vs) so I have to convert it to actual UV
+	vec2	baseUV = texCoord;
+	baseUV = fract(baseUV);
+
+	int row = 15 - (ID / 16);;
+    int col = ID % 16;
+
+    vec2 cellSize = vec2(16.0 / 256.0);
+    vec2 atlasOffset = vec2(col, row) * cellSize;
+    vec2 atlasUV = atlasOffset + baseUV * cellSize;
+
+	return (texture(textureAtlas, atlasUV).rgb);
 }
 
 void main()
@@ -65,6 +58,8 @@ void main()
 	dist = clamp(pow(dist, 1.5), 0.0, 1.0);
 
 	color = getBlockTexture(int(blockType));
+	if (color.r == 1 && color.g == 0 && color.b == 1)
+		discard ;
 
 	if (int(blockType) == 0) //WATER
 	{
@@ -73,9 +68,9 @@ void main()
 		alpha = 0.8;
 		vec3 ndc = clipSpace.xyz / clipSpace.w;
 	    ndc.xy = ndc.xy / 2 + 0.5;
-	
+
 	    color = SHORE_COLOR;
-		color *= texture(waterTexture, texCoord).rgb;
+		color *= getBlockTexture(0);
 	    color = clamp(color, 0, 1);
 	}
 
@@ -89,14 +84,14 @@ void main()
     vec3 ambient = lightAmbient * color;
 
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(-lightDirection);  
+    vec3 lightDir = normalize(-lightDirection);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = lightDiffuse * diff * color;  
-    
+    vec3 diffuse = lightDiffuse * diff * color;
+
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    vec3 specular = lightSpecular * spec * actualShiness;  
-        
+    vec3 specular = lightSpecular * spec * actualShiness;
+
     vec3 result = ambient + diffuse + specular;
     //DIRECTIONAL LIGHT
 

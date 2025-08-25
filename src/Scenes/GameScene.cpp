@@ -28,6 +28,7 @@ Variables used by this scene only
 ChunkGeneratorManager			*CHUNK_GENERATOR;
 RegionManager					*CHUNKS = NULL;
 Terminal						*TERMINAL;
+static bool						F1 = false;
 
 /*
 Global variables for the whole program
@@ -96,6 +97,8 @@ static void	_keyHookFunc(Scene *, int key, int action)
 		F3 = !F3;
 		frameTimes.clear();
 	}
+	else if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
+		F1 = !F1;
 	else
 		TERMINAL->specialInput(key, action);
 }
@@ -256,6 +259,7 @@ std::string	getFPSString(bool debug)
 	static double		lastUpdate = 0;
 	static double		lastMinMaxUpdate = 0;
 	static std::string	fpsString = "0 fps";
+	static std::string	fpsStringDebug = "0 fps | 0 min | 0 max";
 
 	static int	minFPS = INT_MAX;
 	static int	maxFPS = 0;
@@ -278,11 +282,14 @@ std::string	getFPSString(bool debug)
 		fpsString = std::to_string(currentFPS) + " fps";
 		if (debug)
 		{
-			fpsString += " |" + std::to_string(minFPS) + " min";
-			fpsString += " |" + std::to_string(maxFPS) + " max";
+			fpsStringDebug = fpsString;
+			fpsStringDebug += " |" + std::to_string(minFPS) + " min";
+			fpsStringDebug += " |" + std::to_string(maxFPS) + " max";
 		}
 		lastUpdate = currentTime;
 	}
+	if (debug)
+		return (fpsStringDebug);
 	return (fpsString);
 }
 
@@ -295,8 +302,8 @@ static void	_buildInterface(Scene *scene)
 	fps->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
 		[](std::string &label)
 		{
-			label = getFPSString(F3 && !PAUSED);
-		}, true));
+			label = getFPSString(false);
+		}, false));
 
 	Interface	*waiting = interfaces->load("waiting");
 	waiting->addElement("generated_chunks", new Text(UIAnchor::UI_CENTER, "generated chunks", glm::vec2(0, -128),
@@ -372,6 +379,12 @@ static void	_buildInterface(Scene *scene)
 
 	Interface	*debug = interfaces->load("debug");
 
+	debug->addElement("text_fps", new Text(UIAnchor::UI_TOP_LEFT, "fps", glm::vec2(0, 0),
+	[](std::string &label)
+	{
+		label = getFPSString(F3 && !PAUSED);
+	}, true));
+
 	debug->addElement("text_cam_pos", new Text(UIAnchor::UI_TOP_LEFT, "pos", glm::vec2(0, 16),
 		[](std::string &label){label = "world xyz: " + std::to_string((int)CAMERA->pos.x) + " | " + std::to_string((int)CAMERA->pos.y) + " | " + std::to_string((int)CAMERA->pos.z);}, true));
 
@@ -403,6 +416,12 @@ static void	_buildInterface(Scene *scene)
 
 	debug->addElement("text_peaksvalleys", new Text(UIAnchor::UI_TOP_LEFT, "peaks & valleys", glm::vec2(0, 128),
 		[](std::string &label){label = "peaks & valleys: " + std::to_string(Chunk::getPeaksValleys(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
+
+	debug->addElement("text_temperature", new Text(UIAnchor::UI_TOP_LEFT, "temperature", glm::vec2(0, 144),
+		[](std::string &label){label = "temperature: " + std::to_string(Chunk::getTemperature(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
+
+	debug->addElement("text_humidity", new Text(UIAnchor::UI_TOP_LEFT, "humidity", glm::vec2(0, 160),
+		[](std::string &label){label = "humidity: " + std::to_string(Chunk::getHumidity(glm::vec2(CAMERA->pos.x, CAMERA->pos.z)));}, true));
 
 	debug->addElement("text_render_distance", new Text(UIAnchor::UI_TOP_RIGHT, "render distance", glm::vec2(0, 0),
 		[](std::string &label){label = "render distance (blocks): " + std::to_string(CHUNKS->getRenderDist() * 32);}, true));
@@ -565,18 +584,20 @@ void	GameScene::destructor(Scene *)
 
 static void	drawUI(Scene *scene)
 {
+	if (!PAUSED && F1)
+		return ;
+
 	glDisable(GL_DEPTH_TEST);
 
 	Interface	*debug = scene->getInterfaceManager()->get("debug");
 	Interface	*fps = scene->getInterfaceManager()->get("fps");
 
+	debug->update();
 	fps->update();
-	fps->draw();
+	if (!F3 || PAUSED)
+		fps->draw();
 	if (!PAUSED && F3)
-	{
-		debug->update();
 		debug->draw();
-	}
 
 	scene->getInterfaceManager()->draw();
 	TERMINAL->draw();
@@ -625,13 +646,7 @@ void	GameScene::render(Scene *scene)
 	MAIN_FRAME_BUFFER->use();
 	SKYBOX->draw(*CAMERA);
 	Shader	*voxelShader = SHADER_MANAGER->get("voxel");
-	Texture::use("stoneTexture", TEXTURE_MANAGER->get(MISSING_TEXTURE_PATH)->getID(), 0, voxelShader);
-	Texture::use("stoneTexture", TEXTURE_MANAGER->get(STONE_TEXTURE_PATH)->getID(), 1, voxelShader);
-	Texture::use("dirtTexture", TEXTURE_MANAGER->get(DIRT_TEXTURE_PATH)->getID(), 2, voxelShader);
-	Texture::use("grassTexture", TEXTURE_MANAGER->get(GRASS_TOP_TEXTURE_PATH)->getID(), 3, voxelShader);
-	Texture::use("grassSideTexture", TEXTURE_MANAGER->get(GRASS_SIDE_TEXTURE_PATH)->getID(), 4, voxelShader);
-	Texture::use("sandTexture", TEXTURE_MANAGER->get(SAND_TEXTURE_PATH)->getID(), 5, voxelShader);
-	Texture::use("waterTexture", TEXTURE_MANAGER->get(WATER_TEXTURE_PATH)->getID(), 6, voxelShader);
+	Texture::use("textureAtlas", TEXTURE_MANAGER->get("assets/textures/blocks/atlas.bmp")->getID(), 0, voxelShader);
 	CHUNKS->Render(*SHADER_MANAGER->get("voxel"));
 
 	FrameBuffer::reset();
