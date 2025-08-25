@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/25 13:33:33 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 16:41:05 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,8 +103,8 @@ class Chunk
 		std::vector<GenInfo>	Blocks;
 		std::atomic_bool		_edited;
 		float					dist;
-		uint8_t					_minHeight = 0;
-		uint8_t					_maxHeight = 0;
+		std::atomic_uint8_t		_minHeight = 0;
+		std::atomic_uint8_t		_maxHeight = 0;
 		uint8_t					_currentMaxHeight = 0;
 		uint8_t					_currentBiome;
 		std::atomic_bool		_used;

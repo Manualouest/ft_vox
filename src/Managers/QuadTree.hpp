@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 17:46:24 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/28 16:58:28 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 17:03:14 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 #include "libs.hpp"
 #include "Chunk.hpp"
 #include "ChunkGeneratorManager.hpp"
+
+extern std::mutex	_QTLock;
 
 extern ChunkGeneratorManager	*CHUNK_GENERATOR;
 
@@ -138,7 +140,12 @@ class	Quadtree
 
 			@param targetPos World position of a block inside the wanted leaf (chunk)
 		*/
-		Chunk	*growBranch(const glm::ivec2 &targetPos);
+		Chunk	*growBranchLocked(const glm::ivec2 &targetPos);
+		Chunk	*growBranch(const glm::ivec2 &targetPos)
+		{
+			std::lock_guard<std::mutex>	lock(_QTLock);
+			return (growBranchLocked(targetPos));
+		}
 
 		/*
 			Goes through branches until it can find a leaf on the given position without creating new branches.
@@ -146,9 +153,19 @@ class	Quadtree
 
 			@param targetPos World position of a block inside the wanted leaf (chunk)
 		*/
-		Chunk	*getLeaf(const glm::ivec2 &targetPos);
+		Chunk	*getLeafLocked(const glm::ivec2 &targetPos);
+		Chunk	*getLeaf(const glm::ivec2 &targetPos)
+		{
+			std::lock_guard<std::mutex>	lock(_QTLock);
+			return (getLeafLocked(targetPos));
+		}
 
-		void	getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB);
+		void	getVisibleChunksLocked(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB);
+		void	getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB)
+		{
+			std::lock_guard<std::mutex>	lock(_QTLock);
+			getVisibleChunksLocked(chunks, camFrustum, AABB);
+		}
 
 		/*
 			Returns the branch that contains targetPos and stops at the given depth.
@@ -157,12 +174,21 @@ class	Quadtree
 			@param targetPos World position of a block inside the wanted leaf (chunk)
 			@param depth Depth at wich the search should stop
 		*/
-		Quadtree	*getBranch(const glm::ivec2 &targetPos, int depth);
-
+		Quadtree	*getBranchLocked(const glm::ivec2 &targetPos, int depth);
+		Quadtree	*getBranch(const glm::ivec2 &targetPos, int depth)
+		{
+			std::lock_guard<std::mutex>	lock(_QTLock);
+			return (getBranchLocked(targetPos, depth));
+		}
 		/*
 			Frees memory by pruning branches and leaves that contain no used chunks
 		*/
-		void	pruneDeadLeaves(Quadtree *root);
+		void	pruneDeadLeavesLocked(Quadtree *root);
+		void	pruneDeadLeaves(Quadtree *root)
+		{
+			std::lock_guard<std::mutex>	lock(_QTLock);
+			pruneDeadLeavesLocked(root);
+		}
 		void	pruneBranch(Quadtree *root, QTBranch quadrant);
 		void	pruneAll()
 		{

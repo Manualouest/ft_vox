@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/25 13:36:32 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 17:05:38 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -421,7 +421,7 @@ void	Chunk::genMesh()
 	_indices.reserve(2359296); // 2359296 is (1572864/4) * 6 because for each 4 vertices 6 indices are added
 
 	glm::ivec3	chunkPos(0, 0, 0);
-	uint64_t	edges[4][std::max((int)_maxHeight, WATERLINE) + 1]; // these are the slices of adjacent chunks (4-7 is for water only) 0 = west, 1 = east, 2 = north, 3 = south
+	uint64_t	edges[4][std::max((int)_maxHeight.load(), WATERLINE) + 1]; // these are the slices of adjacent chunks (4-7 is for water only) 0 = west, 1 = east, 2 = north, 3 = south
 	Chunk		*sideChunks[4] = {NULL, NULL, NULL, NULL}; // the adjacent chunks 0 = west, 1 = east, 2 = north, 3 = south
 
 	// consoleLog("2.1.2.3.2", NORMAL);
@@ -452,7 +452,7 @@ void	Chunk::genMesh()
 		return ;
 	}
 
-	for (int y = 0; y <= std::max(_maxHeight, (uint8_t)WATERLINE); ++y)
+	for (int y = 0; y <= std::max(_maxHeight.load(), (uint8_t)WATERLINE); ++y)
 	{
 		// getting the proper adjacent slice for the y level
 		if (sideChunks[0])
@@ -470,7 +470,7 @@ void	Chunk::genMesh()
 
 	// consoleLog("2.1.2.3.4", NORMAL);
 	// Generating the mesh
-	for (chunkPos.y = 0; chunkPos.y <= std::max(_maxHeight, (uint8_t)WATERLINE); ++chunkPos.y)
+	for (chunkPos.y = 0; chunkPos.y <= std::max(_maxHeight.load(), (uint8_t)WATERLINE); ++chunkPos.y)
 	{
 
 		for (chunkPos.z = 0; chunkPos.z < 32; ++chunkPos.z)
@@ -500,7 +500,7 @@ void	Chunk::genMesh()
 			}
 		}
 	}
-	for (chunkPos.y = 0; chunkPos.y <= std::max(_maxHeight, (uint8_t)WATERLINE); ++chunkPos.y)
+	for (chunkPos.y = 0; chunkPos.y <= std::max(_maxHeight.load(), (uint8_t)WATERLINE); ++chunkPos.y)
 	{
 
 		for (chunkPos.z = 0; chunkPos.z < 32; ++chunkPos.z)
@@ -1019,9 +1019,9 @@ void	Chunk::setBlock(int type, int x, int y, int z)
 		ChunkMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
 
 
-	if (y > _maxHeight)
+	if (y > _maxHeight.load())
 		_maxHeight = y;
-	if (y < _minHeight)
+	if (y < _minHeight.load())
 		_minHeight = y;
 }
 
@@ -1236,9 +1236,9 @@ void	Chunk::genChunk()
 		{
 			height = getGenerationHeight(glm::vec2{(31 - x) + pos.x, pos.z + z});
 
-			if (height > _maxHeight)
+			if (height > _maxHeight.load())
 				_maxHeight = height;
-			if (height < _minHeight)
+			if (height < _minHeight.load())
 				_minHeight = height;
 			_chunkTop.push_back(height); // this vector stores the y values of the top blocks
 
@@ -1296,7 +1296,7 @@ void	Chunk::genChunk()
 		}
 	}
 
-	for (int y = std::max((int)_maxHeight, WATERLINE); y >= 0; --y)
+	for (int y = std::max((int)_maxHeight.load(), WATERLINE); y >= 0; --y)
 	{
 		fatGetRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
 		fatGetRotSlice(RotChunkTrsMask, y * 32, y * 32, ChunkTrsMask);

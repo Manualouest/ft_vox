@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:07:42 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/14 13:05:00 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 16:25:05 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,7 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 
 	LOCK(_depositMutex);
 
-	std::vector<Chunk*>	cpy = chunks;
-	RegionManager::sortChunks(cpy);
-	std::reverse(cpy.begin(), cpy.end());
-
-	_deposit.reserve(cpy.size());
-
-	for (Chunk * chunk : cpy)
+	for (Chunk * chunk : chunks)
 	{
 		if (!chunk->getGenerating() && (chunk->getState() < CS_MESHED || chunk->getRemesh()))
 		{
@@ -35,7 +29,8 @@ void	ChunkGeneratorManager::deposit(std::vector<Chunk *> &chunks)
 		}
 	}
 
-	_deposit.shrink_to_fit();
+	RegionManager::sortChunks(_deposit);
+	std::reverse(_deposit.begin(), _deposit.end());
 }
 
 void	ChunkGeneratorManager::_send()
@@ -55,10 +50,6 @@ void	ChunkGeneratorManager::_send()
 				_deposit.erase(_deposit.begin(), _deposit.begin() + sizeToAdd);
 		}
 	}
-
-	for (Chunk *chunk : _deposit)
-		chunk->setGenerating(false);
-	_deposit.clear();
 }
 
 void	ChunkGeneratorManager::_loop()

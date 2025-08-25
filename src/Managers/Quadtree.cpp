@@ -6,11 +6,13 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/25 10:05:03 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 17:03:03 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "QuadTree.hpp"
+
+std::mutex	_QTLock;
 
 uint	_QT_SizeBranches;
 uint	_QT_SizeLeaves;
@@ -34,15 +36,15 @@ Quadtree::~Quadtree()
 		delete _leaf;
 }
 
-void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB)
+void	Quadtree::getVisibleChunksLocked(std::vector<Chunk *> &chunks, const Frustum &camFrustum, VolumeAABB &AABB)
 {
 	glm::vec2	npos = {0, 0};
 
 	if (isLeaf())
 	{
-		Chunk *chunk = getLeaf(glm::vec2(_pos.x, _pos.y));
+		Chunk *chunk = getLeafLocked(glm::vec2(_pos.x, _pos.y));
 
-		AABB.extents = glm::vec3(16, (std::max(chunk->_minHeight, chunk->_maxHeight) + 16) / 2, 16);
+		AABB.extents = glm::vec3(16, (std::max(chunk->_minHeight.load(), chunk->_maxHeight.load()) + 16) / 2, 16);
 		AABB.center = glm::vec3(16, AABB.extents.y, 16);
 
 		if (AABB.isOnFrustum(camFrustum, glm::vec3(_pos.x, 0, _pos.y)))
@@ -77,13 +79,13 @@ void	Quadtree::getVisibleChunks(std::vector<Chunk *> &chunks, const Frustum &cam
 						continue ;
 					_branches[i] = new Quadtree(npos, (QTBranch)i, _size / 2);
 				}
-				_branches[i]->getVisibleChunks(chunks, camFrustum, AABB);
+				_branches[i]->getVisibleChunksLocked(chunks, camFrustum, AABB);
 			}
 		}
 	}
 }
 
-Chunk	*Quadtree::growBranch(const glm::ivec2 &targetPos)
+Chunk	*Quadtree::growBranchLocked(const glm::ivec2 &targetPos)
 {
 	if (isLeaf())
 		return (_leaf);
@@ -104,14 +106,14 @@ Chunk	*Quadtree::growBranch(const glm::ivec2 &targetPos)
 			_branches[quadrant] = new Quadtree(childPos, quadrant, _size / 2);
 		if (!_branches[quadrant]->isInBounds(targetPos))
 			return (NULL);
-		return (_branches[quadrant]->growBranch(targetPos));
+		return (_branches[quadrant]->growBranchLocked(targetPos));
 	}
 
 	consoleLog("WARNING could not find/create a leaf from the given branch", LogSeverity::WARNING);
 	return (NULL);
 }
 
-Quadtree	*Quadtree::getBranch(const glm::ivec2 &targetPos, int depth)
+Quadtree	*Quadtree::getBranchLocked(const glm::ivec2 &targetPos, int depth)
 {
 	if (depth-- <= 0)
 		return (this);
@@ -122,13 +124,13 @@ Quadtree	*Quadtree::getBranch(const glm::ivec2 &targetPos, int depth)
 	{
 		if (!_branches[quadrant]->isInBounds(targetPos))
 			return (NULL);
-		return (_branches[quadrant]->getBranch(targetPos, depth));
+		return (_branches[quadrant]->getBranchLocked(targetPos, depth));
 	}
 
 	return (NULL);
 }
 
-Chunk	*Quadtree::getLeaf(const glm::ivec2 &targetPos)
+Chunk	*Quadtree::getLeafLocked(const glm::ivec2 &targetPos)
 {
 	if (isLeaf())
 		return (_leaf);
@@ -139,7 +141,7 @@ Chunk	*Quadtree::getLeaf(const glm::ivec2 &targetPos)
 	{
 		if (!_branches[quadrant]->isInBounds(targetPos))
 			return (NULL);
-		return (_branches[quadrant]->getLeaf(targetPos));
+		return (_branches[quadrant]->getLeafLocked(targetPos));
 	}
 
 	return (NULL);
@@ -164,7 +166,7 @@ QTBranch	Quadtree::_getQuadrant(const glm::ivec2 &pos) const
 		return (QTBranch::OUT_OF_BOUNDS);
 }
 
-void	Quadtree::pruneDeadLeaves(Quadtree *root) //shouldBranchDie
+void	Quadtree::pruneDeadLeavesLocked(Quadtree *root) //shouldBranchDie
 {
 	pruneBranch(root, QTBranch::TOP_LEFT);
 	pruneBranch(root, QTBranch::TOP_RIGHT);
@@ -200,7 +202,7 @@ void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
 			else
 				return ;
 		else
-			branch->pruneDeadLeaves(this);
+			branch->pruneDeadLeavesLocked(this);
 	}
 }
 
