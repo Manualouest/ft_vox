@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/25 17:05:38 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/25 17:11:35 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1014,7 +1014,10 @@ void	Chunk::setBlock(int type, int x, int y, int z)
 	if (type == 0)
 		return ;
 	if (type == GLASS_ID || type == OAK_LEAVES_ID || type == MANGROVE_LEAVES_ID || type == JUNGLE_LEAVES_ID || type == SPRUCE_LEAVES_ID)
+	{
+		ChunkMask[y * 32 + z] &= ~((uint64_t)(((uint64_t)3) << ((31 - x) * 2)));
 		ChunkTrsMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
+	}
 	else
 		ChunkMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
 
