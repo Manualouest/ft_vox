@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 20:29:16 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 20:44:28 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,7 +175,7 @@ static void	_frameKeyHook(Scene *)
 	if (PAUSED || TERMINAL->isActive() || enteringWorld)
 		return ;
 
-	float cameraSpeed = 15 * WINDOW->getDeltaTime();
+	float	cameraSpeed = 1 * WINDOW->getDeltaTime();
 	float	speedBoost = 1.0f;
 
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
@@ -183,9 +183,6 @@ static void	_frameKeyHook(Scene *)
 
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
 		speedBoost *= 15.0f;
-
-	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_2) == GLFW_PRESS)
-		speedBoost = 20.f / 15.f;
 
 	if (glfwGetKey(WINDOW->getWindowData(), GLFW_KEY_W) == GLFW_PRESS)
 		CAMERA->pos = CAMERA->pos + CAMERA->front * (cameraSpeed * speedBoost);

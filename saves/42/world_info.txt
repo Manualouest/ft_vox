@@ -1,7 +1,7 @@
 display_name 42
-pitch 2.899991
+pitch 2.999991
 pos_x 5100.500000
 pos_y 69.000000
 pos_z 4998.700195
 seed 42
-yaw 271.399689
+yaw 270.499634

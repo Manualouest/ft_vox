@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 15:22:58 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 20:27:42 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 20:44:35 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,7 +151,7 @@ void	Skybox::draw(Camera &camera)
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	_time += WINDOW->getDeltaTime() * 8.3333333335 * 2;
+	_time += WINDOW->getDeltaTime() * 8.3333333335;
 	if (_time > 1000)
 		_time -= 1000;
 
