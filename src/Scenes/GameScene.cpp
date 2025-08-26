@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   GameScene.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 11:18:47 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:47:16 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,55 +182,94 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 		CAMERA->yaw = 360;
 }
 
+void	moveRay(glm::ivec3 &mapPos, glm::vec3 &sideDist, const glm::vec3 &deltaDist, const glm::ivec3 &rayStep)
+{
+	if (sideDist.x < sideDist.y)
+	{
+		if (sideDist.x < sideDist.z)
+		{
+			sideDist.x += deltaDist.x;
+			mapPos.x += rayStep.x;
+		}
+		else
+		{
+			sideDist.z += deltaDist.z;
+			mapPos.z += rayStep.z;
+		}
+	}
+	else
+	{
+		if (sideDist.y < sideDist.z)
+		{
+			sideDist.y += deltaDist.y;
+			mapPos.y += rayStep.y;
+		}
+		else
+		{
+			sideDist.z += deltaDist.z;
+			mapPos.z += rayStep.z;
+		}
+	}
+}
+
+void	breakBlock()
+{
+	glm::vec3	rayDir = CAMERA->front;
+	glm::vec3	rayPos = CAMERA->pos;
+	glm::ivec3	mapPos = CAMERA->pos;
+	glm::vec3	deltaDist = glm::abs(glm::vec3(glm::length(rayDir)) / rayDir);
+	glm::ivec3	rayStep = glm::ivec3(glm::sign(rayDir));
+	glm::vec3	sideDist = (sign(rayDir) * (glm::vec3(mapPos) - rayPos) + (glm::sign(rayDir) * 0.5f) + 0.5f) * deltaDist;
+
+	int	MAX_RAY_STEPS = 8;
+	for (int i = 0; i < MAX_RAY_STEPS; ++i)
+	{
+		moveRay(mapPos, sideDist, deltaDist, rayStep);
+		Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+		if (chunk && chunk->removeBlock(mapPos))
+			break;
+	}
+}
+
+void	placeBlock()
+{
+	glm::vec3	rayDir = CAMERA->front;
+	glm::vec3	rayPos = CAMERA->pos;
+	glm::ivec3	mapPos = CAMERA->pos;
+	glm::ivec3	prevMapPos = mapPos;
+	glm::vec3	deltaDist = glm::abs(glm::vec3(glm::length(rayDir)) / rayDir);
+	glm::ivec3	rayStep = glm::ivec3(glm::sign(rayDir));
+	glm::vec3	sideDist = (sign(rayDir) * (glm::vec3(mapPos) - rayPos) + (glm::sign(rayDir) * 0.5f) + 0.5f) * deltaDist;
+
+	int	MAX_RAY_STEPS = 8;
+	moveRay(mapPos, sideDist, deltaDist, rayStep);
+	Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+	if (chunk && chunk->isBlock(mapPos))
+		return ;
+	for (int i = 0; i < MAX_RAY_STEPS; ++i)
+	{
+		prevMapPos = mapPos;
+		moveRay(mapPos, sideDist, deltaDist, rayStep);
+		Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+		if (chunk && chunk->isBlock(mapPos))
+		{
+			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({prevMapPos.x, prevMapPos.z});
+			if (chunk)
+				chunk->placeBlock(prevMapPos, 2);
+			return ;
+		}
+	}
+}
+
 void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 {
-	if (PAUSED || enteringWorld || leavingScene || TERMINAL->isActive())
+	if (PAUSED || enteringWorld || leavingScene)
 		return ;
 
 	if (CHUNKS && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-	{
-		glm::vec3	rayDir = CAMERA->front;
-		glm::vec3	rayPos = CAMERA->pos;
-		glm::ivec3	mapPos = CAMERA->pos;
-		glm::vec3	deltaDist = glm::abs(glm::vec3(glm::length(rayDir)) / rayDir);
-		glm::ivec3	rayStep = glm::ivec3(glm::sign(rayDir));
-		glm::vec3	sideDist = (sign(rayDir) * (glm::vec3(mapPos) - rayPos) + (glm::sign(rayDir) * 0.5f) + 0.5f) * deltaDist;
-
-		int	MAX_RAY_STEPS = 8;
-		for (int i = 0; i < MAX_RAY_STEPS; ++i)
-		{
-			if (sideDist.x < sideDist.y) {
-				if (sideDist.x < sideDist.z)
-				{
-					sideDist.x += deltaDist.x;
-					mapPos.x += rayStep.x;
-				}
-				else
-				{
-					sideDist.z += deltaDist.z;
-					mapPos.z += rayStep.z;
-				}
-			}
-			else
-			{
-				if (sideDist.y < sideDist.z)
-				{
-					sideDist.y += deltaDist.y;
-					mapPos.y += rayStep.y;
-				}
-				else
-				{
-					sideDist.z += deltaDist.z;
-					mapPos.z += rayStep.z;
-				}
-			}
-			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
-			if (chunk && (chunk->getGenerating() || chunk->getState() < ChunkState::CS_GENERATED))
-				break ;
-			if (chunk && chunk->removeBlock(mapPos))
-				break;
-		}
-	}
+		breakBlock();
+	else if (CHUNKS && button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+		placeBlock();
 }
 
 static void	_updateShaders(ShaderManager *shaders)

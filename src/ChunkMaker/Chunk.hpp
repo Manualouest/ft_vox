@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/26 09:09:41 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:26:02 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,8 @@ class Chunk
 		bool	isInRange();
 
 		bool	removeBlock(const glm::ivec3 &targetPos);
+		bool	placeBlock(const glm::ivec3 &targetPos, const uint8_t &blockType);
+		bool	isBlock(const glm::ivec3 &targetPos);
 
 		std::thread::id	_lastThreadID;
 
@@ -123,8 +125,8 @@ class Chunk
 		static float	getPeaksValleys(const glm::vec2 &pos);
 		static float	getTemperature(const glm::vec2 &pos);
 		static float	getHumidity(const glm::vec2 &pos);
-		BiomeType	getBiomeType();
-		uint8_t	getBiomeBlock(float y, BiomeType type);
+		BiomeType		getBiomeType();
+		uint8_t			getBiomeBlock(float y, BiomeType type);
 
 		float	_currentErosion;
 		float	_currentContinentalness;
@@ -206,7 +208,7 @@ class Chunk
 		bool	loadFromFile();
 
 		void	addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
-		void	placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice, const bool &isWater);
+		void	insertBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice, const bool &isWater);
 		void	genChunk();
 		void	getRotSlice(std::vector<uint64_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<uint64_t>	&usedMask);
 		void	fatGetRotSlice(std::vector<uint64_t> &rotSlice, const int &rotOffset, const int &height, const std::vector<uint64_t>	&usedMask);

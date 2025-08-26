@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/26 11:17:14 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:47:30 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -475,7 +475,7 @@ This is the list of the Normals used in the shader:
 /*
 	Puts the blocks in the mesh using the culled slices, the given CHunkMask and the array of Blocks as reference.
 */
-void	Chunk::placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice, const bool &isWater)
+void	Chunk::insertBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice, const bool &isWater)
 {
 	// to add a face we add the offsets of each of it's vertexes to it's position the chunk and then give it's normal based on the face.
 	// things change for the north and south slices as the positions are rotated
@@ -594,8 +594,8 @@ void	Chunk::genMesh()
 			// creating the blocks for the slice
 			for (chunkPos.x = 0; chunkPos.x < 32; ++chunkPos.x)
 			{
-				placeBlock(chunkPos, ChunkMask, ground, false);
-				placeBlock(chunkPos, ChunkMask, trs, false);
+				insertBlock(chunkPos, ChunkMask, ground, false);
+				insertBlock(chunkPos, ChunkMask, trs, false);
 				ground.shift();
 				trs.shift();
 			}
@@ -617,7 +617,7 @@ void	Chunk::genMesh()
 			// creating the blocks for the slice
 			for (chunkPos.x = 0; chunkPos.x < 32; ++chunkPos.x)
 			{
-				placeBlock(chunkPos, ChunkMask, ground, true);
+				insertBlock(chunkPos, ChunkMask, ground, true);
 				ground.shift();
 			}
 		}
@@ -1395,6 +1395,63 @@ void	Chunk::draw(Shader &shader)
 	glBindVertexArray(0);
 }
 
+bool	Chunk::placeBlock(const glm::ivec3 &targetPos, const uint8_t &blockType)
+{
+	glm::ivec3 targetPosMod = targetPos % 32;
+	int			pos = targetPos.y * 32 + targetPosMod.z;
+	uint64_t	slice = (pos >= ChunkMaskSize ? 0 : ChunkMask[pos]);
+	uint64_t	sliceTrs = (pos >= ChunkMaskSize ? 0 : ChunkTrsMask[pos]);
+	if (((slice >> (targetPosMod.x * 2)) & 3) || ((sliceTrs >> (targetPosMod.x * 2)) & 3))
+		return (false);
+
+	setBlock(blockType, 31 - targetPosMod.x, targetPos.y, targetPosMod.z);
+
+	fatGetRotSlice(RotChunkMask, targetPos.y * 32, targetPos.y * 32, ChunkMask);
+	fatGetRotSlice(RotChunkTrsMask, targetPos.y * 32, targetPos.y * 32, ChunkTrsMask);
+
+	reGenMesh(true);
+	upload();
+
+	// we detect if we are on a border
+	glm::vec2	sideReload = {targetPos.x, targetPos.z};
+	if (targetPosMod.x == 31)
+		sideReload.x += 32;
+	if (targetPosMod.x == 0)
+		sideReload.x -= 32;
+	if (targetPosMod.z == 31)
+		sideReload.y += 32;
+	if (targetPosMod.z == 0)
+		sideReload.y -= 32;
+
+	// if we aren't we do nothing
+	if (sideReload == glm::vec2(targetPos.x, targetPos.z))
+		return (true);
+
+	// but if we are wi force the update of the adjacent chunk so it matches it's faces for the newly broken blocks
+	if (targetPos.x != sideReload.x)
+	{
+		Chunk *chunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(sideReload.x, targetPos.z));
+		if (chunk && chunk->getState() != CS_EMPTY)
+		{
+			chunk->reGenMesh(true);
+			chunk->upload();
+		}
+	}
+	if (targetPos.z != sideReload.y)
+	{
+		Chunk *chunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(targetPos.x, sideReload.y));
+		if (chunk && chunk->getState() != CS_EMPTY)
+		{
+			chunk->reGenMesh(true);
+			chunk->upload();
+		}
+	}
+
+	return (true);
+}
+
+#include<bitset>
+
 bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 {
 	glm::ivec3 targetPosMod = targetPos % 32;
@@ -1409,10 +1466,11 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 
 	// editing the mask slice to remove the desired block
 	uint64_t rawSlice = slice;
-	slice = ((rawSlice << ((31 - targetPosMod.x) * 2)) >> ((31 - targetPosMod.x) * 2)) ^ ((rawSlice >> (targetPosMod.x * 2)) << (targetPosMod.x * 2));
+	slice = rawSlice & ~((uint64_t)0b11 << ((targetPosMod.x) * 2));
+
 
 	uint64_t rawSliceTrs = sliceTrs;
-	sliceTrs = ((rawSliceTrs << ((31 - targetPosMod.x) * 2)) >> ((31 - targetPosMod.x) * 2)) ^ ((rawSliceTrs >> (targetPosMod.x * 2)) << (targetPosMod.x * 2));
+	sliceTrs = rawSliceTrs & ~((uint64_t)0b11 << ((targetPosMod.x) * 2));
 
 
 	// updating the different vectors of the chunk
@@ -1466,4 +1524,13 @@ bool	Chunk::removeBlock(const glm::ivec3 &targetPos)
 
 	// the return is important for the raycast so it knows to stop when a block is deleted.
 	return (true);
+}
+
+bool	Chunk::isBlock(const glm::ivec3 &targetPos)
+{
+	glm::ivec3 targetPosMod = targetPos % 32;
+	int			pos = targetPos.y * 32 + targetPosMod.z;
+	uint64_t	slice = (pos >= ChunkMaskSize ? 0 : ChunkMask[pos]);
+	uint64_t	sliceTrs = (pos >= ChunkMaskSize ? 0 : ChunkTrsMask[pos]);
+	return (((slice >> (targetPosMod.x * 2)) & 3) || ((sliceTrs >> (targetPosMod.x * 2)) & 3));
 }
