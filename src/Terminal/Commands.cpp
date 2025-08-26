@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 09:51:17 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 11:30:49 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 10:00:39 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ std::string	command_tp(std::istringstream &args)
 {
 	float	x, y, z;
 	if (!(args >> x >> y >> z))
-		return ("error parsing command: bad args");
+		return ("error: parsing command: bad args");
 	CAMERA->pos = glm::vec3(x, y, z);
 	return ("teleported to " + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z));
 }
@@ -38,10 +38,30 @@ std::string	command_quit(std::istringstream &)
 	return ("quitting game");
 }
 
+#include "RegionManager.hpp"
+extern RegionManager	*CHUNKS;
+
+std::string	command_getblock(std::istringstream &args)
+{
+	int	x, y, z;
+	if (!(args >> x >> y >> z))
+		return ("error: parsing command: bad args");
+
+	Chunk	*currentChunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(x, z));
+	if (currentChunk && !currentChunk->getGenerating() && currentChunk->getState() >= ChunkState::CS_GENERATED)
+	{
+		GenInfo	currentBlock = currentChunk->getBlock(x, y, z);
+		return ("block at " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z) + " is: " + std::to_string((int)currentBlock.type));
+	}
+	else
+		return ("error: chunk is not loaded");
+}
+
 Commands::Commands()
 {
 	_commands["/seed"] = command_seed;
 	_commands["/tp"] = command_tp;
 	_commands["/quit"] = command_quit;
 	_commands["/q"] = command_quit;
+	_commands["/getblock"] = command_getblock;
 }

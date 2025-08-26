@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/15 09:51:43 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/15 11:41:39 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 09:59:42 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ class	Commands
 			std::istringstream	iss(args);
 			std::string			command;
 			if (!(iss >> command))
-				return ("error parsing command: empty");
+				return ("error: parsing command: empty");
 
 			if (command == "/help")
 				return (this->help());
