@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   GameScene.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 11:47:16 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:54:24 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,6 +226,8 @@ void	breakBlock()
 	{
 		moveRay(mapPos, sideDist, deltaDist, rayStep);
 		Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+		if (chunk && (chunk->getGenerating() || chunk->getState() < CS_GENERATED))
+			break ;
 		if (chunk && chunk->removeBlock(mapPos))
 			break;
 	}
@@ -244,6 +246,8 @@ void	placeBlock()
 	int	MAX_RAY_STEPS = 8;
 	moveRay(mapPos, sideDist, deltaDist, rayStep);
 	Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+	if (chunk && (chunk->getGenerating() || chunk->getState() < CS_GENERATED))
+		return ;
 	if (chunk && chunk->isBlock(mapPos))
 		return ;
 	for (int i = 0; i < MAX_RAY_STEPS; ++i)
@@ -251,9 +255,13 @@ void	placeBlock()
 		prevMapPos = mapPos;
 		moveRay(mapPos, sideDist, deltaDist, rayStep);
 		Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+		if (chunk && (chunk->getGenerating() || chunk->getState() < CS_GENERATED))
+			return ;
 		if (chunk && chunk->isBlock(mapPos))
 		{
 			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({prevMapPos.x, prevMapPos.z});
+			if (chunk && (chunk->getGenerating() || chunk->getState() < CS_GENERATED))
+				return ;
 			if (chunk)
 				chunk->placeBlock(prevMapPos, 2);
 			return ;

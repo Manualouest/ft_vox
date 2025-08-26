@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 08:58:21 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:42:38 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void	Quadtree::getVisibleChunksLocked(std::vector<Chunk *> &chunks, const Frustu
 		AABB.extents = glm::vec3(16, (std::max(chunk->_minHeight.load(), chunk->_maxHeight.load()) + 16) / 2, 16);
 		AABB.center = glm::vec3(16, AABB.extents.y, 16);
 
-		if (AABB.isOnFrustum(camFrustum, glm::vec3(_pos.x, 0, _pos.y)))
+		if (AABB.isOnFrustum(camFrustum, glm::vec3(_pos.x, 0, _pos.y)) && !chunk->getGenerating() && chunk->getState() >= ChunkState::CS_MESHED)
 		{
 			chunk->rendered = true;
 			chunks.push_back(chunk);

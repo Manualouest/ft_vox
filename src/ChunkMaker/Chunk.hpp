@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/26 11:26:02 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:50:00 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,6 +164,8 @@ class Chunk
 		void	saveFile();
 		GenInfo	getBlock(int x, int y, int z) //Takes world pos
 		{
+			if (y > 255 || y < 0)
+				return GenInfo();
 			x -= pos.x;
 			z -= pos.z;
 			x = 31 - x;
