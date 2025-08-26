@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 09:41:17 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 09:52:11 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,6 +225,8 @@ void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 				}
 			}
 			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
+			if (chunk && chunk->getGenerating() && chunk->getState() < ChunkState::CS_GENERATED)
+				break ;
 			if (chunk && chunk->removeBlock(mapPos))
 				break;
 		}
@@ -674,7 +676,7 @@ void	GameScene::render(Scene *scene)
 
 	SHADER_MANAGER->get("post")->setBool("underwater", false);
 	Chunk	*currentChunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(CAMERA->pos.x, CAMERA->pos.z));
-	if (currentChunk)
+	if (currentChunk && !currentChunk->getGenerating() && currentChunk->getState() >= ChunkState::CS_GENERATED)
 	{
 		GenInfo	currentBlock = currentChunk->getBlock(CAMERA->pos.x, CAMERA->pos.y, CAMERA->pos.z);
 		if (currentBlock.type == 1)
