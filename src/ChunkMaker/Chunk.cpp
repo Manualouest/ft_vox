@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/25 17:11:35 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 09:39:48 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,11 +117,109 @@ Chunk::Chunk(const glm::vec3 &nPos) : rendered(false), loaded(false),  _edited(f
 	dist = 0;
 }
 
+#include "WorldManager.hpp"
+extern WorldManager	*WORLD_MANAGER;
+
+void	Chunk::saveFile()
+{
+	std::string	worldFile = "saves/" + WORLD_MANAGER->getCurrent()->getID() + "/world/regions/";
+	std::string	path = "chunk_" + std::to_string((int)pos.x) + "_" + std::to_string((int)pos.z) + ".chunk";
+	std::ofstream	file;
+
+	file.open(worldFile + path);
+	
+	for (int y = 0; y <= _maxHeight; y++)
+	{
+		for (int z = 0; z < 32; ++z)
+		{
+			for (int x = 0; x < 32; ++x)
+			{
+				file << std::to_string(Blocks[y * 1024 + z * 32 + x].type) + " ";
+			}
+		}
+		file << std::endl;
+	}
+
+	consoleLog("Saved chunk at " + worldFile + path);
+}
+
+bool	Chunk::loadFromFile()
+{
+	std::string	worldFile = "saves/" + WORLD_MANAGER->getCurrent()->getID() + "/world/regions/";
+	std::string	path = "chunk_" + std::to_string((int)pos.x) + "_" + std::to_string((int)pos.z) + ".chunk";
+
+	std::ifstream	file;
+	std::string line;
+
+	file.open(worldFile + path);
+	if (!file.is_open())
+		return (false);
+
+	int x = 0;
+	int	y = 0;
+	int z = 0;
+	
+	ChunkMask.resize(8192, 0);
+	RotChunkMask.resize(8192, 0);
+	ChunkTrsMask.resize(8192, 0);
+	RotChunkTrsMask.resize(8192, 0);
+	Blocks.resize(262144, GenInfo());
+
+	uint	counter = 0;
+
+	while (std::getline(file, line))
+	{
+		int	block;
+		std::istringstream iss(line);
+		while (iss >> block && counter++ < 1024)
+		{
+			if (x > 31)
+			{
+				x = 0;
+				z++;
+			}
+			if (z > 31)
+				break ;
+
+			_chunkTop.push_back(255);
+
+			setBlock(block, x, y, z);
+			x++;
+		}
+		x = 0;
+		z = 0;
+		y++;
+		if (counter != 1024 || y >= 256)
+			throw std::runtime_error("Malformed chunk data");
+		counter = 0;
+	}
+	_maxHeight = y;
+
+	for (int y = std::max((int)_maxHeight.load(), WATERLINE); y >= 0; --y)
+	{
+		fatGetRotSlice(RotChunkMask, y * 32, y * 32, ChunkMask);
+		fatGetRotSlice(RotChunkTrsMask, y * 32, y * 32, ChunkTrsMask);
+	}
+
+	ChunkMask.shrink_to_fit();
+	RotChunkMask.shrink_to_fit();
+	ChunkTrsMask.shrink_to_fit();
+	RotChunkTrsMask.shrink_to_fit();
+	Blocks.shrink_to_fit();
+
+	return (true);
+}
+
 void	Chunk::generate()
 {
 	if (Chunk::getState() >= ChunkState::CS_GENERATED)
 		return ;
+
 	_chunkTop.reserve(1024);
+
+	if (loadFromFile())
+		return ;
+
 	genChunk();
 }
 
@@ -168,6 +266,9 @@ void	Chunk::upload()
 
 Chunk::~Chunk()
 {
+	if (_edited)
+		saveFile();
+		
     if (DEBUG)
 	{
 		std::stringstream sPos;
@@ -737,45 +838,6 @@ BiomeType	Chunk::getBiomeType()
 	return (res);
 }
 
-/*
-
-BlockTypes:
-
-0 = air
-1 = water
-2 = stone
-3 = dirt
-4 = grass
-6 = sand
-8 = sandstone
-9 = terracotta
-12 = red sandstone
-11 = snow
-12 = red sand
-13 = red terracotta
-14 = brown terracotta
-15 = yellow terracotta
-16 = light grey terracotta
-17 = white terracotta
-18 = oak leaves
-19 = oak log
-20 = cactus
-21 = spruce leaves
-22 = spruce log
-23 = jungle leaves
-24 = jungle log
-25 = mangrove leaves
-26 = mangrove log
-27 = snowy grass side
-28 = packed ice
-29 = diamond ore
-30 = diamond block
-31 = glass
-32 = oak planks
-33 = stone bricks
-
-*/
-
 #define STONE_ID 2
 #define DIRT_ID 3
 #define GRASS_ID 4
@@ -783,7 +845,7 @@ BlockTypes:
 #define SANDSTONE_ID 11
 #define TERRACOTA_ID 17
 #define RED_SANDSTONE_ID 13
-#define SNOW_ID 11
+#define SNOW_ID 7
 #define RED_SAND_ID 12
 #define RED_TERRACOTTA_ID 18
 #define BROWN_TERRACOTTA_ID 19

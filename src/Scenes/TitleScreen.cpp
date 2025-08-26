@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TitleScreen.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:39:14 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/18 15:01:57 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/25 20:04:16 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,9 @@
 #include "FrameBuffer.hpp"
 #include "Skybox.hpp"
 #include "WorldManager.hpp"
+
+//SETTINGS
+extern uint	settingRenderDistance;
 
 extern WorldManager	*WORLD_MANAGER;
 
@@ -197,6 +200,8 @@ static void	_buildMainInterface(Interface *interface)
 		});
 }
 
+extern bool	crosshair;
+
 static void	_buildOptionsInterface(Interface *interface)
 {
 	interface->addElement("button_leave", new Button(UIAnchor::UI_BOTTOM_CENTER, "leave", glm::vec2(0, -10), glm::vec2(200, 60), []
@@ -205,16 +210,53 @@ static void	_buildOptionsInterface(Interface *interface)
 			SCENE_MANAGER->get("title_scene")->getInterfaceManager()->use("main");
 		}, NULL));
 
-	interface->addElement("fun_text", new Text(UIAnchor::UI_CENTER, "why are you here? ... there are no options...", glm::vec2(0, 0), NULL, false));
+	interface->addElement("slider_render_distance", new Slider(UIAnchor::UI_CENTER, "render distance", glm::vec2(0, 0), glm::vec2(300, 80),
+		[](float val)
+		{
+			int	newRenderDistance = glm::clamp((int)(val * 32.f), 2, 32);
+			RENDER_DISTANCE = newRenderDistance * 32 * 2;
+			settingRenderDistance = newRenderDistance;
+		}, [](Slider *slider) {slider->setLabel("render distance " + std::to_string(settingRenderDistance));}, 0.55));
+
+	interface->addElement("slider_fov", new Slider(UIAnchor::UI_CENTER, "fov", glm::vec2(0, -90), glm::vec2(300, 80),
+		[](float val)
+		{
+			FOV = glm::clamp((int)(val * 120), 2, 120);
+		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 80.f / 120.f));
+
+	interface->addElement("button_crosshair", new Button(UIAnchor::UI_CENTER, "crosshair: off", glm::vec2(-310, 0), glm::vec2(300, 80), []
+		(ButtonInfo info)
+		{
+			if (!crosshair)
+			{
+				crosshair = true;
+				info.button->label = "crosshair: on";
+			}
+			else
+			{
+				crosshair = false;
+				info.button->label = "crosshair: off";
+			}
+		}, NULL));
 
 	interface->setUpdateFunc([]
 		(Interface *interface)
 		{
-			Text		*text_popup = static_cast<Text*>(interface->getElement("fun_text"));
+			(void)interface;
+			Slider		*render_distance_slider = static_cast<Slider*>(interface->getElement("slider_render_distance"));
+			Slider		*fov_slider = static_cast<Slider*>(interface->getElement("slider_fov"));
+			Button		*button_crosshair = static_cast<Button*>(interface->getElement("button_crosshair"));
 
-			text_popup->setColor(glm::vec3(1.0, 0.2, 0.2));
-			text_popup->setRotation(glm::vec3(0.0, 0.0, 1.0));
-			text_popup->setAngle(cos(glfwGetTime() * 25));
+			render_distance_slider->setLabel("render distance " + std::to_string(settingRenderDistance));
+			render_distance_slider->setSlider((float)settingRenderDistance / 32.f);
+			
+			fov_slider->setLabel("fov " + std::to_string(FOV));
+			fov_slider->setSlider((float)FOV / 120.f);
+
+			if (crosshair)
+				button_crosshair->label = "crosshair: on";
+			else
+				button_crosshair->label = "crosshair: off";
 		});
 }
 

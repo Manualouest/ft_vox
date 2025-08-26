@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:44:25 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/25 16:41:05 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 09:09:41 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,6 +159,14 @@ class Chunk
 			std::lock_guard<std::mutex> lock(_remeshMutex);
 			return (_remesh);
 		}
+		void	saveFile();
+		GenInfo	getBlock(int x, int y, int z) //Takes world pos
+		{
+			x -= pos.x;
+			z -= pos.z;
+			x = 31 - x;
+			return (Blocks[y * 1024 + z * 32 + x]);
+		}
 	private:
 		std::mutex	_stateMutex;
 		ChunkState	_state = ChunkState::CS_EMPTY;
@@ -194,6 +202,8 @@ class Chunk
 				_used.store(false);
 			return (true);
 		}
+
+		bool	loadFromFile();
 
 		void	addVertices(uint32_t type, const glm::ivec3 &TL, const glm::ivec3 &TR, const glm::ivec3 &BL, const glm::ivec3 &BR, const uint32_t &Normal);
 		void	placeBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedData, const Slices &slice, const bool &isWater);

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/25 17:03:03 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 08:58:21 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,17 +182,14 @@ void	Quadtree::pruneDeadLeavesLocked(Quadtree *root) //shouldBranchDie
 	}
 }
 
-void	Quadtree::pruneBranch(Quadtree *root, QTBranch quadrant)
+void	Quadtree::pruneBranch(Quadtree *, QTBranch quadrant)
 {
-	(void)root;
-	// (void)quadrant;
 	Quadtree	*branch = _branches[quadrant];
 	if (branch != NULL)
 	{
 		if (branch->isLeaf())
 			if (!branch->_leaf->getGenerating()
 				&& !branch->_leaf->rendered
-				&& !branch->_leaf->_edited
 				&& !branch->_leaf->loaded
 				&& !branch->_leaf->_used.load())
 			{
