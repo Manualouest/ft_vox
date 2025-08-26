@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/26 09:39:48 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:17:14 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,7 @@ void	Chunk::saveFile()
 
 	file.open(worldFile + path);
 	
-	for (int y = 0; y <= _maxHeight; y++)
+	for (int y = 0; y <= std::max(_maxHeight.load(), (uint8_t)WATERLINE); y++)
 	{
 		for (int z = 0; z < 32; ++z)
 		{
@@ -193,7 +193,7 @@ bool	Chunk::loadFromFile()
 			throw std::runtime_error("Malformed chunk data");
 		counter = 0;
 	}
-	_maxHeight = y;
+	_maxHeight = std::max(y, WATERLINE);
 
 	for (int y = std::max((int)_maxHeight.load(), WATERLINE); y >= 0; --y)
 	{
@@ -1080,6 +1080,8 @@ void	Chunk::setBlock(int type, int x, int y, int z)
 		ChunkMask[y * 32 + z] &= ~((uint64_t)(((uint64_t)3) << ((31 - x) * 2)));
 		ChunkTrsMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
 	}
+	else if (type == 1)	
+		ChunkMask[y * 32 + z] |= (uint64_t)(((uint64_t)1) << ((31 - x) * 2));
 	else
 		ChunkMask[y * 32 + z] |= (uint64_t)(((uint64_t)3) << ((31 - x) * 2));
 

@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 10:47:24 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 11:18:47 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,7 +225,7 @@ void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 				}
 			}
 			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({mapPos.x, mapPos.z});
-			if (chunk && chunk->getGenerating() && chunk->getState() < ChunkState::CS_GENERATED)
+			if (chunk && (chunk->getGenerating() || chunk->getState() < ChunkState::CS_GENERATED))
 				break ;
 			if (chunk && chunk->removeBlock(mapPos))
 				break;
