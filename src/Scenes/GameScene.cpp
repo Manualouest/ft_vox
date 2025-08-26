@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 17:05:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 18:56:14 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,7 @@ void	resumeGameButton(ButtonInfo)
 
 void	closeWindow(ButtonInfo);
 
-uint	currentBlock = 0;
+int	currentBlock = -1;
 std::vector<uint8_t>	blocks =
 {
 	STONE_ID,
@@ -126,12 +126,12 @@ static void	_mouseScrollHookFunc(Scene *, double, double yoffset)
 {
 	if (yoffset > 0)
 	{
-		if (currentBlock < blocks.size() - 1)
+		if (currentBlock < (int)blocks.size() - 1)
 			currentBlock++;
 	}
 	else if (yoffset < 0)
 	{
-		if (currentBlock > 0)
+		if (currentBlock > -1)
 			currentBlock--;
 	}
 }
@@ -311,7 +311,7 @@ void	placeBlock()
 			Chunk	*chunk = CHUNKS->getQuadTree()->getLeaf({prevMapPos.x, prevMapPos.z});
 			if (chunk && (chunk->getGenerating() || chunk->getState() < CS_GENERATED))
 				return ;
-			if (chunk)
+			if (chunk && currentBlock >= 0)
 				chunk->placeBlock(prevMapPos, blocks[currentBlock]);
 			return ;
 		}
@@ -733,7 +733,7 @@ static void	drawUI(Scene *scene)
 		UIElement::draw(shader, glm::vec2(SCREEN_WIDTH / 2 - crossHairSize / 2, SCREEN_HEIGHT / 2 - crossHairSize / 2), glm::vec2(crossHairSize));
 	}
 
-	if (!PAUSED)
+	if (!PAUSED && currentBlock >= 0)
 	{
 		Shader	*shader = SHADER_MANAGER->get("item");
 		Texture::use("textureAtlas", TEXTURE_MANAGER->get("assets/textures/blocks/atlas.bmp")->getID(), 0, shader);
@@ -783,8 +783,8 @@ void	GameScene::render(Scene *scene)
 	Chunk	*currentChunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(CAMERA->pos.x, CAMERA->pos.z));
 	if (currentChunk && !currentChunk->getGenerating() && currentChunk->getState() >= ChunkState::CS_GENERATED)
 	{
-		GenInfo	currentBlock = currentChunk->getBlock(CAMERA->pos.x, CAMERA->pos.y, CAMERA->pos.z);
-		if (currentBlock.type == 1)
+		GenInfo	currentBlockOnCamera = currentChunk->getBlock(CAMERA->pos.x, CAMERA->pos.y, CAMERA->pos.z);
+		if (currentBlockOnCamera.type == 1)
 			SHADER_MANAGER->get("post")->setBool("underwater", true);
 	}
 
