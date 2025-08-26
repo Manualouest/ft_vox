@@ -4,6 +4,11 @@ out vec4 FragColor;
 
 uniform sampler2D terrainDepthTex;
 uniform sampler2D waterDepthTex;
+uniform vec3 lightAmbient;
+uniform vec3 sunLightDirection;
+uniform vec3 sunLightDiffuse;
+uniform vec3 moonLightDirection;
+uniform vec3 moonLightDiffuse;
 
 in vec2 texCoord;
 flat in float blockType;
@@ -27,7 +32,7 @@ uniform bool getDepth;
 
 const vec3  SHORE_COLOR = vec3(0.3, 0.8, 0.87);
 const vec3  DEEP_COLOR = vec3(0.0, 0.2, 1.0);
-const vec3  FOG_COLOR = vec3(0.6, 0.8, 1.0);
+uniform vec3  FOG_COLOR;
 
 uniform	sampler2D textureAtlas;
 
@@ -76,19 +81,22 @@ void main()
 
 	//DIRECTIONAL LIGHT
     vec3    viewDir = normalize(viewPos - WorldPos.xyz);
-    vec3    lightDirection = vec3(-0.8f, -0.4f, -0.45f);
-    vec3    lightAmbient = vec3(0.2f, 0.2f, 0.2f);
-    vec3    lightDiffuse = vec3(1.0f, 1.0f, 1.0f);
-    vec3    lightSpecular = vec3(1.0f, 1.0f, 1.0f);
+    vec3    lightSpecular = (sunLightDiffuse + moonLightDiffuse) * 1.05;
 
     vec3 ambient = lightAmbient * color;
 
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(-lightDirection);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = lightDiffuse * diff * color;
+    vec3 sunLightDir = normalize(-sunLightDirection);
+    float sunDiff = max(dot(norm, sunLightDir), 0.0);
+    vec3 moonLightDir = normalize(-moonLightDirection);
+    float moonDiff = max(dot(norm, moonLightDir), 0.0);
+    vec3 diffuse = (sunLightDiffuse * sunDiff + moonLightDiffuse * moonDiff) * color;
 
-    vec3 reflectDir = reflect(-lightDir, norm);
+	vec3 reflectDir = vec3(0);
+	if (sunLightDirection.y < moonLightDirection.y)
+    	reflectDir = reflect(-sunLightDir, norm);
+	else
+    	reflectDir = reflect(-moonLightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec3 specular = lightSpecular * spec * actualShiness;
 

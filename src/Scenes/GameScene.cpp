@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   GameScene.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 18:56:14 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 20:17:21 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -350,9 +350,18 @@ static void	_updateShaders(ShaderManager *shaders)
 	voxelShader->setVec3("viewPos", CAMERA->pos);
 	voxelShader->setFloat("RENDER_DISTANCE", RENDER_DISTANCE);
 	voxelShader->setFloat("time", glfwGetTime());
+	voxelShader->setVec3("sunLightDirection", SKYBOX->getDirectLightPos(true));
+	voxelShader->setVec3("sunLightDiffuse", SKYBOX->getDirectLightColor(true));
+	voxelShader->setVec3("moonLightDirection", SKYBOX->getDirectLightPos(false));
+	voxelShader->setVec3("moonLightDiffuse", SKYBOX->getDirectLightColor(false));
+	voxelShader->setVec3("lightAmbient", SKYBOX->getAmbientLight());
+	voxelShader->setVec3("FOG_COLOR", SKYBOX->getSkyboxColorDown());
+	
 
 	skyboxShader->use();
 	skyboxShader->setFloat("time", glfwGetTime());
+	skyboxShader->setVec3("FOG_UP_COLOR", SKYBOX->getSkyboxColorUp());
+	skyboxShader->setVec3("FOG_COLOR", SKYBOX->getSkyboxColorDown());
 }
 
 int		currentFPS = 60;
@@ -875,6 +884,7 @@ void	GameScene::open(Scene *)
 		CHUNK_GENERATOR = new ChunkGeneratorManager();
 	if (!CHUNKS)
 		CHUNKS = new RegionManager();
+	SKYBOX->setTime(0);
 	enteringWorld = true;
 	renderDist = CHUNKS->getRenderDist();
 	CHUNKS->setRenderDist(6);
