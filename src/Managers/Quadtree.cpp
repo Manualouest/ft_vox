@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Quadtree.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 10:15:07 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 11:42:38 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 20:33:12 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ void	Quadtree::getVisibleChunksLocked(std::vector<Chunk *> &chunks, const Frustu
 	{
 		Chunk *chunk = getLeafLocked(glm::vec2(_pos.x, _pos.y));
 
-		AABB.extents = glm::vec3(16, (std::max(chunk->_minHeight.load(), chunk->_maxHeight.load()) + 16) / 2, 16);
+		AABB.extents = glm::vec3(16, (std::max(chunk->_minHeight.load(), std::max(chunk->_maxHeight.load(), (uint8_t)WATERLINE)) + 16) / 2, 16);
 		AABB.center = glm::vec3(16, AABB.extents.y, 16);
 
 		if (AABB.isOnFrustum(camFrustum, glm::vec3(_pos.x, 0, _pos.y)) && !chunk->getGenerating() && chunk->getState() >= ChunkState::CS_MESHED)

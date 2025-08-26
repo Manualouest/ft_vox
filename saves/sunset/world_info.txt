@@ -1,7 +1,7 @@
 display_name sunset
-pitch 7.699903
-pos_x 3718.309082
+pitch 9.599988
+pos_x 3719.055420
 pos_y 82.770714
-pos_z 2058.510254
+pos_z 2058.492676
 seed 123465789
-yaw 89.000099
+yaw 90.999939

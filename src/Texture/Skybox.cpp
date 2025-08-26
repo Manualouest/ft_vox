@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/08 15:22:58 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 20:18:01 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 20:27:42 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,7 +138,6 @@ void	Skybox::draw(Camera &camera)
     glBindVertexArray(UIElement::getQuadVAO());
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-
 
     glm::mat4   moonModel = glm::mat4(1);
 	_moonPos = glm::vec3(-std::cos((_time / 1000.0f) * (M_PI * 2.0f)) * 7, -std::cos((_time / 1000.0f) * (M_PI * 2.0f)) * 10, -std::sin((_time / 1000.0f) * (M_PI * 2.0f)) * 10);

@@ -6,7 +6,7 @@
 /*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 20:17:21 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 20:29:16 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -884,7 +884,7 @@ void	GameScene::open(Scene *)
 		CHUNK_GENERATOR = new ChunkGeneratorManager();
 	if (!CHUNKS)
 		CHUNKS = new RegionManager();
-	SKYBOX->setTime(0);
+	SKYBOX->setTime(750);
 	enteringWorld = true;
 	renderDist = CHUNKS->getRenderDist();
 	CHUNKS->setRenderDist(6);
