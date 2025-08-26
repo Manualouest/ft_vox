@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/26 17:27:21 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 18:14:42 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -483,18 +483,18 @@ void	Chunk::insertBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedD
 		uint8_t	block = Blocks[(chunkPos.y << 10) + ((31 - chunkPos.x) << 5) + (chunkPos.z)].type - 1;
 		glm::ivec3	rotChunkPos = glm::ivec3((31 - chunkPos.z), chunkPos.y, (31 - chunkPos.x));
 		if (slice.northFaces & 3)
-			addVertices(block + (block == GRASS_ID), V2 + rotChunkPos, V1 + rotChunkPos, V6 + rotChunkPos, V5 + rotChunkPos, 3);
+			addVertices(block + (block == 3), V2 + rotChunkPos, V1 + rotChunkPos, V6 + rotChunkPos, V5 + rotChunkPos, 3);
 		if (slice.southFaces & 3)
-			addVertices(block + (block == GRASS_ID), V4 + rotChunkPos, V3 + rotChunkPos, V8 + rotChunkPos, V7 + rotChunkPos, 4);
+			addVertices(block + (block == 3), V4 + rotChunkPos, V3 + rotChunkPos, V8 + rotChunkPos, V7 + rotChunkPos, 4);
 	}
 
 	if ((isWater || (!isWater && (slice.slice & 3) != 1)) && (slice.westFaces & 3 || slice.eastFaces & 3 || slice.slice & 3)) // same as the other one
 	{
 		uint8_t	block = Blocks[(chunkPos.y << 10) + (chunkPos.z << 5) + 31 - chunkPos.x].type - 1;
 		if (slice.westFaces & 3)
-			addVertices(block + (block == GRASS_ID), V1 + chunkPos, V4 + chunkPos, V5 + chunkPos, V8 + chunkPos, 0);
+			addVertices(block + (block == 3), V1 + chunkPos, V4 + chunkPos, V5 + chunkPos, V8 + chunkPos, 0);
 		if (slice.eastFaces & 3)
-			addVertices(block + (block == GRASS_ID), V3 + chunkPos, V2 + chunkPos, V7 + chunkPos, V6 + chunkPos, 1);
+			addVertices(block + (block == 3), V3 + chunkPos, V2 + chunkPos, V7 + chunkPos, V6 + chunkPos, 1);
 
 		if (slice.slice & 3 // top face
 			&& ((chunkPos.y + 1) * 32 + chunkPos.z >= (int)usedData.size()
@@ -504,7 +504,7 @@ void	Chunk::insertBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedD
 		if (chunkPos.y != 0 && slice.slice & 3
 			&& (chunkPos.y - 1) * 32 + chunkPos.z < (int)usedData.size()
 				&& !((usedData[(chunkPos.y - 1) * 32 + chunkPos.z] >> (chunkPos.x * 2)) & 3))
-			addVertices(block - (block == GRASS_ID), V7 + chunkPos, V6 + chunkPos, V8 + chunkPos, V5 + chunkPos, 5);
+			addVertices(block - (block == 3), V7 + chunkPos, V6 + chunkPos, V8 + chunkPos, V5 + chunkPos, 5);
 	}
 
 }
