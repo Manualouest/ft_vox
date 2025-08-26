@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Scene.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 10:38:02 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/18 15:01:40 by mbirou           ###   ########.fr       */
+/*   Updated: 2025/08/26 13:36:48 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,11 +82,17 @@ class	Scene
 			if (_mouseBtnHookFunc)
 				_mouseBtnHookFunc(this, button, action, mod);
 		}
+		void	mouseScrollHook(double xoffset, double yoffset)
+		{
+			if (_mouseScrollHookFunc)
+				_mouseScrollHookFunc(this, xoffset, yoffset);
+		}
 		void	setKeyHook(std::function<void(Scene*, int, int)> keyHook) {this->_keyHook = keyHook;}
 		void	setCharHook(std::function<void(Scene*, uint)> charHook) {this->_charHook = charHook;}
 		void	setMoveMouseHook(std::function<void(Scene*, double, double)> moveMouseHook) {this->_moveMouseHook = moveMouseHook;}
 		void	setMouseBtnHookFunc(std::function<void(Scene*, int, int, int)> mouseBtnHookFunc) {this->_mouseBtnHookFunc = mouseBtnHookFunc;}
-		
+		void	setMouseScrollHookFunc(std::function<void(Scene*, double, double)> mouseScrollFunc) {this->_mouseScrollHookFunc = mouseScrollFunc;}
+
 		//Sets function called whenever the scene is closed (Switching to another scene)
 		void	setClose(std::function<void(Scene*)> onClose) {this->_onClose = onClose;}
 		//Sets function called whenever the scene is opened (Switching from another scene)
@@ -103,6 +109,7 @@ class	Scene
 		std::function<void(Scene*, uint)>			_charHook = NULL; //uint key
 		std::function<void(Scene*, double, double)>	_moveMouseHook = NULL; //uint key
 		std::function<void(Scene*, int, int, int)>	_mouseBtnHookFunc = NULL; // button, action, mod(useless)
+		std::function<void(Scene*, double, double)>			_mouseScrollHookFunc = NULL;
 		Camera										*_camera = NULL;
 		InterfaceManager							*_interfaceManager = NULL;
 };

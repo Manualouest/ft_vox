@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 12:11:45 by mbatty            #+#    #+#             */
-/*   Updated: 2025/07/25 19:51:43 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 13:41:10 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ void	key_hook(GLFWwindow *window, int key, int scancode, int action, int mods);
 void	keyboard_input(GLFWwindow *window, unsigned int key);
 void	move_mouse_hook(GLFWwindow* window, double xpos, double ypos);
 void	press_mouse_hook(GLFWwindow* window, int button, int action, int mods);
+void	scroll_callback(GLFWwindow *, double xoffset, double yoffset);
 
 Window::Window() : _lastFrame(0)
 {
@@ -68,6 +69,7 @@ Window::Window() : _lastFrame(0)
 	glfwSetInputMode(this->getWindowData(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(this->getWindowData(), move_mouse_hook);
 	glfwSetMouseButtonCallback(this->getWindowData(), press_mouse_hook);
+	glfwSetScrollCallback(this->getWindowData(), scroll_callback);
 
 	glClearColor(0.6, 0.8, 1.0, 1.0f);
 	glEnable(GL_DEPTH_TEST);

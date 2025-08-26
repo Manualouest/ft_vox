@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/15 16:28:46 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 13:44:22 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,7 @@ void	build(ShaderManager *shader)
 	shader->load({"colored_quad", "shaders/coloredquad.vs", "shaders/coloredquad.fs"});
 	shader->load({"crosshair", "shaders/crosshair.vs", "shaders/crosshair.fs"});
 	shader->load({"sun", "shaders/sun.vs", "shaders/sun.fs"});
+	shader->load({"item", "shaders/item.vs", "shaders/item.fs"});
 
 	guiShader->setInt("tex0", 0);
 
@@ -160,6 +161,11 @@ void	keyboard_input(GLFWwindow *, unsigned int key)
 void	move_mouse_hook(GLFWwindow*, double xpos, double ypos)
 {
 	SCENE_MANAGER->getCurrent()->moveMouseHook(xpos, ypos);
+}
+
+void scroll_callback(GLFWwindow *, double xoffset, double yoffset)
+{
+	SCENE_MANAGER->getCurrent()->mouseScrollHook(xoffset, yoffset);
 }
 
 void	press_mouse_hook(GLFWwindow*, int button, int action, int mods)

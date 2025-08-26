@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 11:54:24 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 17:05:43 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,55 @@ void	resumeGameButton(ButtonInfo)
 }
 
 void	closeWindow(ButtonInfo);
+
+uint	currentBlock = 0;
+std::vector<uint8_t>	blocks =
+{
+	STONE_ID,
+	DIRT_ID,
+	GRASS_ID,
+	SAND_ID,
+	SANDSTONE_ID,
+	TERRACOTA_ID,
+	RED_SANDSTONE_ID,
+	SNOW_ID,
+	RED_SAND_ID,
+	RED_TERRACOTTA_ID,
+	BROWN_TERRACOTTA_ID,
+	YELLOW_TERRACOTTA_ID,
+	LIGHT_GRAY_TERRACOTTA_ID,
+	WHITE_TERRACOTTA_ID,
+	OAK_LEAVES_ID,
+	OAK_LOG_ID,
+	CACTUS_ID,
+	SPRUCE_LEAVES_ID,
+	SPRUCE_LOG_ID,
+	JUNGLE_LEAVES_ID,
+	JUNGLE_LOG_ID,
+	MANGROVE_LEAVES_ID,
+	MANGROVE_LOG_ID,
+	1,
+	ICE_ID,
+	DIAMOND_ORE_ID,
+	DIAMOND_BLOCK_ID,
+	GLASS_ID,
+	OAK_PLANK_ID,
+	STONE_BRICK_ID
+};
+
+static void	_mouseScrollHookFunc(Scene *, double, double yoffset)
+{
+	if (yoffset > 0)
+	{
+		if (currentBlock < blocks.size() - 1)
+			currentBlock++;
+	}
+	else if (yoffset < 0)
+	{
+		if (currentBlock > 0)
+			currentBlock--;
+	}
+}
 
 static void	_keyHookFunc(Scene *, int key, int action)
 {
@@ -263,7 +312,7 @@ void	placeBlock()
 			if (chunk && (chunk->getGenerating() || chunk->getState() < CS_GENERATED))
 				return ;
 			if (chunk)
-				chunk->placeBlock(prevMapPos, 2);
+				chunk->placeBlock(prevMapPos, blocks[currentBlock]);
 			return ;
 		}
 	}
@@ -637,6 +686,7 @@ void	GameScene::build(Scene *scene)
 	scene->setCharHook(_charHookFunc);
 	scene->setMoveMouseHook(_moveMouseHookFunc);
 	scene->setMouseBtnHookFunc(_mouseBtnHookFunc);
+	scene->setMouseScrollHookFunc(_mouseScrollHookFunc);
 }
 
 void	GameScene::destructor(Scene *)
@@ -681,6 +731,14 @@ static void	drawUI(Scene *scene)
 		Texture::use("screenTexture", MAIN_FRAME_BUFFER->getColorexture(), 0, shader);
 		Texture::use("crossHairTexture", TEXTURE_MANAGER->get("assets/textures/ui/crosshair.bmp")->getID(), 1, shader);
 		UIElement::draw(shader, glm::vec2(SCREEN_WIDTH / 2 - crossHairSize / 2, SCREEN_HEIGHT / 2 - crossHairSize / 2), glm::vec2(crossHairSize));
+	}
+
+	if (!PAUSED)
+	{
+		Shader	*shader = SHADER_MANAGER->get("item");
+		Texture::use("textureAtlas", TEXTURE_MANAGER->get("assets/textures/blocks/atlas.bmp")->getID(), 0, shader);
+		shader->setInt("blockID", blocks[currentBlock] - 1);
+		UIElement::draw(shader, glm::vec2((float)SCREEN_WIDTH / 2.f - (75.f / 2.f), SCREEN_HEIGHT - 75), glm::vec2(75));
 	}
 
     glEnable(GL_DEPTH_TEST);

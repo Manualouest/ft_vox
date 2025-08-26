@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/26 11:49:30 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 15:38:09 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -837,37 +837,6 @@ BiomeType	Chunk::getBiomeType()
 	return (res);
 }
 
-#define STONE_ID 2
-#define DIRT_ID 3
-#define GRASS_ID 4
-#define SAND_ID 10
-#define SANDSTONE_ID 11
-#define TERRACOTA_ID 17
-#define RED_SANDSTONE_ID 13
-#define SNOW_ID 7
-#define RED_SAND_ID 12
-#define RED_TERRACOTTA_ID 18
-#define BROWN_TERRACOTTA_ID 19
-#define YELLOW_TERRACOTTA_ID 20
-#define LIGHT_GRAY_TERRACOTTA_ID 21
-#define WHITE_TERRACOTTA_ID 22
-#define OAK_LEAVES_ID 34
-#define OAK_LOG_ID 49
-#define CACTUS_ID 53
-#define SPRUCE_LEAVES_ID 35
-#define SPRUCE_LOG_ID 50
-#define JUNGLE_LEAVES_ID 36
-#define JUNGLE_LOG_ID 51
-#define MANGROVE_LEAVES_ID 37
-#define MANGROVE_LOG_ID 52
-#define SNOWY_GRASS_ID 27
-#define ICE_ID 9
-#define DIAMOND_ORE_ID 16
-#define DIAMOND_BLOCK_ID 67
-#define GLASS_ID 33
-#define OAK_PLANK_ID 66
-#define STONE_BRICK_ID 65
-
 uint8_t	Chunk::getBiomeBlock(float y, BiomeType type)
 {
 	if (type == BiomeType::MOUNTAINS)
@@ -1402,6 +1371,8 @@ bool	Chunk::placeBlock(const glm::ivec3 &targetPos, const uint8_t &blockType)
 	uint64_t	sliceTrs = (pos >= ChunkMaskSize ? 0 : ChunkTrsMask[pos]);
 	if (((slice >> (targetPosMod.x * 2)) & 3) || ((sliceTrs >> (targetPosMod.x * 2)) & 3))
 		return (false);
+
+	_edited = true;
 
 	setBlock(blockType, 31 - targetPosMod.x, targetPos.y, targetPosMod.z);
 
