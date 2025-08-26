@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/25 16:31:09 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 09:41:17 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,10 @@
 #include "ChunkGeneratorManager.hpp"
 #include "WorldManager.hpp"
 #include "TextureManager.hpp"
+
+//SETTINGS
+
+uint	settingRenderDistance = 16;
 
 /*
 Variables used by this scene only
@@ -46,7 +50,7 @@ extern Window					*WINDOW;
 static bool	leavingScene = false;
 static bool	enteringWorld = false;
 
-static bool crosshair = false;
+bool crosshair = false;
 
 struct	DebugTimes
 {
@@ -85,6 +89,8 @@ void	closeWindow(ButtonInfo);
 
 static void	_keyHookFunc(Scene *, int key, int action)
 {
+	if (enteringWorld)
+		return ;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && !TERMINAL->isActive())
 	{
 		if (PAUSED)
@@ -117,7 +123,7 @@ static void	_updatePostShader(ShaderManager *shaders)
 
 static void	_frameKeyHook(Scene *)
 {
-	if (PAUSED || TERMINAL->isActive())
+	if (PAUSED || TERMINAL->isActive() || enteringWorld)
 		return ;
 
 	float cameraSpeed = 15 * WINDOW->getDeltaTime();
@@ -522,12 +528,13 @@ static void	_buildInterface(Scene *scene)
 			int	newRenderDistance = glm::clamp((int)(val * 32.f), 1, 32);
 			RENDER_DISTANCE = newRenderDistance * 32 * 2;
 			CHUNKS->setRenderDist(newRenderDistance);
+			settingRenderDistance = newRenderDistance;
 		}, [](Slider *slider) {slider->setLabel("render distance " + std::to_string(CHUNKS->getRenderDist()));}, 0.55));
 
 	options->addElement("slider_fov", new Slider(UIAnchor::UI_CENTER, "fov", glm::vec2(0, -90), glm::vec2(300, 80),
 		[](float val)
 		{
-			FOV = glm::clamp((int)(val * 120), 1, 120);
+			FOV = glm::clamp((int)(val * 120), 2, 120);
 		}, [](Slider *slider) {slider->setLabel("fov " + std::to_string((int)FOV));}, 80.f / 120.f));
 
 	options->addElement("button_crosshair", new Button(UIAnchor::UI_CENTER, "crosshair: off", glm::vec2(-310, 0), glm::vec2(300, 80), []
@@ -544,6 +551,20 @@ static void	_buildInterface(Scene *scene)
 			info.button->label = "crosshair: off";
 		}
 	}, NULL));
+
+	options->setUpdateFunc([]
+		(Interface *interface)
+		{
+			(void)interface;
+			Slider		*render_distance_slider = static_cast<Slider*>(interface->getElement("slider_render_distance"));
+			Slider		*fov_slider = static_cast<Slider*>(interface->getElement("slider_fov"));
+
+			render_distance_slider->setLabel("render distance " + std::to_string(CHUNKS->getRenderDist()));
+			render_distance_slider->setSlider((float)CHUNKS->getRenderDist() / 32.f);
+
+			fov_slider->setLabel("fov " + std::to_string(FOV));
+			fov_slider->setSlider((float)FOV / 120.f);
+		});
 
 	Interface	*leaving = interfaces->load("leaving");
 
@@ -651,6 +672,15 @@ void	GameScene::render(Scene *scene)
 
 	FrameBuffer::reset();
 
+	SHADER_MANAGER->get("post")->setBool("underwater", false);
+	Chunk	*currentChunk = CHUNKS->getQuadTree()->getLeaf(glm::vec2(CAMERA->pos.x, CAMERA->pos.z));
+	if (currentChunk)
+	{
+		GenInfo	currentBlock = currentChunk->getBlock(CAMERA->pos.x, CAMERA->pos.y, CAMERA->pos.z);
+		if (currentBlock.type == 1)
+			SHADER_MANAGER->get("post")->setBool("underwater", true);
+	}
+
 	_updatePostShader(SHADER_MANAGER);
 	if (scene->getInterfaceManager()->getCurrent())
 		SHADER_MANAGER->get("post")->setBool("blur", true);
@@ -703,8 +733,6 @@ void	GameScene::update(Scene *scene)
 
 void	GameScene::close(Scene *)
 {
-	WORLD_MANAGER->getCurrent()->save();
-	WORLD_MANAGER->reset();
 	if (CHUNK_GENERATOR)
 	{
 		delete CHUNK_GENERATOR;
@@ -715,6 +743,8 @@ void	GameScene::close(Scene *)
 		delete CHUNKS;
 		CHUNKS = NULL;
 	}
+	WORLD_MANAGER->getCurrent()->save();
+	WORLD_MANAGER->reset();
 	leavingScene = false;
 	enteringWorld = false;
 	consoleLog("Closed a world", LogSeverity::NORMAL);
@@ -740,7 +770,7 @@ void	GameScene::open(Scene *)
 		CHUNKS = new RegionManager();
 	enteringWorld = true;
 	renderDist = CHUNKS->getRenderDist();
-	CHUNKS->setRenderDist(2);
+	CHUNKS->setRenderDist(6);
 	SCENE_MANAGER->get("game_scene")->getInterfaceManager()->use("waiting");
 	consoleLog("Opened a world", LogSeverity::NORMAL);
 }
