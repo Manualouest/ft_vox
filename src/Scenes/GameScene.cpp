@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/17 11:13:19 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 09:52:11 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/26 10:47:24 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,7 @@ static void	_frameKeyHook(Scene *)
 
 void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 {
-	if (PAUSED || enteringWorld || leavingScene)
+	if (PAUSED || enteringWorld || leavingScene || TERMINAL->isActive())
 		return ;
 
 	float xoffset = xpos - WINDOW->getLastMouseX();
@@ -184,7 +184,7 @@ void	_moveMouseHookFunc(Scene*, double xpos, double ypos)
 
 void	_mouseBtnHookFunc(Scene*, int button, int action, int)
 {
-	if (PAUSED || enteringWorld || leavingScene)
+	if (PAUSED || enteringWorld || leavingScene || TERMINAL->isActive())
 		return ;
 
 	if (CHUNKS && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -527,7 +527,7 @@ static void	_buildInterface(Scene *scene)
 	options->addElement("slider_render_distance", new Slider(UIAnchor::UI_CENTER, "render distance", glm::vec2(0, 0), glm::vec2(300, 80),
 		[](float val)
 		{
-			int	newRenderDistance = glm::clamp((int)(val * 32.f), 1, 32);
+			int	newRenderDistance = glm::clamp((int)(val * 32.f), 2, 32);
 			RENDER_DISTANCE = newRenderDistance * 32 * 2;
 			CHUNKS->setRenderDist(newRenderDistance);
 			settingRenderDistance = newRenderDistance;
