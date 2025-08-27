@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   World.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/18 12:41:57 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/12 23:11:59 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/27 11:11:00 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,31 +14,6 @@
 # define WORLD_HPP
 
 # include "libs.hpp"
-
-/*
-
-	WORLD SAVES ARE EXTREMLY WIP
-
-	Worlds will be saved in ./saves/world_X/
-
-	in these save files we will have:
-	- world_info.txt wich will contain
-		- world seed
-		- last updated
-		- creation date
-		- gamerules
-	- playerdata folder
-		- player_NAME
-			- position in world / pitch / yaw
-			- time played
-	- world
-		- regions
-			- chunk_X_X file that will store block infos
-		- entities ? For ft_minecraft probably
-
-	Need to find a way to not hardcode the functions to start worlds to potentially have infinite worlds
-
-*/
 
 class	World
 {

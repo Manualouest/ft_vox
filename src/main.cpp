@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/27 10:02:50 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/27 11:12:31 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,9 +99,6 @@ void	build(ShaderManager *shader)
 
 	Texture::use("terrainDepthTex", 0, 1, SHADER_MANAGER->get("voxel"));
 	Texture::use("waterDepthTex", 0, 2, SHADER_MANAGER->get("voxel"));
-
-	shader->load({"test", "shaders/test.vs", "shaders/test.fs"});
-	Texture::use("screenTexture", 0, 0, (*shader)["test"]);
 
 	Texture::use("tex0", 0, 0, textShader);
 

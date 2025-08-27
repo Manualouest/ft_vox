@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Chunk.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
+/*   By: mbirou <mbirou@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/27 09:30:59 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/27 11:08:41 by mbirou           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -406,29 +406,6 @@ uint64_t	fatCulling(const uint64_t &slice, const bool &dir, const uint64_t &edge
 }
 
 
-/*
-	generates a bit slice based on a height and a list of height (if under it gives a 1 for each of the list's elements)
-*/
-// uint64_t	Chunk::getGenEdgeSlice(int edge[32], const int &height)
-// {
-// 	uint64_t	slice = 0;
-
-// 	// for (int i = 0; i < 32; ++i)
-// 	// 	slice |= ((3 * (height <= edge[i])) << ((31 - i) * 2));
-
-// 	(void)edge;
-// 	GenInfo	block;
-// 	for (int i = 0; i < 32; ++i)
-// 	{
-// 		block = getGeneration(glm::vec3(pos.x + 31, height, pos.z + i));
-// 		if (block.type > 1)
-// 			block.type = 3;
-// 		slice |= (block.type << ((31 - i) * 2));
-// 	}
-
-// 	return (slice);
-// }
-
 // the offsets for the bitshift
 const int OFFSET1 = 6;  // x
 const int OFFSET2 = 15; // xy
@@ -519,7 +496,6 @@ void	Chunk::insertBlock(glm::ivec3 &chunkPos, const std::vector<uint64_t> &usedD
 */
 void	Chunk::genMesh()
 {
-	// consoleLog("2.1.2.3.1", NORMAL);
 	Slices	ground, trs;
 
 	_vertices.reserve(1572864); // 1572864 is 16*16*256*(6*4) because you can have max 16*16 VISIBLE blocks on a chunk's slice with ech having 6*4 vertices
@@ -529,14 +505,12 @@ void	Chunk::genMesh()
 	uint64_t	edges[4][std::max((int)_maxHeight.load(), WATERLINE) + 1]; // these are the slices of adjacent chunks (4-7 is for water only) 0 = west, 1 = east, 2 = north, 3 = south
 	Chunk		*sideChunks[4] = {NULL, NULL, NULL, NULL}; // the adjacent chunks 0 = west, 1 = east, 2 = north, 3 = south
 
-	// consoleLog("2.1.2.3.2", NORMAL);
 	// getting adjacent chunks
 	sideChunks[0] = CHUNKS->getQuadTree()->getLeaf(glm::vec2(pos.x - 1, pos.z));
 	sideChunks[1] = CHUNKS->getQuadTree()->getLeaf(glm::vec2(pos.x + 32, pos.z));
 	sideChunks[2] = CHUNKS->getQuadTree()->getLeaf(glm::vec2(pos.x, pos.z + 32));
 	sideChunks[3] = CHUNKS->getQuadTree()->getLeaf(glm::vec2(pos.x, pos.z - 1));
 
-	// consoleLog("2.1.2.3.3", NORMAL);
 	// checking if they are edited
 	sideChunks[0] = (sideChunks[0] && sideChunks[0]->getState() != CS_EMPTY && sideChunks[0]->setUsed() ? sideChunks[0] : NULL);
 	sideChunks[1] = (sideChunks[1] && sideChunks[1]->getState() != CS_EMPTY && sideChunks[1]->setUsed() ? sideChunks[1] : NULL);
@@ -573,7 +547,6 @@ void	Chunk::genMesh()
 			edges[3][y] = sideChunks[3]->ChunkMask[y * 32 + 31];
 	}
 
-	// consoleLog("2.1.2.3.4", NORMAL);
 	// Generating the mesh
 	for (chunkPos.y = 0; chunkPos.y <= std::max(_maxHeight.load(), (uint8_t)WATERLINE); ++chunkPos.y)
 	{
@@ -627,14 +600,12 @@ void	Chunk::genMesh()
 		}
 	}
 
-	// consoleLog("2.1.2.3.5", NORMAL);
 	// freeing up unused space
 	_vertices.shrink_to_fit();
 	_indices.shrink_to_fit();
 
 	setRemesh(false);
-	
-	// consoleLog("2.1.2.3.6", NORMAL);
+
 	if (sideChunks[0])
 		sideChunks[0]->setUnused();
 	if (sideChunks[1])
@@ -657,33 +628,6 @@ float	perlin(float x, float y, float z)
 
 	return (ab + bc + ac + ba + cb + ca) / 6.0;
 }
-
-//Tweaked cave function to generate thinner caves
-
-// float	getCaveValue(glm::vec3 pos, float minHeight, float maxHeight)
-// {
-// 	float	freq = 0.02;
-
-// 	float minY = minHeight;
-// 	float maxY = maxHeight;
-// 	float mid  = (minY + maxY) * 0.5f;
-// 	float range = (maxY - minY) * 0.5f;
-
-// 	float dist = (pos.y - mid) / range;
-// 	float heightFactor = 1.0f - (pos.y / 512.0f);
-// 	//Pour pas depasser des limites
-// 	float amp = exp(-dist * dist) * heightFactor;
-
-// 	float	noise = 0;
-// 	for (int i = 0; i < 2; i++)
-// 	{
-// 		noise += std::abs(perlin(pos.x * freq, pos.y * freq, pos.z * freq));
-
-// 		freq *= 2;
-// 		amp /= 2;
-// 	}
-// 	return (noise);
-// }
 
 #define CAVE_TRESHOLD 0.12
 
