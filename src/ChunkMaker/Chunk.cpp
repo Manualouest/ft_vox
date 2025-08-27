@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 09:55:10 by mbirou            #+#    #+#             */
-/*   Updated: 2025/08/26 18:14:42 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/27 09:30:59 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,6 +126,11 @@ void	Chunk::saveFile()
 	std::ofstream	file;
 
 	file.open(worldFile + path);
+	if (!file.is_open())
+	{
+		consoleLog("Could not save world file for " + worldFile + path, LogSeverity::WARNING);
+		return ;
+	}
 	
 	for (int y = 0; y <= std::max(_maxHeight.load(), (uint8_t)WATERLINE); y++)
 	{
