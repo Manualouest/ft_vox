@@ -6,7 +6,7 @@
 /*   By: mbatty <mbatty@student.42angouleme.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 13:33:29 by mbatty            #+#    #+#             */
-/*   Updated: 2025/08/26 13:44:22 by mbatty           ###   ########.fr       */
+/*   Updated: 2025/08/27 10:02:50 by mbatty           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,6 +184,17 @@ void	key_hook(GLFWwindow *window, int key, int, int action, int)
 		SCENE_MANAGER->getCurrent()->keyHook(key, action);
 }
 
+void	setupScenes()
+{
+	Scene	*titleScene = SCENE_MANAGER->load("title_scene", TitleScreen::build, TitleScreen::destructor, TitleScreen::render, TitleScreen::update);
+	Scene	*gameScene = SCENE_MANAGER->load("game_scene", GameScene::build, GameScene::destructor, GameScene::render, GameScene::update);
+	gameScene->setClose(GameScene::close);
+	gameScene->setOpen(GameScene::open);
+	titleScene->setClose(TitleScreen::close);
+	titleScene->setOpen(TitleScreen::open);
+	SCENE_MANAGER->use("title_scene");
+}
+
 int	main()
 {
 	consoleLog("Starting...", NORMAL);
@@ -191,15 +202,7 @@ int	main()
 	try {
 		Engine	engine;
 
-		seed = rand();
-
-		Scene	*titleScene = SCENE_MANAGER->load("title_scene", TitleScreen::build, TitleScreen::destructor, TitleScreen::render, TitleScreen::update);
-		Scene	*gameScene = SCENE_MANAGER->load("game_scene", GameScene::build, GameScene::destructor, GameScene::render, GameScene::update);
-		gameScene->setClose(GameScene::close);
-		gameScene->setOpen(GameScene::open);
-		titleScene->setClose(TitleScreen::close);
-		titleScene->setOpen(TitleScreen::open);
-		SCENE_MANAGER->use("title_scene");
+		setupScenes();
 
 		consoleLog("Starting rendering...", NORMAL);
 		while (WINDOW->up())
